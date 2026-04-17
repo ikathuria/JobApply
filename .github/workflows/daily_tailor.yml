@@ -2,13 +2,12 @@ name: Daily Resume Tailor
 
 on:
   schedule:
-    # 9 AM UTC daily — Gemini free-tier quota resets at midnight US-Pacific (≈7-8 AM UTC)
-    - cron: '0 9 * * *'
+    - cron: '0 9 * * *'   # 9 AM UTC daily
   workflow_dispatch:
     inputs:
       limit:
-        description: 'Max jobs to tailor (default: 10)'
-        default: '10'
+        description: 'Max jobs to tailor (default: 50)'
+        default: '50'
         required: false
 
 permissions:
@@ -51,7 +50,7 @@ jobs:
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
-          LIMIT=${{ github.event.inputs.limit || '10' }}
+          LIMIT=${{ github.event.inputs.limit || '50' }}
           python main.py --tailor --limit $LIMIT
 
       - name: Commit updated tracker and generated PDFs

@@ -48,8 +48,8 @@ def _gemini(system_prompt: str, user_message: str, max_tokens: int) -> str:
     client = genai.Client(api_key=api_key)
     model_name = _config().get("gemini_model", "gemini-2.0-flash")
 
-    # 5 RPM free tier → 1 call per 12s minimum
-    time.sleep(13)
+    # 1K RPM paid tier → 2s between calls is plenty
+    time.sleep(2)
 
     response = client.models.generate_content(
         model=model_name,
