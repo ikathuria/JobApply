@@ -1,0 +1,5 @@
+I'm particularly excited about the GTM Engineering Intern role at Equinix because my experience in designing and deploying LLM-based solutions, coupled with my research in RAG and multi-agent systems, directly aligns with your focus on Agentic AI for enhancing customer interactions and operational efficiency. I'm eager to contribute to building autonomous solutions that leverage live customer data and integrate with GTM tools.
+
+In a recent project, I developed a multi-agent system using LangChain to automate customer support queries, reducing response times by 30%. I also implemented a RAG pipeline that integrated disparate data sources, ensuring high-accuracy outputs grounded in real-time information. My work involved developing custom "skills" for agents to interact with internal APIs and building robust reasoning loops to handle complex, non-linear scenarios.
+
+I'm enthusiastic about the opportunity to apply my skills in Agentic AI and contribute to Equinix's innovative approach to customer success. I am confident I can make a significant impact and would welcome the chance to discuss my qualifications further.

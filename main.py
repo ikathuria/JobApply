@@ -1,0 +1,258 @@
+"""
+JobApply - Orchestrator
+Phases:
+  1. Discover  - scrape job listings
+  2. Filter    - score and store in DB
+  3. Tailor    - fetch JD, generate tailored resume + cover letter PDF
+
+Usage:
+  python main.py                          # discover + filter (all sources)
+  python main.py --source intern_list     # single source
+  python main.py --source linkedin
+  python main.py --tailor                 # tailor top unreviewed jobs
+  python main.py --tailor --limit 5       # tailor top N jobs
+  python main.py --stats                  # show tracker stats
+"""
+
+import argparse
+import logging
+import os
+import re
+import sys
+from pathlib import Path
+
+# Fix Windows console encoding so emoji in job titles don't crash print()
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+import yaml
+from dotenv import load_dotenv
+
+from scrapers.intern_list_scraper import scrape_intern_list
+from scrapers.linkedin_scraper import scrape_linkedin_sync
+from pipeline.job_filter import filter_jobs, deduplicate
+from pipeline.jd_fetcher import fetch_jd
+from pipeline.resume_tailor import tailor_resume
+from pipeline.cover_letter import generate_cover_letter
+from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
+from tracker.tracker import (
+    init_db, upsert_jobs, get_jobs, get_stats, update_status,
+    STATUS_NEW, STATUS_QUEUED,
+)
+
+load_dotenv()
+
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+OUTPUT_DIR = Path("output/resumes")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(LOG_DIR / "jobapply.log", encoding="utf-8"),
+    ],
+)
+logger = logging.getLogger("main")
+
+
+def load_config() -> dict:
+    with open("config/settings.yaml") as f:
+        return yaml.safe_load(f)
+
+
+# -- Phase 1: Discovery --------------------------------------------------------
+
+def run_discovery(config: dict, source: str | None = None) -> list[dict]:
+    all_jobs = []
+    sources = config.get("sources", {})
+
+    if source in (None, "intern_list") and sources.get("intern_list", {}).get("enabled"):
+        logger.info("=== Scraping intern-list.com ===")
+        jobs = scrape_intern_list(max_rows=300)
+        logger.info(f"intern-list.com: {len(jobs)} raw listings")
+        all_jobs.extend(jobs)
+
+    if source in (None, "linkedin") and sources.get("linkedin", {}).get("enabled"):
+        logger.info("=== Scraping LinkedIn ===")
+        li_cfg = sources["linkedin"]
+        jobs = scrape_linkedin_sync(
+            query=li_cfg.get("search_query", "AI ML internship"),
+            location="United States",
+            easy_apply_only=li_cfg.get("easy_apply_only", True),
+            max_jobs=50,
+            headless=False,
+        )
+        logger.info(f"LinkedIn: {len(jobs)} raw listings")
+        all_jobs.extend(jobs)
+
+    return all_jobs
+
+
+def run_pipeline(config: dict, source: str | None = None) -> None:
+    conn = init_db()
+    min_score = config.get("scoring", {}).get("min_score", 0.3)
+
+    raw_jobs = run_discovery(config, source)
+    if not raw_jobs:
+        logger.warning("No jobs discovered - check scraper output above.")
+        conn.close()
+        return
+
+    jobs = deduplicate(raw_jobs)
+    filtered = filter_jobs(jobs, min_score=min_score)
+    inserted, skipped = upsert_jobs(conn, filtered)
+
+    stats = get_stats(conn)
+    print("\n-- Discovery complete --------------------------")
+    print(f"  Raw listings found : {len(raw_jobs)}")
+    print(f"  Passed filter      : {len(filtered)}")
+    print(f"  New in DB          : {inserted}")
+    print(f"  Already known      : {skipped}")
+    print("\n-- Database totals -----------------------------")
+    for status, count in sorted(stats.items()):
+        print(f"  {status:<12} : {count}")
+
+    new_jobs = get_jobs(conn, status=STATUS_NEW, min_score=min_score, limit=10)
+    if new_jobs:
+        print("\n-- Top new jobs (showing up to 10) -------------")
+        for i, job in enumerate(new_jobs, 1):
+            print(f"  {i:>2}. [{job['score']:.2f}] {job['title']} @ {job['company'] or 'N/A'}")
+            print(f"       {job['url']}")
+    print()
+    conn.close()
+
+
+# -- Phase 2: Tailoring --------------------------------------------------------
+
+def run_tailor(limit: int = 10) -> None:
+    """
+    For the top-scored unreviewed jobs:
+      1. Fetch full JD from URL
+      2. Generate tailored resume JSON via LLM
+      3. Generate cover letter via LLM
+      4. Render both to PDF
+      5. Mark job as 'queued' in tracker
+    """
+    conn = init_db()
+    jobs = get_jobs(conn, status=STATUS_NEW, limit=limit)
+
+    if not jobs:
+        print("No new jobs to tailor. Run discovery first.")
+        conn.close()
+        return
+
+    print(f"\n-- Tailoring {len(jobs)} jobs -------------------------------")
+
+    for job in jobs:
+        job = dict(job)
+        title_slug = _slug(f"{job['company']}_{job['title']}")
+        job_dir = OUTPUT_DIR / title_slug
+        job_dir.mkdir(parents=True, exist_ok=True)
+
+        print(f"\n  - {job['title']} @ {job['company'] or 'N/A'}")
+        print(f"     Score: {job['score']:.2f} | {job['url']}")
+
+        # 1. Fetch JD
+        print("     Fetching job description...")
+        jd_text = fetch_jd(job["url"])
+        if not jd_text:
+            logger.warning(f"Could not fetch JD for job {job['id']} - skipping tailoring.")
+            print("     [!] Could not fetch JD - skipping.")
+            continue
+
+        # Update description in DB
+        conn.execute(
+            "UPDATE jobs SET description = ?, updated_at = datetime('now') WHERE id = ?",
+            (jd_text[:5000], job["id"]),
+        )
+        conn.commit()
+
+        # 2. Tailor resume
+        print("     Generating tailored resume...")
+        tailored = tailor_resume(job, jd_text)
+        if not tailored:
+            print("     [!] Resume tailoring failed - skipping.")
+            continue
+
+        # 3. Cover letter
+        print("     Generating cover letter...")
+        letter_text = generate_cover_letter(job, jd_text, tailored.get("why_fit", ""))
+
+        # 4. Render PDFs
+        resume_path = job_dir / "resume.pdf"
+        cover_path = job_dir / "cover_letter.pdf"
+
+        generate_resume_pdf(tailored, resume_path)
+        if letter_text:
+            generate_cover_letter_pdf(letter_text, job, cover_path)
+            # Save plain text too for easy editing
+            (job_dir / "cover_letter.txt").write_text(letter_text, encoding="utf-8")
+
+        # 5. Mark queued
+        update_status(
+            conn,
+            job["id"],
+            STATUS_QUEUED,
+            resume_path=str(resume_path),
+            notes=f"why_fit: {tailored.get('why_fit', '')}",
+        )
+
+        print(f"     - Resume  - {resume_path}")
+        if letter_text:
+            print(f"     - Cover   - {cover_path}")
+
+    stats = get_stats(conn)
+    print("\n-- Updated tracker stats -----------------------")
+    for status, count in sorted(stats.items()):
+        print(f"  {status:<12} : {count}")
+    print()
+    conn.close()
+
+
+# -- Stats ---------------------------------------------------------------------
+
+def show_stats() -> None:
+    conn = init_db()
+    stats = get_stats(conn)
+    total = sum(stats.values())
+    print("\n-- Application Tracker Stats -------------------")
+    for status, count in sorted(stats.items()):
+        print(f"  {status:<12} : {count}")
+    print(f"  {'TOTAL':<12} : {total}")
+
+    queued = get_jobs(conn, status=STATUS_QUEUED, limit=5)
+    if queued:
+        print("\n-- Queued (ready to apply) ---------------------")
+        for job in queued:
+            print(f"  [{job['score']:.2f}] {job['title']} @ {job['company'] or 'N/A'}")
+    conn.close()
+
+
+# -- Entry point ---------------------------------------------------------------
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9_]", "", text.lower().replace(" ", "_"))[:60]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
+    parser.add_argument("--source", choices=["intern_list", "linkedin"])
+    parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
+    parser.add_argument("--limit", type=int, default=10, help="Max jobs to tailor (default: 10)")
+    parser.add_argument("--stats", action="store_true", help="Show tracker stats")
+    args = parser.parse_args()
+
+    if args.stats:
+        show_stats()
+    elif args.tailor:
+        run_tailor(limit=args.limit)
+    else:
+        config = load_config()
+        run_pipeline(config, source=args.source)
+
+
+if __name__ == "__main__":
+    main()

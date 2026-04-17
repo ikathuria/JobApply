@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Truveta's mission of saving lives with data, particularly through developing innovative and trustworthy generative AI for healthcare. My strong research background in RAG systems and multi-modal knowledge graphs, coupled with practical experience deploying LLM-based solutions at AWS, aligns perfectly with the challenges of this ML PhD Intern role focusing on LLMs and Generative AI.
+
+My experience includes designing and implementing a novel RAG system that improved information retrieval accuracy by 15% in a complex domain, and developing a multi-modal knowledge graph for enhanced data integration. At AWS, I contributed to deploying an LLM-based solution, gaining hands-on experience with cloud infrastructure and large-scale model deployment. I'm proficient in PyTorch and Python, and have experience with distributed training and prompt engineering.
+
+I'm eager to apply my skills to Truveta's impactful work and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute.

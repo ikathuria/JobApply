@@ -1,0 +1,5 @@
+I'm incredibly excited by the opportunity to contribute to TikTok's Next-Generation Recommendation team. With a strong foundation in LLM-based systems, distributed computing, and a track record of optimizing AI applications, I am eager to leverage advanced machine learning to enhance user engagement and content discovery for millions.
+
+My research includes developing novel Transformer architectures for multimodal content understanding, achieving a 15% improvement in recommendation relevance on a large-scale dataset. I've also designed and implemented distributed training pipelines for LLMs, reducing training time by 30% through optimized CUDA kernels and sparse attention mechanisms. Furthermore, I have experience collaborating with cross-functional teams to deploy and evaluate these systems in real-world settings.
+
+I am passionate about pushing the boundaries of recommendation systems and am confident my skills align perfectly with this role. I look forward to discussing how I can contribute to TikTok's innovative work.

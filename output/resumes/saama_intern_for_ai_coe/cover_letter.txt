@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Saama's mission of streamlining clinical study onboarding, especially within the AI CoE. My strong foundation in LLM development and automation, coupled with experience in data processing and AI-driven workflow optimization, aligns perfectly with the AI Automation Intern role, particularly in developing and testing AI/ML models for clinical document parsing and data mapping.
+
+In a recent project, I developed an LLM-based system that automated the extraction of key entities from unstructured text, achieving a 25% reduction in manual processing time. I also designed and implemented Python scripts to automate repetitive data manipulation tasks, improving data pipeline efficiency by 15%. My experience extends to performing rigorous quality checks on AI-generated outputs and providing human-in-the-loop feedback to enhance model accuracy.
+
+I'm eager to apply my skills in AI implementation and process optimization to Saama's innovative work in life sciences. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

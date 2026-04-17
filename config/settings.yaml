@@ -1,0 +1,56 @@
+search:
+  keywords:
+    - "artificial intelligence"
+    - "machine learning"
+    - "AI"
+    - "ML"
+    - "LLM"
+    - "deep learning"
+    - "NLP"
+    - "generative AI"
+    - "RAG"
+    - "computer vision"
+    - "data science"
+  role_types:
+    - "intern"
+    - "internship"
+  location: "USA"
+  exclude_keywords:
+    - "no visa"
+    - "no sponsorship"
+    - "citizens only"
+    - "clearance required"
+    - "security clearance"
+
+scoring:
+  weights:
+    keyword_match: 0.4
+    role_relevance: 0.3
+    recency: 0.2
+    sponsorship_friendly: 0.1
+  min_score: 0.3   # jobs below this are discarded
+
+sources:
+  intern_list:
+    url: "https://www.intern-list.com/?k=aiml"
+    enabled: true
+  linkedin:
+    enabled: true
+    search_query: "AI intern"
+    easy_apply_only: true
+
+linkedin:
+  email: ""      # fill in .env
+  password: ""   # fill in .env
+
+llm:
+  provider: "gemini"       # options: "gemini", "anthropic"
+  gemini_model: "gemini-2.5-flash"
+  anthropic_model: "claude-sonnet-4-6"
+
+tracker:
+  db_path: "tracker/applications.db"
+
+output:
+  resumes_dir: "output/resumes"
+  logs_dir: "logs"

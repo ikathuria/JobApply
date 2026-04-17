@@ -1,0 +1,110 @@
+{
+  "name": "Ishani Kathuria",
+  "email": "ishani@kathuria.net",
+  "phone": "+12193680435",
+  "location": "Hammond, Indiana, USA",
+  "linkedin": "https://www.linkedin.com/in/ishani-kathuria",
+  "github": "https://github.com/ikathuria",
+  "portfolio": "https://ishani.kathuria.net",
+  "education": [
+    {
+      "school": "Purdue University Northwest",
+      "degree": "Master of Science in Applied Artificial Intelligence",
+      "gpa": "4.0/4.0",
+      "start": "Aug 2025",
+      "end": "May 2027",
+      "location": "Hammond, Indiana, USA"
+    },
+    {
+      "school": "Amity University",
+      "degree": "Bachelor of Technology in Artificial Intelligence",
+      "gpa": "9.09/10.0",
+      "start": "Jul 2019",
+      "end": "Jul 2023",
+      "location": "Noida, India"
+    }
+  ],
+  "experience": [
+    {
+      "company": "Purdue University",
+      "title": "Artificial Intelligence Research Assistant",
+      "start": "Sep 2025",
+      "end": "Present",
+      "bullets": [
+        "Conducting applied research on Retrieval-Augmented Generation (RAG) systems, focusing on retrieval quality, hallucination reduction, and end-to-end latency optimization for LLM-based applications.",
+        "Evaluating retrieval strategies using Recall@K and nDCG to optimize real-world question answering performance."
+      ]
+    },
+    {
+      "company": "Amazon Web Services",
+      "title": "Software Development Engineer",
+      "start": "Jul 2023",
+      "end": "Jul 2025",
+      "bullets": [
+        "Built and deployed LLM-based log summarization systems for production services, reducing root-cause analysis time from 2.5 hours to 30 minutes.",
+        "Designed internal AI chatbots for developer support workflows, improving resolution efficiency for routine operational queries by 40%.",
+        "Automated region-build and deployment pipelines for 15+ OpenSearch services using AWS infrastructure tooling, reducing manual intervention by 80% and accelerating launch timelines by 3 weeks.",
+        "Developed proactive anomaly and bug detection systems to identify failures pre-release, reducing external customer-reported issues by 30%.",
+        "Optimized distributed system scripts, cutting CPU and memory usage by 50%, lowering infrastructure costs by $50K/month."
+      ]
+    },
+    {
+      "company": "Planet E-Com Solutions",
+      "title": "Data and Algorithm Lead",
+      "start": "May 2022",
+      "end": "Jul 2022",
+      "bullets": [
+        "Engineered web scraping pipelines and data processing algorithms in Python to improve accuracy of education consultation software."
+      ]
+    },
+    {
+      "company": "Deloitte",
+      "title": "Artificial Intelligence Automation Intern",
+      "start": "Jun 2022",
+      "end": "Jul 2022",
+      "bullets": [
+        "Developed hybrid RPA solutions using Automation Anywhere and Python, automating complex internal reporting tasks."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "TrustworthyRAG",
+      "bullets": [
+        "Designed a query-adaptive learned fusion (QALF) mechanism to dynamically route queries across vector, graph, and keyword retrieval systems.",
+        "Built a multimodal knowledge graph ingesting unstructured text and images to enable multi-hop reasoning and complex retrieval workflows."
+      ]
+    },
+    {
+      "name": "AutoRedTeam",
+      "bullets": [
+        "Engineered a multi-agent adversarial evaluation framework (Attacker, Target, Judge) to stress-test LLM safety and robustness.",
+        "Implemented provider-agnostic LLM integrations (GPT-4, Gemini, Llama 3) with a real-time React-based visualization interface."
+      ]
+    },
+    {
+      "name": "DeepFakeGuard",
+      "bullets": [
+        "Built a client-side AI forensic tool using Transformers.js to detect synthetic audio directly in-browser, preserving user privacy.",
+        "Optimized streaming inference pipelines to achieve sub-second latency without server-side dependencies."
+      ]
+    }
+  ],
+  "skills": {
+    "generative_ai": ["LLMs", "RAG", "Fine-Tuning", "Multi-Agent Systems", "Prompt Engineering", "LangChain", "HuggingFace", "Gemini", "ChatGPT", "Claude", "Mistral"],
+    "ml_frameworks": ["PyTorch", "TensorFlow", "Scikit-Learn", "Ollama"],
+    "programming": ["Python", "Golang", "TypeScript", "Java"],
+    "cloud_mlops": ["AWS Bedrock", "Lambda", "ECS", "Step Functions", "CloudFormation", "CloudWatch", "Azure"],
+    "web_data": ["React", "Flask", "Django", "Pandas", "NumPy", "Tableau"]
+  },
+  "certifications": [
+    "AWS Certified AI Practitioner",
+    "AWS Certified Cloud Practitioner"
+  ],
+  "publications": [
+    "Conversational AI for Supporting Children with Autism (Springer 2025)",
+    "Temperature Based Food Recommendation using AI (IEEE 2023)",
+    "Deep Learning in Healthcare (Springer 2023)",
+    "PM2.5 Prediction using Azure ML Studio (IEEE 2022)"
+  ]
+}

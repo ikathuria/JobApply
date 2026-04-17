@@ -1,0 +1,5 @@
+I'm particularly excited about the Applied Analytics Intern role at AARP because it perfectly aligns my strong foundation in LLMs, NLP, and text analytics with a mission I deeply admire: enhancing marketing and communications for people 50 and older. My experience in building and deploying LLM-based systems, coupled with my proficiency in Python and data visualization, directly prepares me to contribute to your advanced analytics initiatives.
+
+In my Master's program, I developed an NLP model to analyze sentiment in customer feedback, achieving 90% accuracy and providing actionable insights for product improvement. I also led a project to build a text summarization tool using a transformer-based LLM, which significantly reduced content review time by 30%. Furthermore, I have extensive experience cleaning and structuring complex, messy text data, preparing it for robust analysis and model training.
+
+I am eager to apply my skills to AARP's unique challenges and contribute to meaningful outcomes. Thank you for considering my application; I look forward to the opportunity to discuss how I can contribute to your team.
