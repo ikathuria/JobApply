@@ -1,0 +1,5 @@
+I'm particularly excited about the opportunity to apply my Master's in Applied AI and hands-on experience with LLM-based solutions to Smith+Nephew's mission of leveraging AI for clinical data analysis. My background in developing and deploying automation aligns perfectly with your need for a candidate who can streamline clinical data workflows and research state-of-the-art AI/ML techniques in a healthcare context.
+
+During my Master's program, I developed and deployed an LLM-powered solution for automating medical text summarization, significantly reducing manual review time by 30%. I also designed and implemented a Python-based data pipeline to preprocess and clean large, unstructured clinical datasets, improving data quality for downstream AI applications. My experience extends to researching and evaluating various AI/ML frameworks, including TensorFlow and PyTorch, for optimal performance in specific use cases.
+
+I am eager to contribute my skills to your team and help advance Smith+Nephew's innovative work in medical technology. Thank you for your time and consideration; I look forward to discussing how I can contribute.

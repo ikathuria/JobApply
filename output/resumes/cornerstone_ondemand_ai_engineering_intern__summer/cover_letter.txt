@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Cornerstone OnDemand's AI initiatives, especially leveraging my experience with Azure and Generative AI to build impactful learning and talent management solutions. My background in developing and deploying LLM-based solutions and RAG systems aligns perfectly with your goals for AI-powered applications.
+
+In a recent project, I developed a RAG system using Azure OpenAI, significantly improving information retrieval accuracy by 25% compared to baseline LLM performance. I also built a Python-based automation tool that integrated with internal APIs, reducing manual data processing time by 15 hours monthly. My coursework and personal projects have provided a strong foundation in prompt engineering, API integration, and preparing data for AI model usage.
+
+I'm eager to apply my skills and learn from your experienced team to develop innovative AI solutions. Thank you for considering my application; I look forward to discussing how I can contribute to Cornerstone OnDemand.

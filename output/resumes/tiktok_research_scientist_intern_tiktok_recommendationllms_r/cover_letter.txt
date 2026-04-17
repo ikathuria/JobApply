@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to TikTok's Core Recommendation Team, especially given my strong foundation in LLMs, RAG systems, and multimodal learning from my PhD research and industry experience at AWS. The opportunity to develop innovative algorithms that enhance user experiences on such a massive scale is particularly compelling.
+
+During my PhD, I designed and implemented a novel RAG system that improved information retrieval accuracy by 15% on a complex dataset, leading to a first-author publication. At AWS, I contributed to a project integrating multimodal models into a real-world application, optimizing data pipelines and achieving a 10% reduction in inference latency. I also have hands-on experience analyzing large-scale user behavior data to drive model improvements, aligning with TikTok's focus on data-driven insights.
+
+I am eager to apply my research and development skills to TikTok's cutting-edge recommendation challenges. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

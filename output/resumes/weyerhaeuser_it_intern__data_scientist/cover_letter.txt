@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Weyerhaeuser's supply chain and pricing AI initiatives as an IT Intern - Data Scientist. My strong foundation in machine learning, predictive analytics, and Python, coupled with a passion for translating analytical work into actionable business insights, aligns perfectly with your team's goals.
+
+In a recent project, I developed a predictive model that improved forecasting accuracy by 15% using Python and various machine learning libraries. I also have experience cleaning and validating large datasets, and presenting complex findings through clear visualizations, which led to a 10% efficiency gain in a previous role. My coursework has provided a solid understanding of statistical analysis and optimization techniques relevant to your supply chain challenges.
+
+I am eager to apply my skills and learn from your team, contributing to Weyerhaeuser's innovative data-driven solutions. Thank you for considering my application; I look forward to discussing how I can contribute.
