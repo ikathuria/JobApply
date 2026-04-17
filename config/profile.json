@@ -3,9 +3,23 @@
   "email": "ishani@kathuria.net",
   "phone": "+12193680435",
   "location": "Hammond, Indiana, USA",
+  "city": "Hammond",
+  "state": "Indiana",
+  "zip": "46323",
+  "country": "United States",
   "linkedin": "https://www.linkedin.com/in/ishani-kathuria",
   "github": "https://github.com/ikathuria",
   "portfolio": "https://ishani.kathuria.net",
+  "work_authorization": {
+    "authorized_to_work_in_us": true,
+    "requires_sponsorship_internship": false,
+    "requires_sponsorship_fulltime": true,
+    "visa_status": "F-1 Student Visa (CPT eligible)",
+    "us_citizen_or_pr": false,
+    "will_relocate": true,
+    "expected_graduation": "May 2027",
+    "gpa": "4.0"
+  },
   "education": [
     {
       "school": "Purdue University Northwest",

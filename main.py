@@ -4,6 +4,7 @@ Phases:
   1. Discover  - scrape job listings
   2. Filter    - score and store in DB
   3. Tailor    - fetch JD, generate tailored resume + cover letter PDF
+  4. Apply     - auto-fill ATS forms with human confirmation before submit
 
 Usage:
   python main.py                          # discover + filter (all sources)
@@ -11,6 +12,8 @@ Usage:
   python main.py --source linkedin
   python main.py --tailor                 # tailor top unreviewed jobs
   python main.py --tailor --limit 5       # tailor top N jobs
+  python main.py --apply                  # apply to queued jobs (human confirms each)
+  python main.py --apply --limit 5        # apply to top N queued jobs
   python main.py --stats                  # show tracker stats
 """
 
@@ -241,7 +244,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
     parser.add_argument("--source", choices=["intern_list", "linkedin"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
-    parser.add_argument("--limit", type=int, default=10, help="Max jobs to tailor (default: 10)")
+    parser.add_argument("--apply",  action="store_true", help="Auto-apply to queued jobs (human confirms each)")
+    parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
     parser.add_argument("--stats", action="store_true", help="Show tracker stats")
     args = parser.parse_args()
 
@@ -249,6 +253,9 @@ def main() -> None:
         show_stats()
     elif args.tailor:
         run_tailor(limit=args.limit)
+    elif args.apply:
+        from auto_apply.apply_runner import run_apply
+        run_apply(limit=args.limit)
     else:
         config = load_config()
         run_pipeline(config, source=args.source)
