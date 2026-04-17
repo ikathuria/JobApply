@@ -21,6 +21,14 @@ import streamlit as st
 # Make sure imports resolve from project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Inject Streamlit secrets into env so pipeline modules pick them up
+for _key in ("GOOGLE_API_KEY", "ANTHROPIC_API_KEY"):
+    if _key in st.secrets:
+        os.environ[_key] = st.secrets[_key]
+
+# Streamlit Cloud mounts the repo under /mount/src — headed browser unavailable
+IS_CLOUD = Path("/mount/src").exists()
+
 from tracker.tracker import (
     init_db,
     get_jobs,
@@ -86,7 +94,8 @@ def pdf_viewer(path: str) -> None:
 
 
 def open_file(path: str) -> None:
-    """Open a file with the OS default application."""
+    if IS_CLOUD:
+        return
     try:
         os.startfile(path)
     except AttributeError:
@@ -125,17 +134,20 @@ def sidebar(conn: sqlite3.Connection) -> None:
 
     st.sidebar.divider()
     st.sidebar.markdown("### Quick Actions")
-    if st.sidebar.button("Run Discovery (intern-list)", use_container_width=True):
-        with st.spinner("Scraping intern-list.com..."):
-            result = subprocess.run(
-                [sys.executable, "main.py", "--source", "intern_list"],
-                capture_output=True, text=True, cwd=Path(__file__).parent.parent,
-            )
-        if result.returncode == 0:
-            st.sidebar.success("Discovery complete!")
-        else:
-            st.sidebar.error(f"Error:\n{result.stderr[-500:]}")
-        refresh()
+    if not IS_CLOUD:
+        if st.sidebar.button("Run Discovery (intern-list)", use_container_width=True):
+            with st.spinner("Scraping intern-list.com..."):
+                result = subprocess.run(
+                    [sys.executable, "main.py", "--source", "intern_list"],
+                    capture_output=True, text=True, cwd=Path(__file__).parent.parent,
+                )
+            if result.returncode == 0:
+                st.sidebar.success("Discovery complete!")
+            else:
+                st.sidebar.error(f"Error:\n{result.stderr[-500:]}")
+            refresh()
+    else:
+        st.sidebar.caption("Discovery runs automatically via GitHub Actions daily.")
 
     if st.sidebar.button("Tailor Top 10 Jobs", use_container_width=True):
         with st.spinner("Calling Claude API for tailoring..."):
@@ -181,13 +193,10 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
         if show_pdf and job.get("resume_path"):
             tabs = st.tabs(["Resume PDF", "Cover Letter"])
             with tabs[0]:
-                col_a, col_b = st.columns([1, 5])
-                col_a.button(
-                    "Open PDF",
-                    key=f"open_r_{job['id']}",
-                    on_click=open_file,
-                    args=(job["resume_path"],),
-                )
+                if not IS_CLOUD:
+                    col_a, _ = st.columns([1, 5])
+                    col_a.button("Open PDF", key=f"open_r_{job['id']}",
+                                 on_click=open_file, args=(job["resume_path"],))
                 pdf_viewer(job["resume_path"])
             with tabs[1]:
                 cl_txt_path = Path(job["resume_path"]).parent / "cover_letter.txt"
@@ -204,13 +213,10 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                         cl_txt_path.write_text(edited, encoding="utf-8")
                         st.success("Saved.")
                 if cl_pdf_path.exists():
-                    col_a2, _ = st.columns([1, 5])
-                    col_a2.button(
-                        "Open PDF",
-                        key=f"open_cl_{job['id']}",
-                        on_click=open_file,
-                        args=(str(cl_pdf_path),),
-                    )
+                    if not IS_CLOUD:
+                        col_a2, _ = st.columns([1, 5])
+                        col_a2.button("Open PDF", key=f"open_cl_{job['id']}",
+                                      on_click=open_file, args=(str(cl_pdf_path),))
                     pdf_viewer(str(cl_pdf_path))
 
         # Action buttons
