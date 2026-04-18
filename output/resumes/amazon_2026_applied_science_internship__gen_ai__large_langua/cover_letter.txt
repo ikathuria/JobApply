@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to Amazon's pioneering work in Generative AI. My strong background in developing and deploying LLM-based solutions at AWS, coupled with my current research in RAG systems, aligns perfectly with this role's focus on fine-tuning state-of-the-art models and tackling complex NLP challenges.
+
+During my PhD, I developed a novel RAG system that improved answer relevance by 15% on a challenging domain-specific dataset, leading to a publication at a top-tier conference. At AWS, I engineered and deployed an LLM-powered customer service chatbot, reducing query resolution time by 20% and handling over 10,000 daily interactions. I also have extensive experience fine-tuning transformer models for various NLP tasks, achieving state-of-the-art results on several benchmarks.
+
+I am eager to apply my expertise to Amazon's real-world problems and collaborate with your leading scientists. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

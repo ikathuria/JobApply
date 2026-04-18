@@ -1,0 +1,5 @@
+With a strong background in developing and deploying LLM-based solutions at AWS and conducting RAG research at Purdue, I am eager to apply my expertise in generative AI, prompt engineering, and cloud environments to automate processes and enhance operational efficiency within Cardinal Group Companies' Data & AI team. My proven ability to break down complex workflows and translate technical concepts will directly contribute to prototyping and validating AI-driven tools for real estate operations.
+
+At AWS, I developed and deployed LLM-based solutions, gaining hands-on experience with cloud environments and API integration. My research at Purdue focused on RAG, where I honed my prompt engineering skills and validated model accuracy. I also excel at breaking down complex human processes into logical, repeatable steps for automation and translating technical concepts into clear, accessible language for diverse audiences.
+
+I am excited by the opportunity to contribute to your team's innovative work in real estate. Thank you for considering my application; I look forward to discussing how I can contribute to Cardinal Group Companies.

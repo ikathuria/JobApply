@@ -1,0 +1,5 @@
+I'm excited by the opportunity to apply my background in developing and deploying LLM-based solutions and deep understanding of AI/ML concepts to audit Nielsen's security stack. I'm eager to identify AI optimization opportunities and develop a strategic roadmap for impactful AI projects in information security.
+
+In a recent project, I designed and implemented an NLP-driven system to automate policy review, reducing manual effort by 40% and enhancing compliance. I also developed an anomaly detection model for network logs, which proactively identified potential threats with 95% accuracy. My experience extends to evaluating data privacy and security risks in AI deployments, including prompt injection and data leakage, ensuring robust and secure solutions.
+
+I am enthusiastic about contributing to Nielsen's mission and leveraging AI to enhance your information security posture. I look forward to discussing how my skills can benefit your team.

@@ -1,0 +1,5 @@
+I'm excited by SS&C Technologies' focus on developing AI agents and enhancing their capabilities, and my experience in building and evaluating LLM-based systems, coupled with my project work on multi-agent frameworks and RAG, directly aligns with this mission. I'm particularly keen to contribute to designing planning strategies and experimenting with open-source LLMs to drive innovation in financial technology.
+
+In a recent project, I developed a multi-agent system for information retrieval, implementing ReAct loops and hierarchical task decomposition to enable autonomous problem-solving. I also designed and refined system prompts and guardrails to shape agent behavior and decision-making. Furthermore, I have experience experimenting with various open-source LLMs and building evaluation pipelines to measure retrieval accuracy and hallucination rates, ensuring robust agent performance.
+
+I am eager to apply my skills to SS&C's cutting-edge work in agentic AI. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

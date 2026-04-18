@@ -1,0 +1,5 @@
+I'm particularly excited about the AI Engineer Intern role at Rakuten's AI Center of Excellence because my experience in designing and implementing multi-agent systems, coupled with my strong Python programming skills and deep understanding of LLM capabilities, directly aligns with your need for contributions to production-grade AI solutions.
+
+In a recent project, I developed a multi-agent system using LangGraph to automate complex data analysis workflows, demonstrating proficiency in agent communication, memory management, and tool integration. I also engineered a robust prompting strategy for an LLM-powered content generation system, significantly improving output quality and reducing hallucination, showcasing my ability to build reliable and scalable AI solutions. My contributions to an open-source agent-based framework further highlight my commitment to innovation and best practices in agentic development.
+
+I'm eager to apply my skills to Rakuten's innovative projects and contribute to your AI initiatives. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

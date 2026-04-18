@@ -1,0 +1,5 @@
+I'm particularly excited by Optum's mission to advance healthcare outcomes through innovative AI solutions, and this research intern role aligns perfectly with my background. My strong foundation in AI/ML research, including RAG systems and LLM development, and my Master's in Applied Artificial Intelligence, make me eager to contribute to your team.
+
+My experience includes implementing and evaluating machine learning algorithms on complex datasets, leading to a publication record in healthcare AI. I've developed and optimized LLM-based RAG systems, demonstrating proficiency in deep learning frameworks like PyTorch and TensorFlow, and consistently communicating technical results to interdisciplinary teams.
+
+I am enthusiastic about the opportunity to apply my research skills to real-world healthcare challenges at Optum. Thank you for considering my application; I look forward to discussing how I can contribute.

@@ -1,0 +1,5 @@
+I'm particularly excited about this Applied Science Internship at Amazon, especially given my proven track record of developing and deploying LLM-based solutions at AWS and current research in RAG systems. My experience aligns perfectly with the internship's focus on natural language processing, model fine-tuning, and building models for business applications, making me eager to contribute to Amazon's cutting-edge work in generative AI.
+
+During my PhD, I've developed and fine-tuned transformer-based models for complex NLP tasks, achieving significant improvements in question-answering accuracy. My work at AWS involved deploying scalable LLM solutions, directly impacting customer engagement, and I've published research on optimizing RAG systems for real-time applications. These experiences have honed my skills in deep learning, model development, and translating research into practical business applications.
+
+I am enthusiastic about the opportunity to collaborate with Amazon's experts and push the boundaries of generative AI. I look forward to discussing how my skills and passion can contribute to your team.

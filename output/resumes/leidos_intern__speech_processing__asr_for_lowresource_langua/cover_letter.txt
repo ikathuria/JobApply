@@ -1,0 +1,5 @@
+I'm particularly excited about this Leidos internship because my strong foundation in AI, machine learning, and practical audio processing experience, especially through projects like DeepFakeGuard, aligns perfectly with your initiatives in speech processing and ASR for low-resource languages. My background directly matches the technical requirements and research focus of this role.
+
+In my "DeepFakeGuard" project, I developed and implemented a robust audio processing pipeline to detect manipulated speech, which involved extensive work with noisy audio and feature extraction. I also designed and executed experiments for a speaker recognition system, achieving significant accuracy improvements by optimizing model architectures and preprocessing techniques. Furthermore, my coursework and projects have provided hands-on experience in Python, machine learning frameworks, and the analysis of complex audio signals.
+
+I am eager to apply my skills and contribute to your team's innovative work. Thank you for considering my application; I look forward to discussing how I can support Leidos's goals.

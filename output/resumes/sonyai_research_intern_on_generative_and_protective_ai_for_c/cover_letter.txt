@@ -1,0 +1,5 @@
+I'm incredibly excited by the opportunity to contribute to Sony AI's mission of enhancing human creativity through AI, particularly in the realm of generative and protective AI for content creation. With a strong foundation in generative AI, ethical model evaluation, and a publication record, I am well-prepared to investigate and apply novel algorithms for content creation and the alleviation of ethical flaws in generative models.
+
+My research experience includes developing novel deep generative models for image synthesis, where I achieved a 15% improvement in FID scores compared to baseline methods. I also led a project focused on detecting and mitigating data memorization in large language models, resulting in a published paper at a top-tier conference. Furthermore, I have extensive experience implementing and optimizing deep learning models using PyTorch and TensorBoard, ensuring efficient experimentation and visualization.
+
+I am eager to apply my skills and passion for innovative AI research to Sony AI's impactful projects. I am confident I can make significant contributions and look forward to discussing my qualifications further.

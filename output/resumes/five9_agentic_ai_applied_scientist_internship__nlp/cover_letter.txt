@@ -1,0 +1,5 @@
+I'm genuinely excited by Five9's focus on enhancing AI capabilities through natural language processing and generative AI. My experience developing and deploying LLM-based systems, combined with hands-on research in RAG and multi-agent frameworks, directly aligns with your mission to improve customer service experiences.
+
+In my academic projects, I've led the development of a multi-agent conversational AI system, utilizing transformer-based models and fine-tuning with PyTorch, achieving a 15% improvement in response relevance. I also designed and implemented a RAG pipeline for a knowledge retrieval system, significantly reducing hallucination rates by integrating external data sources. My work involved extensive data preprocessing, model evaluation using appropriate metrics, and leveraging Hugging Face Transformers.
+
+I am eager to apply my skills in NLP model development and evaluation to contribute to Five9's innovative solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

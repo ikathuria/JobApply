@@ -1,0 +1,5 @@
+My experience developing and deploying state-of-the-art ML models, particularly in NLP and anomaly detection, aligns perfectly with Delta Air Lines' focus on enhancing customer and employee experiences through AI. I am eager to leverage my skills in Python, PyTorch, and TensorFlow to contribute to innovative solutions within the dynamic aviation industry.
+
+During my academic projects, I developed a real-time anomaly detection system for sensor data, achieving 95% accuracy in identifying critical deviations. I also built an NLP-powered sentiment analysis tool that processed large datasets, demonstrating proficiency in feature engineering and model selection. These experiences honed my ability to translate complex problems into robust, data-driven solutions and present technical findings clearly to diverse audiences.
+
+I am incredibly enthusiastic about the opportunity to contribute to Delta's innovation initiatives and collaborate with a forward-thinking team. Thank you for considering my application; I look forward to discussing how my skills can benefit Delta Air Lines.

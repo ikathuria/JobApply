@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Nile's mission of designing and shipping robust agentic AI solutions for networking as a service. My experience in building and deploying production-grade LLM-based systems and agentic AI frameworks, coupled with a deep understanding of RAG and distributed cloud systems, directly aligns with your goals.
+
+In a recent project, I designed and implemented an agentic system with multi-step reasoning and tool usage, achieving a 25% improvement in task completion efficiency. I also developed and deployed a RAG-integrated LLM application, optimizing retrieval performance by 15% through careful memory architecture design and distributed system considerations. My work consistently focused on operationalizing reliability and performance, including developing observability and evaluation frameworks.
+
+I'm eager to apply my skills to Nile's innovative approach to networking. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

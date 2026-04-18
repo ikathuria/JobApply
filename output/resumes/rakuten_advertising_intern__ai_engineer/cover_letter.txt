@@ -1,0 +1,5 @@
+I'm particularly excited about the AI Engineer Intern role at Rakuten Advertising, especially the focus on orchestrating complex workflows for your advertising platform. My strong foundation in multi-agent systems, including projects like AutoRedTeam, and practical experience deploying LLM-based solutions at AWS, align perfectly with the responsibilities outlined, especially in developing robust agent communication and integration.
+
+In my previous work, I designed and implemented a multi-agent system for cybersecurity simulations, significantly improving threat detection efficiency by 25%. At AWS, I developed and deployed an LLM-based customer support solution, integrating it with existing APIs and databases, which reduced response times by 30%. I also have extensive experience with Python, agent orchestration frameworks like LangGraph, and ensuring system reliability in production environments.
+
+I'm eager to apply my skills in multi-agent architectures and LLM integration to contribute to Rakuten Advertising's innovative solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

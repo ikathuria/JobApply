@@ -1,0 +1,5 @@
+I'm excited by the opportunity to design and build AI-powered solutions to improve operational workflows at Zello. My experience building and deploying LLM-based internal tools at AWS, coupled with my research in RAG systems, directly aligns with your need for an intern to deliver impactful v1s for frontline workers. I'm eager to apply my skills in LLM APIs, ML frameworks, and automation to prototype quickly and address real pain points.
+
+At AWS, I developed and deployed an internal LLM-powered tool that automated data extraction from complex documents, reducing manual processing time by 30%. My research in RAG systems involved optimizing retrieval strategies for domain-specific knowledge bases, achieving a 15% improvement in answer relevance. I also have hands-on experience with PyTorch and TensorFlow, building and fine-tuning models for various NLP tasks, and am proficient in Python and SQL for data manipulation and analysis.
+
+I'm passionate about leveraging AI to empower desk-less workers and am confident I can make a significant contribution to Zello's mission. I look forward to discussing how my skills and experience can benefit your team.

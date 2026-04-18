@@ -1,0 +1,5 @@
+As an MS student specializing in Applied AI with hands-on experience in RAG systems, LLM deployment, and a strong proficiency in Python, PyTorch, and TensorFlow, I am well-prepared to contribute to Centific's research in NLP and Machine Learning. My background aligns perfectly with the internship's focus on transformative AI technologies and solving complex challenges.
+
+During my studies, I developed and deployed a RAG system for domain-specific knowledge retrieval, significantly improving response accuracy and relevance. I also fine-tuned a large language model for a specialized task, achieving a 15% increase in performance metrics compared to baseline models. My work frequently involves leveraging Transformer architecture and vector databases to tackle complex NLP problems.
+
+I am eager to apply my skills to Centific's cutting-edge projects and collaborate with your team of experts. Thank you for considering my application; I look forward to discussing how I can contribute.

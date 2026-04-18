@@ -1,0 +1,5 @@
+I'm particularly excited about the AI/ML Engineering Intern role at Poshmark, especially the opportunity to apply my skills in machine learning techniques, model deployment, and algorithm optimization to your unique challenges in social commerce, like pricing and recommendation systems. My experience at AWS building and deploying AI solutions aligns perfectly with the responsibilities outlined for this position.
+
+At AWS, I developed and deployed a real-time fraud detection system, reducing false positives by 15% through optimizing a gradient boosting model. I also designed and implemented a data pipeline using Spark for processing large datasets, improving feature engineering efficiency by 20%. My work involved extensive use of Python, SQL, and understanding the full ML lifecycle from experimentation to production.
+
+I'm eager to contribute to Poshmark's innovative approach to social commerce and further develop my expertise in a dynamic environment. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

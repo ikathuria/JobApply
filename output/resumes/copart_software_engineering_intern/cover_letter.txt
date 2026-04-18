@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Copart's innovative mobile AI solutions, especially given my strong foundation in generative AI, LLMs, and React-based development. I'm eager to leverage my experience in building and deploying AI-powered features to enhance user experience within your existing mobile applications.
+
+My projects include developing a React Native application that integrated a custom LLM for personalized content generation, where I also implemented prompt engineering strategies to optimize model responses. I also built a full-stack application using ReactJS and Node.js, consuming RESTful APIs and demonstrating a solid understanding of data structures and algorithms. These experiences have equipped me with practical skills in both front-end development and AI integration.
+
+I am enthusiastic about the opportunity to apply my skills and learn from the team at Copart. Thank you for considering my application; I look forward to discussing how I can contribute.

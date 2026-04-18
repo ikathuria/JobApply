@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Okta for Developers' AI content operations, especially given my strong background in LLM development and prompt engineering. My hyper-detail orientation and analytical mindset align perfectly with ensuring the accuracy and quality of your AI-generated content, and I'm eager to help maintain a high-quality content ecosystem.
+
+In previous projects, I developed and fine-tuned prompts for various LLMs, achieving a 90% accuracy rate in generating desired outputs and significantly reducing post-generation edits. I also implemented a systematic review process for AI-generated content, identifying and correcting factual inaccuracies and stylistic inconsistencies across multiple drafts. Furthermore, I've utilized data tooling to analyze content gaps and suggest improvements, leading to a 15% increase in content comprehensiveness.
+
+I'm enthusiastic about the chance to apply my skills at Okta for Developers and contribute to securing AI through trusted infrastructure. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
