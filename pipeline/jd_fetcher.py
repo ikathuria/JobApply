@@ -67,7 +67,7 @@ def fetch_jd(url: str, retries: int = 2) -> str:
 
 
 def _extract_text(url: str, html: str) -> str:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
 
     # Remove noise elements
     for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
