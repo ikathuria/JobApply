@@ -3,7 +3,6 @@ JobApply Review Dashboard
 Run: streamlit run dashboard/app.py
 """
 
-import base64
 import os
 import re
 import sqlite3
@@ -150,26 +149,28 @@ def _resolve_path(stored: str) -> Path | None:
 
 
 def pdf_viewer(path: str) -> None:
+    """Render PDF pages as images — works in all browsers, no data: URI needed."""
     p = _resolve_path(path)
     if p is None:
-        st.info("PDF not available on this environment — tailored locally only. Re-tailor here to generate it.")
+        st.info("PDF not generated in this environment — click ✨ Tailor to create it here.")
         return
-    data = p.read_bytes()
-    b64  = base64.b64encode(data).decode()
-    # <embed> works in Chrome where <iframe data:> is blocked
-    st.markdown(
-        f'<embed src="data:application/pdf;base64,{b64}" '
-        f'type="application/pdf" width="100%" height="620px" '
-        f'style="border:1px solid #e0e0e0;border-radius:8px;" />',
-        unsafe_allow_html=True,
-    )
-    # Download button as reliable fallback
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(str(p))
+        for i in range(len(doc)):
+            page = doc.load_page(i)
+            pix  = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2× zoom for readability
+            st.image(pix.tobytes("png"), use_container_width=True)
+        doc.close()
+    except Exception as e:
+        st.warning(f"Could not render PDF: {e}")
+    # Always offer a download button
     st.download_button(
         "⬇️ Download PDF",
-        data=data,
+        data=p.read_bytes(),
         file_name=p.name,
         mime="application/pdf",
-        key=f"dl_{p}",
+        key=f"dl_{hash(str(p))}",
     )
 
 
