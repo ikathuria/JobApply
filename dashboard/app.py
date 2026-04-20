@@ -29,9 +29,10 @@ from tracker.tracker import (
     STATUS_APPLIED, STATUS_INTERVIEW, STATUS_REJECTED, STATUS_OFFER,
 )
 
-DB_PATH    = Path(__file__).parent.parent / "tracker" / "applications.db"
-OUTPUT_DIR = Path(__file__).parent.parent / "output" / "resumes"
-ROOT_DIR   = Path(__file__).parent.parent
+DB_PATH        = Path(__file__).parent.parent / "tracker" / "applications.db"
+OUTPUT_DIR     = Path(__file__).parent.parent / "output" / "resumes"
+SCREENSHOT_DIR = Path(__file__).parent.parent / "output" / "apply_screenshots"
+ROOT_DIR       = Path(__file__).parent.parent
 
 st.set_page_config(
     page_title="JobApply",
@@ -173,6 +174,23 @@ def _run_tailor(limit: int) -> tuple[bool, str]:
     return result.returncode == 0, result.stdout + result.stderr
 
 
+def _screenshot_path(job: dict) -> Path | None:
+    """Return path to dry-run screenshot if it exists for this job."""
+    slug = "".join(
+        c if c.isalnum() else "_"
+        for c in f"{job.get('company', '')}_{job['title']}"
+    )[:50]
+    p = SCREENSHOT_DIR / f"{slug}.png"
+    return p if p.exists() else None
+
+
+def _run_dry_run(job_id: int | None = None, limit: int = 10) -> tuple[bool, str]:
+    """Run dry-run apply (fills form + screenshots, no submit)."""
+    cmd = [sys.executable, "main.py", "--apply", "--dry-run", "--limit", str(limit)]
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT_DIR)
+    return result.returncode == 0, result.stdout + result.stderr
+
+
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 
 def sidebar(conn: sqlite3.Connection) -> None:
@@ -192,9 +210,9 @@ def sidebar(conn: sqlite3.Connection) -> None:
         c3.metric("Applied",  stats.get(STATUS_APPLIED, 0))
 
         c4, c5, c6 = st.columns(3)
-        c4.metric("New",      stats.get(STATUS_NEW, 0))
-        c5.metric("Interview",stats.get(STATUS_INTERVIEW, 0))
-        c6.metric("Offer 🎉", stats.get(STATUS_OFFER, 0))
+        c4.metric("New",       stats.get(STATUS_NEW, 0))
+        c5.metric("🚀 Approved", stats.get(STATUS_APPROVED, 0))
+        c6.metric("Offer 🎉",  stats.get(STATUS_OFFER, 0))
 
         # Progress bar: applied / total
         if total:
@@ -228,6 +246,21 @@ def sidebar(conn: sqlite3.Connection) -> None:
             else:
                 st.error(out[-400:])
             refresh()
+
+        if not IS_CLOUD:
+            st.divider()
+            st.markdown('<p class="section-label">Dry Run</p>', unsafe_allow_html=True)
+            st.caption("Fills forms + saves screenshots without submitting.")
+            n_dry = st.number_input("Jobs to dry-run", min_value=1, max_value=20,
+                                    value=5, step=1, key="n_dry")
+            if st.button("🔍 Dry Run Queued", use_container_width=True):
+                with st.spinner(f"Dry-running {n_dry} jobs (browser will open)…"):
+                    ok, out = _run_dry_run(limit=n_dry)
+                if ok:
+                    st.success("Done! Screenshots saved to output/apply_screenshots/")
+                else:
+                    st.error(out[-400:])
+                refresh()
 
         if st.button("🔄 Refresh", use_container_width=True):
             refresh()
@@ -268,16 +301,23 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
             with st.expander("📄 Job description"):
                 st.text(job["description"][:2000] + ("…" if len(job.get("description", "")) > 2000 else ""))
 
-        # PDFs
+        # PDFs + dry-run screenshot
         if show_pdf and job.get("resume_path"):
-            r_path = Path(job["resume_path"])
-            cl_txt = r_path.parent / "cover_letter.txt"
-            cl_pdf = r_path.parent / "cover_letter.pdf"
+            r_path    = Path(job["resume_path"])
+            cl_txt    = r_path.parent / "cover_letter.txt"
+            cl_pdf    = r_path.parent / "cover_letter.pdf"
+            shot_path = _screenshot_path(job)
 
-            t1, t2 = st.tabs(["📄 Resume", "✉️ Cover Letter"])
-            with t1:
+            tab_labels = ["📄 Resume", "✉️ Cover Letter"]
+            if shot_path:
+                tab_labels.append("🖥️ Form Preview")
+
+            tabs = st.tabs(tab_labels)
+
+            with tabs[0]:
                 pdf_viewer(str(r_path))
-            with t2:
+
+            with tabs[1]:
                 if cl_txt.exists():
                     letter = cl_txt.read_text(encoding="utf-8")
                     edited = st.text_area("Cover letter", value=letter, height=280,
@@ -288,6 +328,11 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                         st.success("Saved.")
                 if cl_pdf.exists():
                     pdf_viewer(str(cl_pdf))
+
+            if shot_path:
+                with tabs[2]:
+                    st.caption(f"Dry-run screenshot — form as it would be submitted")
+                    st.image(str(shot_path), use_container_width=True)
 
         # Action buttons
         st.markdown("---")
@@ -302,10 +347,17 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
             if btns[0].button("🚀 Approve", key=f"approve_{job['id']}", type="primary",
                               use_container_width=True, help="Approve for GHA auto-apply"):
                 update_status(conn, job["id"], STATUS_APPROVED); refresh()
-            if btns[1].button("📤 Applied", key=f"apply_{job['id']}",
+            if not IS_CLOUD:
+                if btns[1].button("🔍 Dry Run", key=f"dry_{job['id']}",
+                                  use_container_width=True, help="Fill form + screenshot, no submit"):
+                    with st.spinner("Opening browser for dry run…"):
+                        _run_dry_run(limit=1)
+                    st.info("Done — check the 🖥️ Form Preview tab above.")
+                    refresh()
+            if btns[2].button("📤 Applied", key=f"apply_{job['id']}",
                               use_container_width=True, help="Mark as manually applied"):
                 update_status(conn, job["id"], STATUS_APPLIED); refresh()
-            if btns[2].button("🎤 Interview", key=f"int_{job['id']}",
+            if btns[3].button("🎤 Interview", key=f"int_{job['id']}",
                               use_container_width=True):
                 update_status(conn, job["id"], STATUS_INTERVIEW); refresh()
 
