@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 DB_PATH = Path(__file__).parent / "applications.db"
 
 STATUS_NEW = "new"               # discovered, not yet reviewed
-STATUS_QUEUED = "queued"         # approved for application
+STATUS_QUEUED = "queued"         # tailored, awaiting human review
+STATUS_APPROVED = "approved"     # human approved — ready for GHA auto-apply
 STATUS_SKIPPED = "skipped"       # manually skipped
 STATUS_APPLIED = "applied"       # application submitted
 STATUS_INTERVIEW = "interview"   # interview scheduled

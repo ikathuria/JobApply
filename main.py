@@ -244,7 +244,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
     parser.add_argument("--source", choices=["intern_list", "linkedin"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
-    parser.add_argument("--apply",  action="store_true", help="Auto-apply to queued jobs (human confirms each)")
+    parser.add_argument("--apply",    action="store_true", help="Auto-apply to queued jobs (human confirms each)")
+    parser.add_argument("--dry-run",  action="store_true", help="Fill forms + screenshot, never submit")
+    parser.add_argument("--headless", action="store_true", help="Headless auto-submit for approved jobs (GHA mode)")
     parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
     parser.add_argument("--stats", action="store_true", help="Show tracker stats")
     args = parser.parse_args()
@@ -255,7 +257,7 @@ def main() -> None:
         run_tailor(limit=args.limit)
     elif args.apply:
         from auto_apply.apply_runner import run_apply
-        run_apply(limit=args.limit)
+        run_apply(limit=args.limit, dry_run=args.dry_run, headless=args.headless)
     else:
         config = load_config()
         run_pipeline(config, source=args.source)

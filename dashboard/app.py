@@ -25,7 +25,7 @@ IS_CLOUD = Path("/mount/src").exists()
 
 from tracker.tracker import (
     init_db, get_jobs, get_stats, update_status,
-    STATUS_NEW, STATUS_QUEUED, STATUS_SKIPPED,
+    STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED, STATUS_SKIPPED,
     STATUS_APPLIED, STATUS_INTERVIEW, STATUS_REJECTED, STATUS_OFFER,
 )
 
@@ -124,6 +124,7 @@ def score_bar_html(score: float) -> str:
 STATUS_META = {
     STATUS_NEW:       ("🆕", "New",       "pill-new"),
     STATUS_QUEUED:    ("✅", "Ready",     "pill-queued"),
+    STATUS_APPROVED:  ("🚀", "Approved",  "pill-interview"),
     STATUS_SKIPPED:   ("⏭", "Skipped",   "pill-skipped"),
     STATUS_APPLIED:   ("📤", "Applied",   "pill-applied"),
     STATUS_INTERVIEW: ("🎤", "Interview", "pill-interview"),
@@ -298,12 +299,23 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                 _tailor_single(conn, job)
 
         if status == STATUS_QUEUED:
-            if btns[0].button("📤 Applied", key=f"apply_{job['id']}", type="primary",
-                              use_container_width=True):
+            if btns[0].button("🚀 Approve", key=f"approve_{job['id']}", type="primary",
+                              use_container_width=True, help="Approve for GHA auto-apply"):
+                update_status(conn, job["id"], STATUS_APPROVED); refresh()
+            if btns[1].button("📤 Applied", key=f"apply_{job['id']}",
+                              use_container_width=True, help="Mark as manually applied"):
                 update_status(conn, job["id"], STATUS_APPLIED); refresh()
-            if btns[1].button("🎤 Interview", key=f"int_{job['id']}",
+            if btns[2].button("🎤 Interview", key=f"int_{job['id']}",
                               use_container_width=True):
                 update_status(conn, job["id"], STATUS_INTERVIEW); refresh()
+
+        if status == STATUS_APPROVED:
+            if btns[0].button("📤 Applied", key=f"apply2_{job['id']}", type="primary",
+                              use_container_width=True):
+                update_status(conn, job["id"], STATUS_APPLIED); refresh()
+            if btns[1].button("↩ Unapprove", key=f"unapprove_{job['id']}",
+                              use_container_width=True):
+                update_status(conn, job["id"], STATUS_QUEUED); refresh()
 
         if status == STATUS_APPLIED:
             if btns[0].button("🎤 Interview", key=f"int2_{job['id']}", type="primary",
@@ -388,13 +400,24 @@ def tab_new(conn: sqlite3.Connection) -> None:
 
 
 def tab_queued(conn: sqlite3.Connection) -> None:
-    jobs = rows_to_dicts(get_jobs(conn, status=STATUS_QUEUED, limit=100))
-    if not jobs:
+    approved = rows_to_dicts(get_jobs(conn, status=STATUS_APPROVED, limit=100))
+    queued   = rows_to_dicts(get_jobs(conn, status=STATUS_QUEUED, limit=100))
+
+    if not approved and not queued:
         st.info("No jobs queued yet. Use **✨ Tailor Jobs** in the sidebar or click **✨ Tailor** on any new job.")
         return
-    st.caption(f"{len(jobs)} jobs ready to apply")
-    for job in jobs:
-        job_card(conn, job, show_pdf=True)
+
+    if approved:
+        st.markdown(f"### 🚀 Approved for Auto-Apply &nbsp; `{len(approved)}`")
+        st.caption("These will be submitted automatically by the GitHub Action. Review carefully before approving.")
+        for job in approved:
+            job_card(conn, job, show_pdf=True)
+
+    if queued:
+        st.markdown(f"### ✅ Ready — Awaiting Review &nbsp; `{len(queued)}`")
+        st.caption("Click **🚀 Approve** to send to GitHub Actions, or **📤 Applied** if you applied manually.")
+        for job in queued:
+            job_card(conn, job, show_pdf=True)
 
 
 def tab_applied(conn: sqlite3.Connection) -> None:
@@ -472,12 +495,13 @@ def main() -> None:
 
     n_new      = stats.get(STATUS_NEW, 0)
     n_queued   = stats.get(STATUS_QUEUED, 0)
+    n_approved = stats.get(STATUS_APPROVED, 0)
     n_applied  = stats.get(STATUS_APPLIED, 0) + stats.get(STATUS_INTERVIEW, 0) + stats.get(STATUS_OFFER, 0)
     n_total    = sum(stats.values())
 
     tab1, tab2, tab3, tab4 = st.tabs([
         f"🆕 New ({n_new})",
-        f"✅ Ready ({n_queued})",
+        f"✅ Ready ({n_queued + n_approved})",
         f"📤 Applied ({n_applied})",
         f"📋 All ({n_total})",
     ])
