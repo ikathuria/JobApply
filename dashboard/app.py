@@ -3,11 +3,14 @@ JobApply Review Dashboard
 Run: streamlit run dashboard/app.py
 """
 
+import csv
+import io
 import os
 import re
 import sqlite3
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
@@ -549,6 +552,205 @@ def tab_all(conn: sqlite3.Connection) -> None:
         c[4].link_button("→", job.get("url", "#"))
 
 
+# ── Import tab ─────────────────────────────────────────────────────────────────
+
+def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
+    """Insert a single manually-entered job. Returns (success, message)."""
+    url = (job.get("url") or "").strip()
+    title = (job.get("title") or "").strip()
+    if not url or not title:
+        return False, "URL and Job Title are required."
+
+    try:
+        conn.execute(
+            """
+            INSERT INTO jobs
+                (title, company, location, url, source, score,
+                 status, date_applied, notes, date_scraped)
+            VALUES
+                (:title, :company, :location, :url, :source, :score,
+                 :status, :date_applied, :notes, datetime('now'))
+            """,
+            {
+                "title":        title,
+                "company":      (job.get("company") or "").strip(),
+                "location":     (job.get("location") or "").strip(),
+                "url":          url,
+                "source":       "manual",
+                "score":        float(job.get("score", 1.0)),
+                "status":       job.get("status", STATUS_APPLIED),
+                "date_applied": job.get("date_applied") or None,
+                "notes":        (job.get("notes") or "").strip() or None,
+            },
+        )
+        conn.commit()
+        return True, f"✅ Added: {title}"
+    except sqlite3.IntegrityError:
+        # URL already exists — update status/notes instead
+        existing = conn.execute(
+            "SELECT id, status FROM jobs WHERE url = ?", (url,)
+        ).fetchone()
+        if existing:
+            update_status(
+                conn, existing["id"], job.get("status", existing["status"]),
+                date_applied=job.get("date_applied") or None,
+                notes=(job.get("notes") or "").strip() or None,
+            )
+            return True, f"↩️ Updated existing entry: {title}"
+        return False, f"URL already exists and could not be updated."
+    except Exception as e:
+        return False, f"Error: {e}"
+
+
+def tab_import(conn: sqlite3.Connection) -> None:
+    st.markdown("### 📥 Import Pre-Dashboard Applications")
+    st.caption(
+        "Track jobs you applied to before this dashboard existed. "
+        "Enter them manually or bulk-upload a CSV."
+    )
+
+    manual_tab, csv_tab = st.tabs(["✍️ Manual Entry", "📂 CSV Bulk Upload"])
+
+    # ── Manual entry ────────────────────────────────────────────────────────────
+    with manual_tab:
+        st.markdown("#### Add a single job")
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            imp_title   = st.text_input("Job Title *", placeholder="Software Engineer Intern")
+            imp_company = st.text_input("Company *", placeholder="Google")
+            imp_url     = st.text_input("Job Posting URL *", placeholder="https://...")
+        with col_b:
+            imp_status  = st.selectbox(
+                "Current Status *",
+                [STATUS_APPLIED, STATUS_INTERVIEW, STATUS_OFFER, STATUS_REJECTED, STATUS_NEW],
+                format_func=lambda s: {
+                    STATUS_APPLIED:   "📤 Applied",
+                    STATUS_INTERVIEW: "🎤 Interview",
+                    STATUS_OFFER:     "🎉 Offer",
+                    STATUS_REJECTED:  "❌ Rejected",
+                    STATUS_NEW:       "🆕 New (discovered manually)",
+                }.get(s, s),
+            )
+            imp_date    = st.date_input(
+                "Date Applied",
+                value=date.today(),
+                help="Leave as today if unknown.",
+            )
+            imp_location = st.text_input("Location", placeholder="Remote / New York, NY")
+
+        imp_notes = st.text_area("Notes", placeholder="Recruiter name, referral, interview stage…", height=80)
+
+        if st.button("➕ Add Job", type="primary", use_container_width=False):
+            ok, msg = _insert_manual_job(conn, {
+                "title":        imp_title,
+                "company":      imp_company,
+                "url":          imp_url,
+                "status":       imp_status,
+                "date_applied": str(imp_date) if imp_status != STATUS_NEW else None,
+                "location":     imp_location,
+                "notes":        imp_notes,
+            })
+            if ok:
+                st.success(msg)
+                refresh()
+            else:
+                st.error(msg)
+
+    # ── CSV upload ──────────────────────────────────────────────────────────────
+    with csv_tab:
+        st.markdown("#### Bulk upload via CSV")
+
+        with st.expander("📋 Required CSV format", expanded=False):
+            st.markdown("""
+**Required columns:** `title`, `company`, `url`
+
+**Optional columns:** `status`, `date_applied`, `location`, `notes`
+
+**Valid status values:** `applied`, `interview`, `offer`, `rejected`, `new`
+
+**Example:**
+```
+title,company,url,status,date_applied,location,notes
+ML Intern,OpenAI,https://openai.com/careers/1,applied,2026-03-15,San Francisco CA,No response yet
+Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Remote,Phone screen done
+```
+""")
+            # Provide a downloadable template
+            template_csv = "title,company,url,status,date_applied,location,notes\n"
+            st.download_button(
+                "⬇️ Download CSV Template",
+                data=template_csv,
+                file_name="import_template.csv",
+                mime="text/csv",
+            )
+
+        uploaded = st.file_uploader(
+            "Upload your CSV file",
+            type=["csv"],
+            help="UTF-8 encoded CSV with at minimum: title, company, url columns",
+        )
+
+        if uploaded is not None:
+            try:
+                content = uploaded.read().decode("utf-8-sig")  # handle BOM
+                reader  = csv.DictReader(io.StringIO(content))
+                rows    = list(reader)
+            except Exception as e:
+                st.error(f"Could not parse CSV: {e}")
+                rows = []
+
+            if rows:
+                st.markdown(f"**Preview — {len(rows)} rows detected:**")
+
+                # Show preview table
+                preview_data = []
+                for r in rows[:10]:
+                    preview_data.append({
+                        "Title":    r.get("title", ""),
+                        "Company":  r.get("company", ""),
+                        "Status":   r.get("status", "applied"),
+                        "Date":     r.get("date_applied", ""),
+                        "URL":      (r.get("url", "") or "")[:50] + ("…" if len(r.get("url","")) > 50 else ""),
+                    })
+                st.table(preview_data)
+                if len(rows) > 10:
+                    st.caption(f"… and {len(rows) - 10} more rows")
+
+                valid_statuses = {
+                    STATUS_APPLIED, STATUS_INTERVIEW, STATUS_OFFER,
+                    STATUS_REJECTED, STATUS_NEW, STATUS_QUEUED,
+                }
+
+                if st.button(f"📥 Import {len(rows)} jobs", type="primary"):
+                    success_count = 0
+                    fail_msgs     = []
+
+                    for r in rows:
+                        raw_status = (r.get("status") or "applied").strip().lower()
+                        status     = raw_status if raw_status in valid_statuses else STATUS_APPLIED
+
+                        ok, msg = _insert_manual_job(conn, {
+                            "title":        r.get("title", ""),
+                            "company":      r.get("company", ""),
+                            "url":          r.get("url", ""),
+                            "status":       status,
+                            "date_applied": r.get("date_applied") or None,
+                            "location":     r.get("location", ""),
+                            "notes":        r.get("notes", ""),
+                        })
+                        if ok:
+                            success_count += 1
+                        else:
+                            fail_msgs.append(f"• {r.get('title', '?')} @ {r.get('company', '?')}: {msg}")
+
+                    st.success(f"✅ Imported {success_count} / {len(rows)} jobs successfully.")
+                    if fail_msgs:
+                        with st.expander(f"⚠️ {len(fail_msgs)} failed rows"):
+                            st.text("\n".join(fail_msgs))
+                    refresh()
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -573,12 +775,13 @@ def main() -> None:
     n_applied  = stats.get(STATUS_APPLIED, 0) + stats.get(STATUS_INTERVIEW, 0) + stats.get(STATUS_OFFER, 0)
     n_total    = sum(stats.values())
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         f"🆕 New ({n_new})",
         f"✅ Ready ({n_queued})",
         f"🚀 Approved ({n_approved})",
         f"📤 Applied ({n_applied})",
         f"📋 All ({n_total})",
+        "📥 Import",
     ])
 
     with tab1: tab_new(conn)
@@ -586,6 +789,7 @@ def main() -> None:
     with tab3: tab_approved(conn)
     with tab4: tab_applied(conn)
     with tab5: tab_all(conn)
+    with tab6: tab_import(conn)
 
 
 if __name__ == "__main__":
