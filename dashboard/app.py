@@ -475,24 +475,23 @@ def tab_new(conn: sqlite3.Connection) -> None:
 
 
 def tab_queued(conn: sqlite3.Connection) -> None:
-    approved = rows_to_dicts(get_jobs(conn, status=STATUS_APPROVED, limit=100))
-    queued   = rows_to_dicts(get_jobs(conn, status=STATUS_QUEUED, limit=100))
-
-    if not approved and not queued:
-        st.info("No jobs queued yet. Use **✨ Tailor Jobs** in the sidebar or click **✨ Tailor** on any new job.")
+    jobs = rows_to_dicts(get_jobs(conn, status=STATUS_QUEUED, limit=100))
+    if not jobs:
+        st.info("No jobs ready yet. Use **✨ Tailor Jobs** in the sidebar or click **✨ Tailor** on a new job.")
         return
+    st.caption(f"{len(jobs)} tailored jobs awaiting review — open the resume, then **🚀 Approve** or **📤 Applied**.")
+    for job in jobs:
+        job_card(conn, job, show_pdf=True)
 
-    if approved:
-        st.markdown(f"### 🚀 Approved for Auto-Apply &nbsp; `{len(approved)}`")
-        st.caption("These will be submitted automatically by the GitHub Action. Review carefully before approving.")
-        for job in approved:
-            job_card(conn, job, show_pdf=True)
 
-    if queued:
-        st.markdown(f"### ✅ Ready — Awaiting Review &nbsp; `{len(queued)}`")
-        st.caption("Click **🚀 Approve** to send to GitHub Actions, or **📤 Applied** if you applied manually.")
-        for job in queued:
-            job_card(conn, job, show_pdf=True)
+def tab_approved(conn: sqlite3.Connection) -> None:
+    jobs = rows_to_dicts(get_jobs(conn, status=STATUS_APPROVED, limit=100))
+    if not jobs:
+        st.info("No approved jobs yet. Review resumes in the **✅ Ready** tab and click **🚀 Approve**.")
+        return
+    st.caption(f"{len(jobs)} jobs approved — trigger **Auto Apply** from GitHub Actions to submit them headlessly.")
+    for job in jobs:
+        job_card(conn, job, show_pdf=True)
 
 
 def tab_applied(conn: sqlite3.Connection) -> None:
@@ -574,17 +573,19 @@ def main() -> None:
     n_applied  = stats.get(STATUS_APPLIED, 0) + stats.get(STATUS_INTERVIEW, 0) + stats.get(STATUS_OFFER, 0)
     n_total    = sum(stats.values())
 
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         f"🆕 New ({n_new})",
-        f"✅ Ready ({n_queued + n_approved})",
+        f"✅ Ready ({n_queued})",
+        f"🚀 Approved ({n_approved})",
         f"📤 Applied ({n_applied})",
         f"📋 All ({n_total})",
     ])
 
     with tab1: tab_new(conn)
     with tab2: tab_queued(conn)
-    with tab3: tab_applied(conn)
-    with tab4: tab_all(conn)
+    with tab3: tab_approved(conn)
+    with tab4: tab_applied(conn)
+    with tab5: tab_all(conn)
 
 
 if __name__ == "__main__":
