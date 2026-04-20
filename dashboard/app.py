@@ -322,39 +322,40 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
             with st.expander("📄 Job description"):
                 st.text(job["description"][:2000] + ("…" if len(job.get("description", "")) > 2000 else ""))
 
-        # PDFs + dry-run screenshot
+        # PDFs + dry-run screenshot (collapsible)
         if show_pdf and job.get("resume_path"):
             r_path    = _resolve_path(job["resume_path"]) or Path(job["resume_path"])
             cl_txt    = r_path.parent / "cover_letter.txt"
             cl_pdf    = r_path.parent / "cover_letter.pdf"
             shot_path = _screenshot_path(job)
 
-            tab_labels = ["📄 Resume", "✉️ Cover Letter"]
-            if shot_path:
-                tab_labels.append("🖥️ Form Preview")
+            with st.expander("📄 View Resume & Cover Letter", expanded=False):
+                tab_labels = ["📄 Resume", "✉️ Cover Letter"]
+                if shot_path:
+                    tab_labels.append("🖥️ Form Preview")
 
-            tabs = st.tabs(tab_labels)
+                tabs = st.tabs(tab_labels)
 
-            with tabs[0]:
-                pdf_viewer(str(r_path))
+                with tabs[0]:
+                    pdf_viewer(str(r_path))
 
-            with tabs[1]:
-                if cl_txt.exists():
-                    letter = cl_txt.read_text(encoding="utf-8")
-                    edited = st.text_area("Cover letter", value=letter, height=280,
-                                         key=f"cl_{job['id']}", label_visibility="collapsed")
-                    c_save, _, __ = st.columns([1, 1, 4])
-                    if c_save.button("💾 Save", key=f"save_cl_{job['id']}"):
-                        cl_txt.write_text(edited, encoding="utf-8")
-                        st.success("Saved.")
-                elif IS_CLOUD:
-                    st.info("Cover letter not available — re-tailor to generate it here.")
-                pdf_viewer(str(cl_pdf))
+                with tabs[1]:
+                    if cl_txt.exists():
+                        letter = cl_txt.read_text(encoding="utf-8")
+                        edited = st.text_area("Cover letter", value=letter, height=280,
+                                             key=f"cl_{job['id']}", label_visibility="collapsed")
+                        c_save, _, __ = st.columns([1, 1, 4])
+                        if c_save.button("💾 Save", key=f"save_cl_{job['id']}"):
+                            cl_txt.write_text(edited, encoding="utf-8")
+                            st.success("Saved.")
+                    elif IS_CLOUD:
+                        st.info("Cover letter not available — re-tailor to generate it here.")
+                    pdf_viewer(str(cl_pdf))
 
-            if shot_path:
-                with tabs[2]:
-                    st.caption(f"Dry-run screenshot — form as it would be submitted")
-                    st.image(str(shot_path), use_container_width=True)
+                if shot_path:
+                    with tabs[2]:
+                        st.caption("Dry-run screenshot — form as it would be submitted")
+                        st.image(str(shot_path), use_container_width=True)
 
         # Action buttons
         st.markdown("---")
