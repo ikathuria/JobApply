@@ -135,17 +135,6 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
-@st.cache_data(ttl=30)
-def get_stats_live(db_path: str) -> dict:
-    """Auto-refreshing stats — re-queries the DB every 30 s without a manual reload."""
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute(
-        "SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status"
-    ).fetchall()
-    conn.close()
-    return {row["status"]: row["cnt"] for row in rows}
-
 
 def refresh(toast_msg: str | None = None) -> None:
     if toast_msg:
@@ -280,7 +269,8 @@ def _run_dry_run(job_id: int | None = None, limit: int = 10) -> tuple[bool, str]
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 
-def sidebar(stats: dict) -> None:
+def sidebar(conn: sqlite3.Connection) -> None:
+    stats = get_stats(conn)
     with st.sidebar:
         st.markdown("## 🎯 JobApply")
         st.caption("AI/ML Internship Hunter · Summer 2026")
@@ -311,8 +301,6 @@ def sidebar(stats: dict) -> None:
 
         st.divider()
         st.markdown('<p class="section-label">Actions</p>', unsafe_allow_html=True)
-
-        conn = get_conn()
 
         if not IS_CLOUD:
             if st.button("🔍 Run Discovery", use_container_width=True):
@@ -1029,9 +1017,9 @@ _KEYBOARD_JS = """
 
 def main() -> None:
     conn  = get_conn()
-    stats = get_stats_live(str(DB_PATH))
+    stats = get_stats(conn)
 
-    sidebar(stats)
+    sidebar(conn)
 
     # Keyboard nav injection
     components.html(_KEYBOARD_JS, height=0)
