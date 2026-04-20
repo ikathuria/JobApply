@@ -5,6 +5,7 @@ Run: streamlit run dashboard/app.py
 
 import csv
 import io
+import math
 import os
 import re
 import sqlite3
@@ -14,6 +15,7 @@ from datetime import date
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -36,6 +38,9 @@ OUTPUT_DIR     = Path(__file__).parent.parent / "output" / "resumes"
 SCREENSHOT_DIR = Path(__file__).parent.parent / "output" / "apply_screenshots"
 ROOT_DIR       = Path(__file__).parent.parent
 
+PAGE_SIZE_NEW = 25
+PAGE_SIZE_ALL = 50
+
 st.set_page_config(
     page_title="JobApply",
     page_icon="🎯",
@@ -47,25 +52,42 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* Header gradient */
-.dash-header {
+/* Funnel header */
+.funnel-header {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    padding: 1.5rem 2rem;
+    padding: 1.2rem 2rem;
     border-radius: 12px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-.dash-header h1 { margin: 0; font-size: 1.8rem; color: white; }
-.dash-header p  { margin: 0.2rem 0 0; opacity: 0.75; font-size: 0.9rem; }
+.funnel-header h1 { margin: 0; font-size: 1.5rem; color: white; }
+.funnel-header p  { margin: 0.2rem 0 0; opacity: 0.7; font-size: 0.85rem; }
+.funnel-steps {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.82rem;
+}
+.funnel-step {
+    background: rgba(255,255,255,0.12);
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    color: white;
+    white-space: nowrap;
+}
+.funnel-step.active { background: rgba(255,255,255,0.28); font-weight: 700; }
+.funnel-arrow { opacity: 0.45; font-size: 0.75rem; }
+.funnel-rate  { opacity: 0.55; font-size: 0.7rem; margin-left: 0.15rem; }
 
 /* Score bar */
 .score-bar-wrap { height: 6px; background: #e0e0e0; border-radius: 3px; }
 .score-bar      { height: 6px; border-radius: 3px; }
 
-/* Compact job row in All Jobs */
-.job-row {
-    display: flex; align-items: center; padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0; gap: 1rem;
+/* Compact job row */
+.compact-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.1rem 0;
 }
 
 /* Status pill */
@@ -75,17 +97,31 @@ st.markdown("""
 }
 .pill-new      { background:#e3f2fd; color:#1565c0; }
 .pill-queued   { background:#e8f5e9; color:#2e7d32; }
+.pill-approved { background:#ede7f6; color:#4527a0; }
 .pill-applied  { background:#fff3e0; color:#e65100; }
 .pill-interview{ background:#f3e5f5; color:#6a1b9a; }
 .pill-offer    { background:#e8f5e9; color:#1b5e20; }
 .pill-rejected { background:#ffebee; color:#b71c1c; }
 .pill-skipped  { background:#f5f5f5; color:#616161; }
 
+/* All-tab row left border by status */
+.row-new       { border-left: 4px solid #1565c0; padding-left: 0.6rem; }
+.row-queued    { border-left: 4px solid #2e7d32; padding-left: 0.6rem; }
+.row-approved  { border-left: 4px solid #4527a0; padding-left: 0.6rem; }
+.row-applied   { border-left: 4px solid #e65100; padding-left: 0.6rem; }
+.row-interview { border-left: 4px solid #6a1b9a; padding-left: 0.6rem; }
+.row-offer     { border-left: 4px solid #1b5e20; padding-left: 0.6rem; }
+.row-rejected  { border-left: 4px solid #b71c1c; padding-left: 0.6rem; }
+.row-skipped   { border-left: 4px solid #9e9e9e; padding-left: 0.6rem; }
+
 /* Section label */
 .section-label {
     font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
     text-transform: uppercase; color: #888; margin: 1rem 0 0.4rem;
 }
+
+/* Action button row */
+.action-hint { font-size: 0.72rem; color: #888; margin-top: 0.2rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,8 +135,23 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
-def refresh():
+@st.cache_data(ttl=30)
+def get_stats_live(db_path: str) -> dict:
+    """Auto-refreshing stats — re-queries the DB every 30 s without a manual reload."""
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status"
+    ).fetchall()
+    conn.close()
+    return {row["status"]: row["cnt"] for row in rows}
+
+
+def refresh(toast_msg: str | None = None) -> None:
+    if toast_msg:
+        st.toast(toast_msg)
     st.cache_resource.clear()
+    st.cache_data.clear()
     st.rerun()
 
 
@@ -118,7 +169,7 @@ def score_bar_html(score: float) -> str:
     pct = int(score * 100)
     color = "#4caf50" if score >= 0.7 else "#ff9800" if score >= 0.5 else "#f44336"
     return (
-        f'<div class="score-bar-wrap">'
+        f'<div class="score-bar-wrap" title="AI relevance score: {pct}% match with your profile">'
         f'<div class="score-bar" style="width:{pct}%;background:{color};"></div>'
         f'</div>'
     )
@@ -127,12 +178,23 @@ def score_bar_html(score: float) -> str:
 STATUS_META = {
     STATUS_NEW:       ("🆕", "New",       "pill-new"),
     STATUS_QUEUED:    ("✅", "Ready",     "pill-queued"),
-    STATUS_APPROVED:  ("🚀", "Approved",  "pill-interview"),
+    STATUS_APPROVED:  ("🚀", "Approved",  "pill-approved"),
     STATUS_SKIPPED:   ("⏭", "Skipped",   "pill-skipped"),
     STATUS_APPLIED:   ("📤", "Applied",   "pill-applied"),
     STATUS_INTERVIEW: ("🎤", "Interview", "pill-interview"),
     STATUS_REJECTED:  ("❌", "Rejected",  "pill-rejected"),
     STATUS_OFFER:     ("🎉", "Offer",     "pill-offer"),
+}
+
+STATUS_ROW_CLASS = {
+    STATUS_NEW:       "row-new",
+    STATUS_QUEUED:    "row-queued",
+    STATUS_APPROVED:  "row-approved",
+    STATUS_APPLIED:   "row-applied",
+    STATUS_INTERVIEW: "row-interview",
+    STATUS_OFFER:     "row-offer",
+    STATUS_REJECTED:  "row-rejected",
+    STATUS_SKIPPED:   "row-skipped",
 }
 
 
@@ -217,13 +279,12 @@ def _run_dry_run(job_id: int | None = None, limit: int = 10) -> tuple[bool, str]
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 
-def sidebar(conn: sqlite3.Connection) -> None:
+def sidebar(stats: dict) -> None:
     with st.sidebar:
         st.markdown("## 🎯 JobApply")
         st.caption("AI/ML Internship Hunter · Summer 2026")
         st.divider()
 
-        stats = get_stats(conn)
         total = sum(stats.values())
 
         # Funnel metrics
@@ -234,17 +295,23 @@ def sidebar(conn: sqlite3.Connection) -> None:
         c3.metric("Applied",  stats.get(STATUS_APPLIED, 0))
 
         c4, c5, c6 = st.columns(3)
-        c4.metric("New",       stats.get(STATUS_NEW, 0))
+        c4.metric("New",         stats.get(STATUS_NEW, 0))
         c5.metric("🚀 Approved", stats.get(STATUS_APPROVED, 0))
-        c6.metric("Offer 🎉",  stats.get(STATUS_OFFER, 0))
+        c6.metric("Offer 🎉",    stats.get(STATUS_OFFER, 0))
 
         # Progress bar: applied / total
         if total:
-            applied_pct = (stats.get(STATUS_APPLIED, 0) + stats.get(STATUS_INTERVIEW, 0) + stats.get(STATUS_OFFER, 0)) / total
+            applied_pct = (
+                stats.get(STATUS_APPLIED, 0)
+                + stats.get(STATUS_INTERVIEW, 0)
+                + stats.get(STATUS_OFFER, 0)
+            ) / total
             st.progress(applied_pct, text=f"Applied: {applied_pct:.0%}")
 
         st.divider()
         st.markdown('<p class="section-label">Actions</p>', unsafe_allow_html=True)
+
+        conn = get_conn()
 
         if not IS_CLOUD:
             if st.button("🔍 Run Discovery", use_container_width=True):
@@ -254,10 +321,9 @@ def sidebar(conn: sqlite3.Connection) -> None:
                         capture_output=True, text=True, cwd=ROOT_DIR,
                     )
                 if r.returncode == 0:
-                    st.success("Discovery complete!")
+                    refresh("✅ Discovery complete!")
                 else:
                     st.error(r.stderr[-400:])
-                refresh()
         else:
             st.caption("🤖 Discovery runs daily via GitHub Actions.")
 
@@ -266,10 +332,9 @@ def sidebar(conn: sqlite3.Connection) -> None:
             with st.spinner(f"Tailoring {n_tailor} jobs..."):
                 ok, out = _run_tailor(n_tailor)
             if ok:
-                st.success(f"Done! Check Ready tab.")
+                refresh("✨ Tailoring done! Check Ready tab.")
             else:
                 st.error(out[-400:])
-            refresh()
 
         if not IS_CLOUD:
             st.divider()
@@ -281,10 +346,9 @@ def sidebar(conn: sqlite3.Connection) -> None:
                 with st.spinner(f"Dry-running {n_dry} jobs (browser will open)…"):
                     ok, out = _run_dry_run(limit=n_dry)
                 if ok:
-                    st.success("Done! Screenshots saved to output/apply_screenshots/")
+                    refresh("📸 Done! Screenshots saved.")
                 else:
                     st.error(out[-400:])
-                refresh()
 
         if st.button("🔄 Refresh", use_container_width=True):
             refresh()
@@ -293,10 +357,94 @@ def sidebar(conn: sqlite3.Connection) -> None:
         st.caption("Powered by Gemini 2.5 Flash · ReportLab · Playwright")
 
 
-# ── Job card ───────────────────────────────────────────────────────────────────
+# ── Action buttons (simplified) ────────────────────────────────────────────────
+
+def _action_buttons(conn: sqlite3.Connection, job: dict) -> None:
+    """
+    Show only the next logical primary action prominently.
+    Secondary actions appear as small buttons beneath.
+    """
+    status = job["status"]
+    jid    = job["id"]
+
+    # Primary action
+    if status == STATUS_NEW:
+        if st.button("✨ Tailor", key=f"tailor_{jid}", type="primary",
+                     use_container_width=True,
+                     help="Generate tailored resume + cover letter with AI"):
+            _tailor_single(conn, job)
+
+    elif status == STATUS_QUEUED:
+        if st.button("🚀 Approve for Auto-Apply", key=f"approve_{jid}", type="primary",
+                     use_container_width=True,
+                     help="Mark as approved — GHA will submit it headlessly"):
+            update_status(conn, jid, STATUS_APPROVED)
+            refresh(f"🚀 Approved: {job['title']} @ {job.get('company', '')}")
+
+    elif status == STATUS_APPROVED:
+        if st.button("📤 Mark Applied", key=f"apply2_{jid}", type="primary",
+                     use_container_width=True):
+            update_status(conn, jid, STATUS_APPLIED)
+            refresh(f"📤 Marked applied: {job['title']}")
+
+    elif status == STATUS_APPLIED:
+        if st.button("🎤 Got Interview!", key=f"int2_{jid}", type="primary",
+                     use_container_width=True):
+            update_status(conn, jid, STATUS_INTERVIEW)
+            refresh(f"🎤 Interview stage: {job['title']}")
+
+    elif status == STATUS_INTERVIEW:
+        if st.button("🎉 Got Offer!", key=f"offer_{jid}", type="primary",
+                     use_container_width=True):
+            update_status(conn, jid, STATUS_OFFER)
+            refresh(f"🎉 OFFER from {job.get('company', '')}!")
+
+    # Secondary actions — small row beneath primary
+    sec = st.columns(5)
+    col_idx = 0
+
+    if status == STATUS_QUEUED:
+        if not IS_CLOUD:
+            if sec[col_idx].button("🔍 Dry Run", key=f"dry_{jid}",
+                                   use_container_width=True,
+                                   help="Fill form + screenshot, no submit"):
+                with st.spinner("Opening browser for dry run…"):
+                    _run_dry_run(limit=1)
+                st.toast("📸 Dry run done — check Form Preview tab.")
+                st.rerun()
+            col_idx += 1
+        if sec[col_idx].button("📤 Applied", key=f"apply_{jid}",
+                                use_container_width=True, help="Mark as manually applied"):
+            update_status(conn, jid, STATUS_APPLIED)
+            refresh(f"📤 Marked applied: {job['title']}")
+        col_idx += 1
+        if sec[col_idx].button("🎤 Interview", key=f"int_{jid}", use_container_width=True):
+            update_status(conn, jid, STATUS_INTERVIEW)
+            refresh(f"🎤 Interview stage: {job['title']}")
+        col_idx += 1
+
+    if status == STATUS_APPROVED:
+        if sec[col_idx].button("↩ Unapprove", key=f"unapprove_{jid}",
+                                use_container_width=True):
+            update_status(conn, jid, STATUS_QUEUED)
+            refresh("↩ Moved back to Ready.")
+        col_idx += 1
+
+    if status not in (STATUS_SKIPPED, STATUS_REJECTED, STATUS_OFFER):
+        skip_col = 3
+        rej_col  = 4
+        if sec[skip_col].button("⏭ Skip", key=f"skip_{jid}", use_container_width=True):
+            update_status(conn, jid, STATUS_SKIPPED)
+            refresh(f"⏭ Skipped: {job['title']}")
+        if sec[rej_col].button("❌ Reject", key=f"rej_{jid}", use_container_width=True):
+            update_status(conn, jid, STATUS_REJECTED)
+            refresh(f"❌ Rejected: {job['title']}")
+
+
+# ── Job card (full) ─────────────────────────────────────────────────────────────
 
 def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None:
-    score = job.get("score", 0.0)
+    score  = job.get("score", 0.0)
     status = job["status"]
 
     with st.container(border=True):
@@ -314,11 +462,14 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
         with h2:
             st.link_button("Apply →", job.get("url", "#"), use_container_width=True)
 
-        # Score bar
+        # Score bar with tooltip hint
         sc1, sc2 = st.columns([1, 8])
-        sc1.caption(f"{score_color(score)} **{score:.0%}**")
+        sc1.markdown(
+            f"{score_color(score)} **{score:.0%}**",
+            help="AI relevance score — how well this role matches your profile and target keywords.",
+        )
         sc2.markdown(score_bar_html(score), unsafe_allow_html=True)
-        sc2.empty()  # spacing
+        sc2.empty()
 
         # JD preview
         if job.get("description"):
@@ -350,7 +501,7 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                         c_save, _, __ = st.columns([1, 1, 4])
                         if c_save.button("💾 Save", key=f"save_cl_{job['id']}"):
                             cl_txt.write_text(edited, encoding="utf-8")
-                            st.success("Saved.")
+                            st.toast("💾 Cover letter saved.")
                     elif IS_CLOUD:
                         st.info("Cover letter not available — re-tailor to generate it here.")
                     pdf_viewer(str(cl_pdf))
@@ -360,58 +511,12 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                         st.caption("Dry-run screenshot — form as it would be submitted")
                         st.image(str(shot_path), use_container_width=True)
 
-        # Action buttons
+        # Simplified action buttons
         st.markdown("---")
-        btns = st.columns(6)
-
-        if status == STATUS_NEW:
-            if btns[0].button("✨ Tailor", key=f"tailor_{job['id']}", type="primary",
-                              use_container_width=True):
-                _tailor_single(conn, job)
-
-        if status == STATUS_QUEUED:
-            if btns[0].button("🚀 Approve", key=f"approve_{job['id']}", type="primary",
-                              use_container_width=True, help="Approve for GHA auto-apply"):
-                update_status(conn, job["id"], STATUS_APPROVED); refresh()
-            if not IS_CLOUD:
-                if btns[1].button("🔍 Dry Run", key=f"dry_{job['id']}",
-                                  use_container_width=True, help="Fill form + screenshot, no submit"):
-                    with st.spinner("Opening browser for dry run…"):
-                        _run_dry_run(limit=1)
-                    st.info("Done — check the 🖥️ Form Preview tab above.")
-                    refresh()
-            if btns[2].button("📤 Applied", key=f"apply_{job['id']}",
-                              use_container_width=True, help="Mark as manually applied"):
-                update_status(conn, job["id"], STATUS_APPLIED); refresh()
-            if btns[3].button("🎤 Interview", key=f"int_{job['id']}",
-                              use_container_width=True):
-                update_status(conn, job["id"], STATUS_INTERVIEW); refresh()
-
-        if status == STATUS_APPROVED:
-            if btns[0].button("📤 Applied", key=f"apply2_{job['id']}", type="primary",
-                              use_container_width=True):
-                update_status(conn, job["id"], STATUS_APPLIED); refresh()
-            if btns[1].button("↩ Unapprove", key=f"unapprove_{job['id']}",
-                              use_container_width=True):
-                update_status(conn, job["id"], STATUS_QUEUED); refresh()
-
-        if status == STATUS_APPLIED:
-            if btns[0].button("🎤 Interview", key=f"int2_{job['id']}", type="primary",
-                              use_container_width=True):
-                update_status(conn, job["id"], STATUS_INTERVIEW); refresh()
-
-        if status == STATUS_INTERVIEW:
-            if btns[0].button("🎉 Offer!", key=f"offer_{job['id']}", type="primary",
-                              use_container_width=True):
-                update_status(conn, job["id"], STATUS_OFFER); refresh()
-
-        if status not in (STATUS_SKIPPED, STATUS_REJECTED, STATUS_OFFER):
-            if btns[4].button("Skip", key=f"skip_{job['id']}", use_container_width=True):
-                update_status(conn, job["id"], STATUS_SKIPPED); refresh()
-            if btns[5].button("❌ Reject", key=f"rej_{job['id']}", use_container_width=True):
-                update_status(conn, job["id"], STATUS_REJECTED); refresh()
+        _action_buttons(conn, job)
 
         # Notes
+        st.markdown("")
         new_notes = st.text_input(
             "Notes", value=job.get("notes") or "",
             placeholder="Add notes…", key=f"notes_{job['id']}",
@@ -445,36 +550,115 @@ def _tailor_single(conn: sqlite3.Connection, job: dict) -> None:
             generate_cover_letter_pdf(letter_text, job, job_dir / "cover_letter.pdf")
             (job_dir / "cover_letter.txt").write_text(letter_text, encoding="utf-8")
         update_status(conn, job["id"], STATUS_QUEUED, resume_path=str(resume_path))
-        st.success("Done! Check the Ready tab.")
-    refresh()
+    refresh("✨ Tailored! Check the Ready tab.")
+
+
+# ── Compact job row (New tab) ───────────────────────────────────────────────────
+
+def compact_job_row(conn: sqlite3.Connection, job: dict) -> None:
+    """
+    A scannable single-line row for New jobs.
+    Clicking expands to the full card.
+    """
+    score   = job.get("score", 0.0)
+    pct     = int(score * 100)
+    company = job.get("company") or "Unknown"
+    source  = job.get("source") or "?"
+    label   = f"{score_color(score)} **{job['title']}** &nbsp;·&nbsp; {company} &nbsp; `{source}` &nbsp; {pct}%"
+
+    with st.expander(f"{score_color(score)}  {job['title']}  ·  {company}  [{pct}%]", expanded=False):
+        # Score bar inside expander
+        st.markdown(score_bar_html(score), unsafe_allow_html=True)
+        st.caption(
+            f"📍 {job.get('location') or 'USA'} &nbsp;·&nbsp; "
+            f"Source: `{source}` &nbsp;·&nbsp; "
+            f"Score: {pct}% — AI relevance match with your profile"
+        )
+        st.link_button("🔗 View posting", job.get("url", "#"))
+
+        if job.get("description"):
+            st.text(job["description"][:800] + ("…" if len(job.get("description","")) > 800 else ""))
+
+        st.markdown("---")
+        _action_buttons(conn, job)
+
+        new_notes = st.text_input(
+            "Notes", value=job.get("notes") or "",
+            placeholder="Add notes…", key=f"notes_c_{job['id']}",
+            label_visibility="collapsed",
+        )
+        if new_notes != (job.get("notes") or ""):
+            update_status(conn, job["id"], STATUS_NEW, notes=new_notes)
+
+
+# ── Pagination helpers ─────────────────────────────────────────────────────────
+
+def _paginate(jobs: list[dict], page_key: str, page_size: int) -> tuple[list[dict], int, int]:
+    """Return the current page slice, current page index, and total pages."""
+    if page_key not in st.session_state:
+        st.session_state[page_key] = 0
+    total_pages = max(1, math.ceil(len(jobs) / page_size))
+    # Clamp page in case list shrank
+    st.session_state[page_key] = min(st.session_state[page_key], total_pages - 1)
+    page = st.session_state[page_key]
+    start = page * page_size
+    return jobs[start : start + page_size], page, total_pages
+
+
+def _pagination_controls(page: int, total_pages: int, total_jobs: int, page_key: str, page_size: int) -> None:
+    st.markdown("")
+    p1, p2, p3 = st.columns([1, 3, 1])
+    if p1.button("← Prev", key=f"prev_{page_key}", disabled=(page == 0)):
+        st.session_state[page_key] -= 1
+        st.rerun()
+    p2.markdown(
+        f"<div style='text-align:center;color:#888;font-size:0.85rem;padding-top:0.4rem;'>"
+        f"Page {page + 1} of {total_pages} &nbsp;·&nbsp; {total_jobs} jobs total</div>",
+        unsafe_allow_html=True,
+    )
+    if p3.button("Next →", key=f"next_{page_key}", disabled=(page >= total_pages - 1)):
+        st.session_state[page_key] += 1
+        st.rerun()
 
 
 # ── Tabs ───────────────────────────────────────────────────────────────────────
 
 def tab_new(conn: sqlite3.Connection) -> None:
-    jobs = rows_to_dicts(get_jobs(conn, status=STATUS_NEW, limit=200))
+    jobs = rows_to_dicts(get_jobs(conn, status=STATUS_NEW, limit=500))
     if not jobs:
         st.info("No new jobs yet. Run discovery from the sidebar or wait for the daily GitHub Action.")
         return
 
-    # Filter bar
-    f1, f2 = st.columns([3, 1])
-    search = f1.text_input("🔍 Filter", placeholder="company, title…", label_visibility="collapsed")
-    sort   = f2.selectbox("Sort", ["Score ↓", "Score ↑", "Company"], label_visibility="collapsed")
+    # Filter + sort bar
+    f1, f2, f3 = st.columns([4, 2, 1])
+    search = f1.text_input("🔍 Filter", placeholder="company or title…", label_visibility="collapsed")
+    sort   = f2.selectbox("Sort", ["Score ↓", "Score ↑", "Company"], label_visibility="collapsed",
+                          key="new_sort")
+    min_sc = f3.slider("Min", 0.0, 1.0, 0.0, 0.05, label_visibility="collapsed", key="new_min")
 
     if search:
         q = search.lower()
         jobs = [j for j in jobs if q in (j.get("title") or "").lower()
                 or q in (j.get("company") or "").lower()]
+        # Reset to page 0 when filtering
+        st.session_state["new_page"] = 0
+
+    jobs = [j for j in jobs if j["score"] >= min_sc]
 
     if sort == "Score ↓":   jobs.sort(key=lambda j: j["score"], reverse=True)
     elif sort == "Score ↑": jobs.sort(key=lambda j: j["score"])
     elif sort == "Company":  jobs.sort(key=lambda j: j.get("company") or "")
 
-    st.caption(f"{len(jobs)} jobs · showing top results")
+    page_jobs, page, total_pages = _paginate(jobs, "new_page", PAGE_SIZE_NEW)
+    st.caption(
+        f"{len(jobs)} jobs · page {page + 1}/{total_pages} · "
+        f"click a row to expand → review → Tailor or Skip"
+    )
 
-    for job in jobs:
-        job_card(conn, job, show_pdf=False)
+    for job in page_jobs:
+        compact_job_row(conn, job)
+
+    _pagination_controls(page, total_pages, len(jobs), "new_page", PAGE_SIZE_NEW)
 
 
 def tab_queued(conn: sqlite3.Connection) -> None:
@@ -482,7 +666,7 @@ def tab_queued(conn: sqlite3.Connection) -> None:
     if not jobs:
         st.info("No jobs ready yet. Use **✨ Tailor Jobs** in the sidebar or click **✨ Tailor** on a new job.")
         return
-    st.caption(f"{len(jobs)} tailored jobs awaiting review — open the resume, then **🚀 Approve** or **📤 Applied**.")
+    st.caption(f"{len(jobs)} tailored jobs — open the resume, then **🚀 Approve** or **📤 Applied**.")
     for job in jobs:
         job_card(conn, job, show_pdf=True)
 
@@ -492,7 +676,7 @@ def tab_approved(conn: sqlite3.Connection) -> None:
     if not jobs:
         st.info("No approved jobs yet. Review resumes in the **✅ Ready** tab and click **🚀 Approve**.")
         return
-    st.caption(f"{len(jobs)} jobs approved — trigger **Auto Apply** from GitHub Actions to submit them headlessly.")
+    st.caption(f"{len(jobs)} approved — trigger **Auto Apply** from GitHub Actions to submit headlessly.")
     for job in jobs:
         job_card(conn, job, show_pdf=True)
 
@@ -515,48 +699,69 @@ def tab_applied(conn: sqlite3.Connection) -> None:
             job_card(conn, job, show_pdf=True)
 
     if not any_jobs:
-        st.info("No applications submitted yet. Head to **Ready to Apply** and mark jobs as applied.")
+        st.info("No applications submitted yet. Head to **✅ Ready** and mark jobs as applied.")
 
 
 def tab_all(conn: sqlite3.Connection) -> None:
     f1, f2, f3 = st.columns([3, 2, 2])
-    search      = f1.text_input("🔍 Search", placeholder="title or company…", label_visibility="collapsed")
-    status_sel  = f2.selectbox("Status", ["All"] + [
-        STATUS_NEW, STATUS_QUEUED, STATUS_APPLIED,
+    search     = f1.text_input("🔍 Search", placeholder="title or company…",
+                                label_visibility="collapsed", key="all_search")
+    status_sel = f2.selectbox("Status", ["All"] + [
+        STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED, STATUS_APPLIED,
         STATUS_INTERVIEW, STATUS_OFFER, STATUS_SKIPPED, STATUS_REJECTED,
-    ], label_visibility="collapsed")
-    min_score   = f3.slider("Min score", 0.0, 1.0, 0.3, 0.05)
+    ], label_visibility="collapsed", key="all_status")
+    min_score  = f3.slider("Min score", 0.0, 1.0, 0.3, 0.05, key="all_min")
 
     status_arg = None if status_sel == "All" else status_sel
-    jobs = rows_to_dicts(get_jobs(conn, status=status_arg, min_score=min_score, limit=500))
+    jobs = rows_to_dicts(get_jobs(conn, status=status_arg, min_score=min_score, limit=2000))
 
     if search:
         q = search.lower()
         jobs = [j for j in jobs if q in (j.get("title") or "").lower()
                 or q in (j.get("company") or "").lower()]
+        st.session_state["all_page"] = 0
 
-    st.caption(f"{len(jobs)} jobs")
+    page_jobs, page, total_pages = _paginate(jobs, "all_page", PAGE_SIZE_ALL)
 
-    # Header
-    h = st.columns([4, 2, 1, 1, 1])
-    for col, label in zip(h, ["Title / Company", "Status", "Score", "Source", ""]):
-        col.markdown(f"**{label}**")
+    st.caption(f"{len(jobs)} jobs · page {page + 1}/{total_pages}")
+
+    # Table header
+    h = st.columns([3, 1, 2, 1, 1, 1])
+    for col, lbl in zip(h, ["Title / Company", "Score", "Status", "Date Applied", "Source", ""]):
+        col.markdown(f"**{lbl}**")
     st.divider()
 
-    for job in jobs:
-        c = st.columns([4, 2, 1, 1, 1])
-        c[0].markdown(f"**{job['title']}**  \n{job.get('company') or 'N/A'}")
-        c[1].markdown(status_pill(job["status"]), unsafe_allow_html=True)
-        c[2].markdown(f"{score_color(job['score'])} {job['score']:.0%}")
-        c[3].caption(job.get("source", "?"))
-        c[4].link_button("→", job.get("url", "#"))
+    for job in page_jobs:
+        status     = job["status"]
+        row_class  = STATUS_ROW_CLASS.get(status, "")
+        date_app   = job.get("date_applied") or "—"
+        # Truncate long dates to just YYYY-MM-DD
+        if date_app and date_app != "—":
+            date_app = date_app[:10]
+
+        c = st.columns([3, 1, 2, 1, 1, 1])
+        c[0].markdown(
+            f'<div class="{row_class}"><strong>{job["title"]}</strong><br>'
+            f'<span style="font-size:0.85rem;color:#666;">{job.get("company") or "N/A"}</span></div>',
+            unsafe_allow_html=True,
+        )
+        c[1].markdown(
+            f"{score_color(job['score'])} {job['score']:.0%}",
+            help="AI relevance score vs. your profile",
+        )
+        c[2].markdown(status_pill(status), unsafe_allow_html=True)
+        c[3].caption(date_app)
+        c[4].caption(job.get("source", "?"))
+        c[5].link_button("→", job.get("url", "#"))
+
+    _pagination_controls(page, total_pages, len(jobs), "all_page", PAGE_SIZE_ALL)
 
 
 # ── Import tab ─────────────────────────────────────────────────────────────────
 
 def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
     """Insert a single manually-entered job. Returns (success, message)."""
-    url = (job.get("url") or "").strip()
+    url   = (job.get("url")   or "").strip()
     title = (job.get("title") or "").strip()
     if not url or not title:
         return False, "URL and Job Title are required."
@@ -573,7 +778,7 @@ def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
             """,
             {
                 "title":        title,
-                "company":      (job.get("company") or "").strip(),
+                "company":      (job.get("company")  or "").strip(),
                 "location":     (job.get("location") or "").strip(),
                 "url":          url,
                 "source":       "manual",
@@ -586,7 +791,6 @@ def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
         conn.commit()
         return True, f"✅ Added: {title}"
     except sqlite3.IntegrityError:
-        # URL already exists — update status/notes instead
         existing = conn.execute(
             "SELECT id, status FROM jobs WHERE url = ?", (url,)
         ).fetchone()
@@ -597,31 +801,46 @@ def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
                 notes=(job.get("notes") or "").strip() or None,
             )
             return True, f"↩️ Updated existing entry: {title}"
-        return False, f"URL already exists and could not be updated."
+        return False, "URL already exists and could not be updated."
     except Exception as e:
         return False, f"Error: {e}"
 
 
 def tab_import(conn: sqlite3.Connection) -> None:
+    # Empty state
+    manual_count = conn.execute(
+        "SELECT COUNT(*) FROM jobs WHERE source = 'manual'"
+    ).fetchone()[0]
+
+    if manual_count == 0:
+        st.markdown("""
+        <div style="text-align:center;padding:2rem;background:#f8f9ff;border-radius:12px;margin-bottom:1.5rem;">
+            <div style="font-size:2.5rem;">📭</div>
+            <h3 style="margin:0.5rem 0 0.25rem;">No manually imported jobs yet</h3>
+            <p style="color:#666;margin:0;">
+                Applied somewhere before this dashboard existed?<br>
+                Add those jobs here so everything is tracked in one place.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.success(f"✅ {manual_count} job{'s' if manual_count != 1 else ''} imported manually — visible in the **📤 Applied** and **📋 All** tabs.")
+
     st.markdown("### 📥 Import Pre-Dashboard Applications")
-    st.caption(
-        "Track jobs you applied to before this dashboard existed. "
-        "Enter them manually or bulk-upload a CSV."
-    )
+    st.caption("Enter jobs you applied to before this dashboard existed.")
 
     manual_tab, csv_tab = st.tabs(["✍️ Manual Entry", "📂 CSV Bulk Upload"])
 
-    # ── Manual entry ────────────────────────────────────────────────────────────
+    # ── Manual entry ─────────────────────────────────────────────────────────────
     with manual_tab:
-        st.markdown("#### Add a single job")
-
         col_a, col_b = st.columns(2)
         with col_a:
-            imp_title   = st.text_input("Job Title *", placeholder="Software Engineer Intern")
-            imp_company = st.text_input("Company *", placeholder="Google")
-            imp_url     = st.text_input("Job Posting URL *", placeholder="https://...")
+            imp_title    = st.text_input("Job Title *", placeholder="Software Engineer Intern")
+            imp_company  = st.text_input("Company *",   placeholder="Google")
+            imp_url      = st.text_input("Job Posting URL *", placeholder="https://...")
+            imp_location = st.text_input("Location",    placeholder="Remote / New York, NY")
         with col_b:
-            imp_status  = st.selectbox(
+            imp_status = st.selectbox(
                 "Current Status *",
                 [STATUS_APPLIED, STATUS_INTERVIEW, STATUS_OFFER, STATUS_REJECTED, STATUS_NEW],
                 format_func=lambda s: {
@@ -632,16 +851,17 @@ def tab_import(conn: sqlite3.Connection) -> None:
                     STATUS_NEW:       "🆕 New (discovered manually)",
                 }.get(s, s),
             )
-            imp_date    = st.date_input(
+            imp_date = st.date_input(
                 "Date Applied",
                 value=date.today(),
                 help="Leave as today if unknown.",
             )
-            imp_location = st.text_input("Location", placeholder="Remote / New York, NY")
 
-        imp_notes = st.text_area("Notes", placeholder="Recruiter name, referral, interview stage…", height=80)
+        imp_notes = st.text_area(
+            "Notes", placeholder="Recruiter name, referral source, interview stage…", height=80
+        )
 
-        if st.button("➕ Add Job", type="primary", use_container_width=False):
+        if st.button("➕ Add Job", type="primary"):
             ok, msg = _insert_manual_job(conn, {
                 "title":        imp_title,
                 "company":      imp_company,
@@ -652,15 +872,12 @@ def tab_import(conn: sqlite3.Connection) -> None:
                 "notes":        imp_notes,
             })
             if ok:
-                st.success(msg)
-                refresh()
+                refresh(msg)
             else:
                 st.error(msg)
 
-    # ── CSV upload ──────────────────────────────────────────────────────────────
+    # ── CSV upload ────────────────────────────────────────────────────────────────
     with csv_tab:
-        st.markdown("#### Bulk upload via CSV")
-
         with st.expander("📋 Required CSV format", expanded=False):
             st.markdown("""
 **Required columns:** `title`, `company`, `url`
@@ -669,14 +886,12 @@ def tab_import(conn: sqlite3.Connection) -> None:
 
 **Valid status values:** `applied`, `interview`, `offer`, `rejected`, `new`
 
-**Example:**
 ```
 title,company,url,status,date_applied,location,notes
 ML Intern,OpenAI,https://openai.com/careers/1,applied,2026-03-15,San Francisco CA,No response yet
 Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Remote,Phone screen done
 ```
 """)
-            # Provide a downloadable template
             template_csv = "title,company,url,status,date_applied,location,notes\n"
             st.download_button(
                 "⬇️ Download CSV Template",
@@ -688,12 +903,12 @@ Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Rem
         uploaded = st.file_uploader(
             "Upload your CSV file",
             type=["csv"],
-            help="UTF-8 encoded CSV with at minimum: title, company, url columns",
+            help="UTF-8 encoded CSV — minimum columns: title, company, url",
         )
 
         if uploaded is not None:
             try:
-                content = uploaded.read().decode("utf-8-sig")  # handle BOM
+                content = uploaded.read().decode("utf-8-sig")
                 reader  = csv.DictReader(io.StringIO(content))
                 rows    = list(reader)
             except Exception as e:
@@ -702,17 +917,17 @@ Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Rem
 
             if rows:
                 st.markdown(f"**Preview — {len(rows)} rows detected:**")
-
-                # Show preview table
-                preview_data = []
-                for r in rows[:10]:
-                    preview_data.append({
-                        "Title":    r.get("title", ""),
-                        "Company":  r.get("company", ""),
-                        "Status":   r.get("status", "applied"),
-                        "Date":     r.get("date_applied", ""),
-                        "URL":      (r.get("url", "") or "")[:50] + ("…" if len(r.get("url","")) > 50 else ""),
-                    })
+                preview_data = [
+                    {
+                        "Title":   r.get("title", ""),
+                        "Company": r.get("company", ""),
+                        "Status":  r.get("status", "applied"),
+                        "Date":    r.get("date_applied", ""),
+                        "URL":     (r.get("url", "") or "")[:50]
+                                   + ("…" if len(r.get("url", "")) > 50 else ""),
+                    }
+                    for r in rows[:10]
+                ]
                 st.table(preview_data)
                 if len(rows) > 10:
                     st.caption(f"… and {len(rows) - 10} more rows")
@@ -723,13 +938,10 @@ Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Rem
                 }
 
                 if st.button(f"📥 Import {len(rows)} jobs", type="primary"):
-                    success_count = 0
-                    fail_msgs     = []
-
+                    success_count, fail_msgs = 0, []
                     for r in rows:
                         raw_status = (r.get("status") or "applied").strip().lower()
-                        status     = raw_status if raw_status in valid_statuses else STATUS_APPLIED
-
+                        status = raw_status if raw_status in valid_statuses else STATUS_APPLIED
                         ok, msg = _insert_manual_job(conn, {
                             "title":        r.get("title", ""),
                             "company":      r.get("company", ""),
@@ -742,45 +954,142 @@ Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Rem
                         if ok:
                             success_count += 1
                         else:
-                            fail_msgs.append(f"• {r.get('title', '?')} @ {r.get('company', '?')}: {msg}")
-
-                    st.success(f"✅ Imported {success_count} / {len(rows)} jobs successfully.")
+                            fail_msgs.append(
+                                f"• {r.get('title', '?')} @ {r.get('company', '?')}: {msg}"
+                            )
                     if fail_msgs:
                         with st.expander(f"⚠️ {len(fail_msgs)} failed rows"):
                             st.text("\n".join(fail_msgs))
-                    refresh()
+                    refresh(f"✅ Imported {success_count} / {len(rows)} jobs.")
+
+
+# ── Keyboard navigation (j/k to move, a/s shortcuts) ───────────────────────────
+
+_KEYBOARD_JS = """
+<script>
+(function() {
+  // Only activate when not typing in an input / textarea
+  let focusedIdx = -1;
+
+  function getCards() {
+    // Target the outermost bordered containers Streamlit renders for job cards
+    return Array.from(
+      document.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]')
+    );
+  }
+
+  function scrollToCard(idx) {
+    const cards = getCards();
+    if (idx < 0 || idx >= cards.length) return;
+    cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    cards.forEach((c, i) => {
+      c.style.outline = i === idx ? '2px solid #1565c0' : '';
+    });
+    focusedIdx = idx;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    const tag = document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    const cards = getCards();
+    if (e.key === 'j' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      scrollToCard(Math.min(focusedIdx + 1, cards.length - 1));
+    } else if (e.key === 'k' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      scrollToCard(Math.max(focusedIdx - 1, 0));
+    }
+    // 'a' / 's' click the primary / skip button inside the focused card
+    else if ((e.key === 'a' || e.key === 's') && focusedIdx >= 0) {
+      e.preventDefault();
+      const card = cards[focusedIdx];
+      if (!card) return;
+      const buttons = Array.from(card.querySelectorAll('button'));
+      if (e.key === 'a') {
+        // Primary button is always the first styled-primary one
+        const primary = buttons.find(b => b.getAttribute('kind') === 'primaryFormSubmit'
+                                       || b.classList.toString().includes('primary')
+                                       || buttons[0]);
+        if (primary) primary.click();
+      } else {
+        // Skip = button labelled "⏭ Skip"
+        const skip = buttons.find(b => b.innerText.includes('Skip'));
+        if (skip) skip.click();
+      }
+    }
+  });
+})();
+</script>
+"""
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    conn = get_conn()
-    sidebar(conn)
+    conn  = get_conn()
+    stats = get_stats_live(str(DB_PATH))
 
-    # Header
-    stats = get_stats(conn)
-    st.markdown(f"""
-    <div class="dash-header">
-        <h1>🎯 JobApply Dashboard</h1>
-        <p>Ishani Kathuria &nbsp;·&nbsp; Summer 2026 AI/ML Internship Search &nbsp;·&nbsp;
-           {sum(stats.values())} tracked &nbsp;·&nbsp;
-           {stats.get(STATUS_QUEUED, 0)} ready &nbsp;·&nbsp;
-           {stats.get(STATUS_APPLIED, 0) + stats.get(STATUS_INTERVIEW, 0) + stats.get(STATUS_OFFER, 0)} applied</p>
-    </div>
-    """, unsafe_allow_html=True)
+    sidebar(stats)
 
+    # Keyboard nav injection
+    components.html(_KEYBOARD_JS, height=0)
+
+    # ── Funnel header ─────────────────────────────────────────────────────────
     n_new      = stats.get(STATUS_NEW, 0)
     n_queued   = stats.get(STATUS_QUEUED, 0)
     n_approved = stats.get(STATUS_APPROVED, 0)
-    n_applied  = stats.get(STATUS_APPLIED, 0) + stats.get(STATUS_INTERVIEW, 0) + stats.get(STATUS_OFFER, 0)
-    n_total    = sum(stats.values())
+    n_applied  = stats.get(STATUS_APPLIED, 0)
+    n_interview= stats.get(STATUS_INTERVIEW, 0)
+    n_offer    = stats.get(STATUS_OFFER, 0)
+    n_rejected = stats.get(STATUS_REJECTED, 0)
+    n_tracked  = sum(stats.values())
+    n_submitted = n_applied + n_interview + n_offer
 
+    def _rate(num, den):
+        return f"{num/den:.0%}" if den else "—"
+
+    st.markdown(f"""
+    <div class="funnel-header">
+      <div>
+        <h1>🎯 JobApply</h1>
+        <p>Ishani Kathuria &nbsp;·&nbsp; Summer 2026 AI/ML Internship Search</p>
+      </div>
+      <div class="funnel-steps">
+        <div class="funnel-step {'active' if n_new else ''}">
+          🆕 {n_new} Discovered
+        </div>
+        <span class="funnel-arrow">▶</span>
+        <div class="funnel-step {'active' if n_queued else ''}">
+          ✅ {n_queued} Ready
+          <span class="funnel-rate">({_rate(n_queued, n_new)})</span>
+        </div>
+        <span class="funnel-arrow">▶</span>
+        <div class="funnel-step {'active' if n_submitted else ''}">
+          📤 {n_submitted} Applied
+          <span class="funnel-rate">({_rate(n_submitted, n_new)})</span>
+        </div>
+        <span class="funnel-arrow">▶</span>
+        <div class="funnel-step {'active' if n_interview else ''}">
+          🎤 {n_interview} Interview
+          <span class="funnel-rate">({_rate(n_interview, n_submitted)})</span>
+        </div>
+        <span class="funnel-arrow">▶</span>
+        <div class="funnel-step {'active' if n_offer else ''}">
+          🎉 {n_offer} Offer
+          <span class="funnel-rate">({_rate(n_offer, n_submitted)})</span>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Tabs ──────────────────────────────────────────────────────────────────
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         f"🆕 New ({n_new})",
         f"✅ Ready ({n_queued})",
         f"🚀 Approved ({n_approved})",
-        f"📤 Applied ({n_applied})",
-        f"📋 All ({n_total})",
+        f"📤 Applied ({n_submitted})",
+        f"📋 All ({n_tracked})",
         "📥 Import",
     ])
 
