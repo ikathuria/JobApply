@@ -213,7 +213,7 @@ def _resolve_path(stored: str) -> Path | None:
     return p if p.exists() else None
 
 
-def pdf_viewer(path: str) -> None:
+def pdf_viewer(path: str, dl_key: str = "") -> None:
     """Render PDF pages as images — works in all browsers, no data: URI needed."""
     p = _resolve_path(path)
     if p is None:
@@ -229,13 +229,14 @@ def pdf_viewer(path: str) -> None:
         doc.close()
     except Exception as e:
         st.warning(f"Could not render PDF: {e}")
-    # Always offer a download button
+    # Unique key: caller supplies a job-scoped prefix so duplicate filenames never collide
+    _key = f"dl_{dl_key}_{re.sub(r'[^a-z0-9]', '_', str(p).lower())[-30:]}"
     st.download_button(
         "⬇️ Download PDF",
         data=p.read_bytes(),
         file_name=p.name,
         mime="application/pdf",
-        key=f"dl_{hash(str(p))}",
+        key=_key,
     )
 
 
@@ -491,7 +492,7 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                 tabs = st.tabs(tab_labels)
 
                 with tabs[0]:
-                    pdf_viewer(str(r_path))
+                    pdf_viewer(str(r_path), dl_key=f"resume_{job['id']}")
 
                 with tabs[1]:
                     if cl_txt.exists():
@@ -504,7 +505,7 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                             st.toast("💾 Cover letter saved.")
                     elif IS_CLOUD:
                         st.info("Cover letter not available — re-tailor to generate it here.")
-                    pdf_viewer(str(cl_pdf))
+                    pdf_viewer(str(cl_pdf), dl_key=f"cl_{job['id']}")
 
                 if shot_path:
                     with tabs[2]:
