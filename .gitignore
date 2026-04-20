@@ -5,9 +5,3 @@ __pycache__/
 *.pyo
 logs/
 output/resumes/_test/
-output/resumes/analog_devices_aiml_design_layout_intern/
-output/resumes/catalyst_brands_llc_intern_technology__ai_innovation_digital/
-output/resumes/cerebroneai_genai_engineer_intern/
-output/resumes/rocket_lawyer_aiml_intern/
-output/resumes/sap_sap_ixp_intern__ai_scientist/
-output/resumes/wex_phd_intern__aimlnlp_engineer/

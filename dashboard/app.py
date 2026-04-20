@@ -139,17 +139,37 @@ def status_pill(status: str) -> str:
     return f'<span class="pill {cls}">{icon} {label}</span>'
 
 
+def _resolve_path(stored: str) -> Path | None:
+    """Resolve a stored path to absolute, handling Windows backslashes and relative paths."""
+    if not stored:
+        return None
+    p = Path(stored.replace("\\", "/"))
+    if not p.is_absolute():
+        p = ROOT_DIR / p
+    return p if p.exists() else None
+
+
 def pdf_viewer(path: str) -> None:
-    p = Path(path)
-    if not p.exists():
-        st.warning(f"PDF not found: {path}")
+    p = _resolve_path(path)
+    if p is None:
+        st.info("PDF not available on this environment — tailored locally only. Re-tailor here to generate it.")
         return
-    b64 = base64.b64encode(p.read_bytes()).decode()
+    data = p.read_bytes()
+    b64  = base64.b64encode(data).decode()
+    # <embed> works in Chrome where <iframe data:> is blocked
     st.markdown(
-        f'<iframe src="data:application/pdf;base64,{b64}" '
-        f'width="100%" height="620px" '
-        f'style="border:1px solid #e0e0e0;border-radius:8px;"></iframe>',
+        f'<embed src="data:application/pdf;base64,{b64}" '
+        f'type="application/pdf" width="100%" height="620px" '
+        f'style="border:1px solid #e0e0e0;border-radius:8px;" />',
         unsafe_allow_html=True,
+    )
+    # Download button as reliable fallback
+    st.download_button(
+        "⬇️ Download PDF",
+        data=data,
+        file_name=p.name,
+        mime="application/pdf",
+        key=f"dl_{p}",
     )
 
 
@@ -303,7 +323,7 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
 
         # PDFs + dry-run screenshot
         if show_pdf and job.get("resume_path"):
-            r_path    = Path(job["resume_path"])
+            r_path    = _resolve_path(job["resume_path"]) or Path(job["resume_path"])
             cl_txt    = r_path.parent / "cover_letter.txt"
             cl_pdf    = r_path.parent / "cover_letter.pdf"
             shot_path = _screenshot_path(job)
@@ -322,12 +342,13 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                     letter = cl_txt.read_text(encoding="utf-8")
                     edited = st.text_area("Cover letter", value=letter, height=280,
                                          key=f"cl_{job['id']}", label_visibility="collapsed")
-                    c_save, c_regen, _ = st.columns([1, 1, 4])
+                    c_save, _, __ = st.columns([1, 1, 4])
                     if c_save.button("💾 Save", key=f"save_cl_{job['id']}"):
                         cl_txt.write_text(edited, encoding="utf-8")
                         st.success("Saved.")
-                if cl_pdf.exists():
-                    pdf_viewer(str(cl_pdf))
+                elif IS_CLOUD:
+                    st.info("Cover letter not available — re-tailor to generate it here.")
+                pdf_viewer(str(cl_pdf))
 
             if shot_path:
                 with tabs[2]:
