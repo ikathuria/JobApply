@@ -52,7 +52,12 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             resume_path     TEXT,
             cover_letter    TEXT,
             notes           TEXT,
-            rejection_stage TEXT DEFAULT NULL,
+            rejection_stage TEXT    DEFAULT NULL,
+            starred         INTEGER DEFAULT 0,
+            interview_date  TEXT    DEFAULT NULL,
+            recruiter       TEXT    DEFAULT NULL,
+            salary_range    TEXT    DEFAULT NULL,
+            follow_up_date  TEXT    DEFAULT NULL,
             created_at      TEXT DEFAULT (datetime('now')),
             updated_at      TEXT DEFAULT (datetime('now'))
         );
@@ -61,7 +66,8 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_jobs_score  ON jobs(score DESC);
         CREATE INDEX IF NOT EXISTS idx_jobs_source ON jobs(source);
     """)
-    # Migrate existing DBs — add columns introduced after initial schema
+    # Migrate existing DBs that pre-date any of these columns (ALTER TABLE
+    # is a no-op if the column already exists — the exception is swallowed).
     for _col, _def in [
         ("rejection_stage", "TEXT DEFAULT NULL"),
         ("starred",         "INTEGER DEFAULT 0"),
@@ -74,7 +80,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             conn.execute(f"ALTER TABLE jobs ADD COLUMN {_col} {_def}")
             conn.commit()
         except Exception:
-            pass  # column already exists
+            pass  # column already exists — expected for fresh and migrated DBs
 
 
 def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
