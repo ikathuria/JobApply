@@ -107,6 +107,17 @@ st.markdown("""
 
 /* ── Edit section ── */
 .edit-section { background: rgba(128,128,128,0.06); border-radius: 8px; padding: 0.8rem; }
+
+/* ── Days-since badge ── */
+.days-badge  { display:inline-block; padding:1px 8px; border-radius:12px; font-size:0.72rem; font-weight:600; margin-left:4px; }
+.days-fresh  { background:#e8f5e9; color:#2e7d32; }
+.days-warm   { background:#fff3e0; color:#e65100; }
+.days-cold   { background:#ffebee; color:#b71c1c; }
+.ghost-badge { background:#f3e5f5; color:#6a1b9a; }
+
+/* ── Star ── */
+.star-on  { color:#f9a825; font-size:1.1rem; }
+.star-off { color:#ccc;    font-size:1.1rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -147,6 +158,30 @@ def score_bar_html(score: float) -> str:
         f'<div class="score-bar" style="width:{pct}%;background:{color};"></div>'
         f'</div>'
     )
+
+
+def _days_since(date_str: str | None) -> int | None:
+    """Return number of days since a YYYY-MM-DD date string, or None."""
+    if not date_str:
+        return None
+    try:
+        d = date.fromisoformat(str(date_str)[:10])
+        return (date.today() - d).days
+    except Exception:
+        return None
+
+
+def _days_badge_html(days: int | None, status: str) -> str:
+    """Return an HTML badge showing days since applied, with ghost indicator for stale apps."""
+    if days is None:
+        return ""
+    if status in (STATUS_APPLIED, STATUS_OA) and days > 30:
+        return f'<span class="days-badge ghost-badge">👻 {days}d</span>'
+    if days < 7:
+        return f'<span class="days-badge days-fresh">{days}d ago</span>'
+    if days < 30:
+        return f'<span class="days-badge days-warm">{days}d ago</span>'
+    return f'<span class="days-badge days-cold">{days}d ago</span>'
 
 
 STATUS_META = {
@@ -352,6 +387,16 @@ def sidebar(conn: sqlite3.Connection) -> None:
         st.divider()
         if st.button("🔄 Refresh", use_container_width=True):
             refresh()
+
+        with st.expander("⌨️ Keyboard shortcuts"):
+            st.markdown("""
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Next card |
+| `k` / `↑` | Previous card |
+| `a` | Primary action (Tailor / Approve) |
+| `s` | Skip current card |
+""")
         st.caption("Gemini 2.5 Flash · ReportLab · Playwright")
 
 
@@ -406,6 +451,7 @@ def _action_buttons(conn: sqlite3.Connection, job: dict) -> None:
         if st.button("🎉 Got Offer!", key=f"offer_{jid}", type="primary",
                      use_container_width=True):
             update_status(conn, jid, STATUS_OFFER)
+            st.balloons()
             refresh(f"🎉 OFFER from {job.get('company', '')}!")
 
     # Secondary actions — small row beneath primary
@@ -455,20 +501,37 @@ def _action_buttons(conn: sqlite3.Connection, job: dict) -> None:
 def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None:
     score  = job.get("score", 0.0)
     status = job["status"]
+    jid    = job["id"]
+    is_starred = bool(job.get("starred"))
+    days   = _days_since(job.get("date_applied"))
 
     with st.container(border=True):
         # Header row
-        h1, h2 = st.columns([7, 1])
+        h1, h2, h3 = st.columns([6, 1, 1])
         with h1:
-            st.markdown(f"### {job['title']}")
-            st.markdown(
-                f"{status_pill(status)} &nbsp;"
-                f"**{job.get('company') or 'Unknown'}** &nbsp;·&nbsp; "
-                f"📍 {job.get('location') or 'USA'} &nbsp;·&nbsp; "
+            star_icon = "⭐" if is_starred else "☆"
+            st.markdown(f"### {star_icon} {job['title']}")
+            meta_parts = [
+                status_pill(status),
+                f"&nbsp; **{job.get('company') or 'Unknown'}** &nbsp;·&nbsp;",
+                f"📍 {job.get('location') or 'USA'} &nbsp;·&nbsp;",
                 f"Source: `{job.get('source', '?')}`",
-                unsafe_allow_html=True,
-            )
+            ]
+            if days is not None:
+                meta_parts.append(_days_badge_html(days, status))
+            if status == STATUS_INTERVIEW and job.get("interview_date"):
+                meta_parts.append(f"&nbsp; 📅 Interview: **{job['interview_date'][:10]}**")
+            if job.get("recruiter"):
+                meta_parts.append(f"&nbsp; 👤 {job['recruiter']}")
+            st.markdown(" ".join(meta_parts), unsafe_allow_html=True)
         with h2:
+            # Star toggle button
+            star_label = "⭐" if is_starred else "☆ Star"
+            if st.button(star_label, key=f"star_{jid}", use_container_width=True,
+                         help="Star this job to pin it to the top"):
+                update_status(conn, jid, status, starred=0 if is_starred else 1)
+                st.rerun()
+        with h3:
             _url = job.get("url") or ""
             _has_real_url = _url and not _url.startswith("manual://")
             _apply_visible = status in (STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED) and _has_real_url
@@ -539,7 +602,6 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
             update_status(conn, job["id"], status, notes=new_notes)
 
         # Edit fields (collapsed by default)
-        jid = job["id"]
         with st.expander("✏️ Edit details", expanded=False):
             ea, eb = st.columns(2)
             ed_title    = ea.text_input("Title",    value=job.get("title") or "",
@@ -558,6 +620,22 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                                           float(job.get("score") or 0.0), 0.05,
                                           key=f"ed_sc_{jid}",
                                           help="AI relevance score override")
+            ed_recruiter   = ea.text_input("Recruiter name",
+                                           value=job.get("recruiter") or "",
+                                           key=f"ed_rec_{jid}", placeholder="e.g. Jane Smith")
+            ed_salary      = eb.text_input("Salary / Stipend",
+                                           value=job.get("salary_range") or "",
+                                           key=f"ed_sal_{jid}", placeholder="e.g. $30/hr or $8k/mo")
+            ed_interview_d = ea.text_input("Interview Date",
+                                           value=(job.get("interview_date") or "")[:10],
+                                           placeholder="YYYY-MM-DD",
+                                           key=f"ed_intd_{jid}")
+            ed_followup    = eb.text_input("Follow-up Date",
+                                           value=(job.get("follow_up_date") or "")[:10],
+                                           placeholder="YYYY-MM-DD",
+                                           key=f"ed_fu_{jid}")
+            ed_starred     = ea.checkbox("⭐ Starred", value=bool(job.get("starred")),
+                                         key=f"ed_star_{jid}")
 
             # Rejection stage — only shown for rejected jobs, feeds the Sankey
             _REJ_STAGE_OPTS  = ["—", "applied", "oa", "interview"]
@@ -567,7 +645,7 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                 cur_stage = job.get("rejection_stage") or "—"
                 if cur_stage not in _REJ_STAGE_OPTS:
                     cur_stage = "—"
-                ed_rej_stage = ea.selectbox(
+                ed_rej_stage = eb.selectbox(
                     "Rejected at stage",
                     _REJ_STAGE_OPTS,
                     index=_REJ_STAGE_OPTS.index(cur_stage),
@@ -580,12 +658,17 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
 
             if st.button("💾 Save Changes", key=f"ed_save_{jid}"):
                 fields = {
-                    "title":        ed_title or job["title"],
-                    "company":      ed_company,
-                    "location":     ed_location,
-                    "url":          ed_url or job.get("url", ""),
-                    "date_applied": ed_date or None,
-                    "score":        ed_score,
+                    "title":          ed_title or job["title"],
+                    "company":        ed_company,
+                    "location":       ed_location,
+                    "url":            ed_url or job.get("url", ""),
+                    "date_applied":   ed_date or None,
+                    "score":          ed_score,
+                    "recruiter":      ed_recruiter or None,
+                    "salary_range":   ed_salary or None,
+                    "interview_date": ed_interview_d or None,
+                    "follow_up_date": ed_followup or None,
+                    "starred":        1 if ed_starred else 0,
                 }
                 if ed_rej_stage is not None:
                     fields["rejection_stage"] = None if ed_rej_stage == "—" else ed_rej_stage
@@ -595,7 +678,9 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
 
 def _update_job_fields(conn: sqlite3.Connection, job_id: int, fields: dict) -> None:
     """Update editable job fields, silently ignoring URL uniqueness violations."""
-    allowed = {"title", "company", "location", "url", "date_applied", "score", "rejection_stage"}
+    allowed = {"title", "company", "location", "url", "date_applied", "score",
+               "rejection_stage", "starred", "interview_date", "recruiter",
+               "salary_range", "follow_up_date", "notes"}
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return
@@ -687,6 +772,110 @@ def compact_job_row(conn: sqlite3.Connection, job: dict) -> None:
                     "location": ed_location,
                     "url":      ed_url or job.get("url", ""),
                 })
+                refresh("💾 Job updated.")
+
+
+# ── Compact applied row (Applied / OA / Rejected) ─────────────────────────────
+
+def compact_applied_row(conn: sqlite3.Connection, job: dict) -> None:
+    """
+    Scannable single-line row for Applied/OA/Rejected jobs.
+    Expandable to show action buttons + minimal edit.
+    """
+    status  = job["status"]
+    jid     = job["id"]
+    company = job.get("company") or "Unknown"
+    days    = _days_since(job.get("date_applied"))
+    starred = bool(job.get("starred"))
+    star_icon = "⭐" if starred else ""
+
+    icon, label, _ = STATUS_META.get(status, ("", status, ""))
+    header = f"{star_icon} {icon} **{job['title']}** &nbsp;·&nbsp; {company}"
+    if days is not None:
+        ghost = status in (STATUS_APPLIED, STATUS_OA) and days > 30
+        days_str = f"👻 {days}d" if ghost else f"{days}d ago"
+        header += f" &nbsp; `{days_str}`"
+
+    with st.expander(f"{star_icon}{icon}  {job['title']}  ·  {company}", expanded=False):
+        meta_parts = [status_pill(status)]
+        if days is not None:
+            meta_parts.append(_days_badge_html(days, status))
+        if job.get("recruiter"):
+            meta_parts.append(f"&nbsp; 👤 {job['recruiter']}")
+        if job.get("salary_range"):
+            meta_parts.append(f"&nbsp; 💰 {job['salary_range']}")
+        st.markdown(
+            f"{'  '.join(meta_parts)} &nbsp;·&nbsp; "
+            f"📍 {job.get('location') or 'USA'}",
+            unsafe_allow_html=True,
+        )
+
+        if job.get("notes"):
+            st.caption(f"📝 {job['notes'][:120]}{'…' if len(job.get('notes','')) > 120 else ''}")
+
+        _url = job.get("url") or ""
+        _has_real_url = _url and not _url.startswith("manual://")
+        if _has_real_url:
+            st.link_button("🔗 View posting", _url)
+
+        st.markdown("---")
+        _action_buttons(conn, job)
+
+        new_notes = st.text_input(
+            "Notes", value=job.get("notes") or "",
+            placeholder="💬 Add notes…", key=f"notes_ar_{jid}",
+            label_visibility="collapsed",
+        )
+        if new_notes != (job.get("notes") or ""):
+            update_status(conn, jid, status, notes=new_notes)
+
+        with st.expander("✏️ Edit details", expanded=False):
+            ea, eb = st.columns(2)
+            ed_title   = ea.text_input("Title",    value=job.get("title") or "",   key=f"ared_t_{jid}")
+            ed_company = eb.text_input("Company",  value=job.get("company") or "", key=f"ared_co_{jid}")
+            ed_date    = ea.text_input("Date Applied",
+                                       value=(job.get("date_applied") or "")[:10],
+                                       placeholder="YYYY-MM-DD", key=f"ared_dt_{jid}")
+            ed_recruiter = eb.text_input("Recruiter", value=job.get("recruiter") or "",
+                                         key=f"ared_rec_{jid}")
+            ed_salary  = ea.text_input("Salary/Stipend", value=job.get("salary_range") or "",
+                                       key=f"ared_sal_{jid}")
+            ed_followup = eb.text_input("Follow-up Date",
+                                        value=(job.get("follow_up_date") or "")[:10],
+                                        placeholder="YYYY-MM-DD", key=f"ared_fu_{jid}")
+            ed_starred = ea.checkbox("⭐ Starred", value=bool(job.get("starred")),
+                                     key=f"ared_star_{jid}")
+
+            # Rejection stage for rejected jobs
+            _REJ_STAGE_OPTS  = ["—", "applied", "oa", "interview"]
+            _REJ_STAGE_LABEL = {"—": "— unknown", "applied": "📤 At Applied",
+                                 "oa": "📝 After OA", "interview": "🎤 After Interview"}
+            if status == STATUS_REJECTED:
+                cur_stage = job.get("rejection_stage") or "—"
+                if cur_stage not in _REJ_STAGE_OPTS:
+                    cur_stage = "—"
+                ed_rej_stage = eb.selectbox(
+                    "Rejected at stage", _REJ_STAGE_OPTS,
+                    index=_REJ_STAGE_OPTS.index(cur_stage),
+                    format_func=lambda s: _REJ_STAGE_LABEL[s],
+                    key=f"ared_rs_{jid}",
+                )
+            else:
+                ed_rej_stage = None
+
+            if st.button("💾 Save", key=f"ared_save_{jid}"):
+                fields = {
+                    "title":          ed_title or job["title"],
+                    "company":        ed_company,
+                    "date_applied":   ed_date or None,
+                    "recruiter":      ed_recruiter or None,
+                    "salary_range":   ed_salary or None,
+                    "follow_up_date": ed_followup or None,
+                    "starred":        1 if ed_starred else 0,
+                }
+                if ed_rej_stage is not None:
+                    fields["rejection_stage"] = None if ed_rej_stage == "—" else ed_rej_stage
+                _update_job_fields(conn, jid, fields)
                 refresh("💾 Job updated.")
 
 
@@ -820,25 +1009,74 @@ def tab_approved(conn: sqlite3.Connection) -> None:
 
 
 def tab_applied(conn: sqlite3.Connection) -> None:
-    pipeline_order = [
-        (STATUS_OFFER,     "🎉 Offers"),
-        (STATUS_INTERVIEW, "🎤 Interviews"),
-        (STATUS_OA,        "📝 Online Assessments"),
-        (STATUS_APPLIED,   "📤 Applied"),
-        (STATUS_REJECTED,  "❌ Rejected"),
-    ]
-    any_jobs = False
-    for status, label in pipeline_order:
-        jobs = rows_to_dicts(get_jobs(conn, status=status, limit=50))
-        if not jobs:
-            continue
-        any_jobs = True
-        st.markdown(f"### {label} &nbsp; `{len(jobs)}`")
-        for job in jobs:
-            job_card(conn, job, show_pdf=True)
+    # Fetch all application-stage jobs in one shot
+    all_statuses = [STATUS_OFFER, STATUS_INTERVIEW, STATUS_OA, STATUS_APPLIED, STATUS_REJECTED]
+    all_applied: list[dict] = []
+    for s in all_statuses:
+        all_applied.extend(rows_to_dicts(get_jobs(conn, status=s, limit=500)))
 
-    if not any_jobs:
+    if not all_applied:
         st.info("No applications submitted yet. Head to **✅ Ready** and mark jobs as applied.")
+        return
+
+    # Ghosted = applied/OA with date_applied > 30 days ago
+    def _is_ghosted(j: dict) -> bool:
+        return j["status"] in (STATUS_APPLIED, STATUS_OA) and (_days_since(j.get("date_applied")) or 0) > 30
+
+    # Filter chip counts
+    counts = {s: sum(1 for j in all_applied if j["status"] == s) for s in all_statuses}
+    n_ghosted = sum(1 for j in all_applied if _is_ghosted(j))
+
+    # Radio filter chips
+    filter_opts = ["All", "📤 Applied", "📝 OA", "🎤 Interview", "🎉 Offer", "❌ Rejected", "👻 Ghosted"]
+    filter_labels = {
+        "All":          f"All ({len(all_applied)})",
+        "📤 Applied":   f"📤 Applied ({counts[STATUS_APPLIED]})",
+        "📝 OA":        f"📝 OA ({counts[STATUS_OA]})",
+        "🎤 Interview": f"🎤 Interview ({counts[STATUS_INTERVIEW]})",
+        "🎉 Offer":     f"🎉 Offer ({counts[STATUS_OFFER]})",
+        "❌ Rejected":  f"❌ Rejected ({counts[STATUS_REJECTED]})",
+        "👻 Ghosted":   f"👻 Ghosted ({n_ghosted})",
+    }
+    chosen = st.radio(
+        "Filter",
+        filter_opts,
+        format_func=lambda k: filter_labels[k],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="applied_filter",
+    )
+
+    # Apply filter
+    if chosen == "All":
+        jobs = all_applied
+    elif chosen == "📤 Applied":
+        jobs = [j for j in all_applied if j["status"] == STATUS_APPLIED]
+    elif chosen == "📝 OA":
+        jobs = [j for j in all_applied if j["status"] == STATUS_OA]
+    elif chosen == "🎤 Interview":
+        jobs = [j for j in all_applied if j["status"] == STATUS_INTERVIEW]
+    elif chosen == "🎉 Offer":
+        jobs = [j for j in all_applied if j["status"] == STATUS_OFFER]
+    elif chosen == "❌ Rejected":
+        jobs = [j for j in all_applied if j["status"] == STATUS_REJECTED]
+    elif chosen == "👻 Ghosted":
+        jobs = [j for j in all_applied if _is_ghosted(j)]
+    else:
+        jobs = all_applied
+
+    # Starred first, then most-recent date_applied first
+    jobs.sort(key=lambda j: (-(j.get("starred") or 0), -(j.get("date_applied") or "0000")))
+
+    st.caption(f"{len(jobs)} job{'s' if len(jobs) != 1 else ''}")
+
+    for job in jobs:
+        s = job["status"]
+        # Full card for high-value stages; compact row for applied/oa/rejected
+        if s in (STATUS_INTERVIEW, STATUS_OFFER):
+            job_card(conn, job, show_pdf=True)
+        else:
+            compact_applied_row(conn, job)
 
 
 def tab_all(conn: sqlite3.Connection) -> None:
@@ -860,13 +1098,30 @@ def tab_all(conn: sqlite3.Connection) -> None:
                 or q in (j.get("company") or "").lower()]
         st.session_state["all_page"] = 0
 
+    # Export CSV button
+    if jobs:
+        csv_fields = ["id", "title", "company", "location", "status", "score",
+                      "date_applied", "date_scraped", "source", "url", "notes",
+                      "recruiter", "salary_range", "interview_date", "follow_up_date"]
+        csv_buf = io.StringIO()
+        writer  = csv.DictWriter(csv_buf, fieldnames=csv_fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(jobs)
+        st.download_button(
+            "⬇️ Export CSV",
+            data=csv_buf.getvalue(),
+            file_name="jobapply_export.csv",
+            mime="text/csv",
+            key="export_csv_btn",
+        )
+
     page_jobs, page, total_pages = _paginate(jobs, "all_page", PAGE_SIZE_ALL)
 
     st.caption(f"{len(jobs)} jobs · page {page + 1}/{total_pages}")
 
     # Table header
-    h = st.columns([3, 1, 2, 1, 1, 1])
-    for col, lbl in zip(h, ["Title / Company", "Score", "Status", "Date Applied", "Source", ""]):
+    h = st.columns([0.4, 3, 1, 2, 1, 1, 0.7])
+    for col, lbl in zip(h, ["⭐", "Title / Company", "Score", "Status", "Date Applied", "Source", ""]):
         col.markdown(f"**{lbl}**")
     st.divider()
 
@@ -874,24 +1129,27 @@ def tab_all(conn: sqlite3.Connection) -> None:
         status     = job["status"]
         row_class  = STATUS_ROW_CLASS.get(status, "")
         date_app   = job.get("date_applied") or "—"
-        # Truncate long dates to just YYYY-MM-DD
         if date_app and date_app != "—":
             date_app = date_app[:10]
+        is_starred = bool(job.get("starred"))
 
-        c = st.columns([3, 1, 2, 1, 1, 1])
-        c[0].markdown(
+        c = st.columns([0.4, 3, 1, 2, 1, 1, 0.7])
+        c[0].markdown("⭐" if is_starred else "☆")
+        c[1].markdown(
             f'<div class="{row_class}"><strong>{job["title"]}</strong><br>'
             f'<span style="font-size:0.85rem;color:#666;">{job.get("company") or "N/A"}</span></div>',
             unsafe_allow_html=True,
         )
-        c[1].markdown(
+        c[2].markdown(
             f"{score_color(job['score'])} {job['score']:.0%}",
             help="AI relevance score vs. your profile",
         )
-        c[2].markdown(status_pill(status), unsafe_allow_html=True)
-        c[3].caption(date_app)
-        c[4].caption(job.get("source", "?"))
-        c[5].link_button("→", job.get("url", "#"))
+        c[3].markdown(status_pill(status), unsafe_allow_html=True)
+        c[4].caption(date_app)
+        c[5].caption(job.get("source", "?"))
+        _url = job.get("url") or "#"
+        if _url and not _url.startswith("manual://"):
+            c[6].link_button("→", _url)
 
     _pagination_controls(page, total_pages, len(jobs), "all_page", PAGE_SIZE_ALL)
 

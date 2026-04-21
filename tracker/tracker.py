@@ -61,12 +61,20 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_jobs_score  ON jobs(score DESC);
         CREATE INDEX IF NOT EXISTS idx_jobs_source ON jobs(source);
     """)
-    # Migrate existing DBs that pre-date rejection_stage column
-    try:
-        conn.execute("ALTER TABLE jobs ADD COLUMN rejection_stage TEXT DEFAULT NULL")
-        conn.commit()
-    except Exception:
-        pass  # column already exists
+    # Migrate existing DBs — add columns introduced after initial schema
+    for _col, _def in [
+        ("rejection_stage", "TEXT DEFAULT NULL"),
+        ("starred",         "INTEGER DEFAULT 0"),
+        ("interview_date",  "TEXT DEFAULT NULL"),
+        ("recruiter",       "TEXT DEFAULT NULL"),
+        ("salary_range",    "TEXT DEFAULT NULL"),
+        ("follow_up_date",  "TEXT DEFAULT NULL"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE jobs ADD COLUMN {_col} {_def}")
+            conn.commit()
+        except Exception:
+            pass  # column already exists
 
 
 def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
@@ -128,7 +136,8 @@ def get_jobs(
 
 def update_status(conn: sqlite3.Connection, job_id: int, status: str, **kwargs) -> None:
     """Update a job's status and any optional fields (resume_path, notes, etc.)."""
-    allowed = {"resume_path", "cover_letter", "notes", "date_applied"}
+    allowed = {"resume_path", "cover_letter", "notes", "date_applied",
+               "starred", "interview_date", "recruiter", "salary_range", "follow_up_date"}
     updates = {"status": status, "updated_at": datetime.utcnow().isoformat()}
     updates.update({k: v for k, v in kwargs.items() if k in allowed})
 
