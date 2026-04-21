@@ -4,6 +4,7 @@ Run: streamlit run dashboard/app.py
 """
 
 import csv
+import hashlib
 import io
 import math
 import os
@@ -30,7 +31,7 @@ IS_CLOUD = Path("/mount/src").exists()
 from tracker.tracker import (
     init_db, get_jobs, get_stats, update_status,
     STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED, STATUS_SKIPPED,
-    STATUS_APPLIED, STATUS_INTERVIEW, STATUS_REJECTED, STATUS_OFFER,
+    STATUS_APPLIED, STATUS_OA, STATUS_INTERVIEW, STATUS_REJECTED, STATUS_OFFER,
 )
 
 DB_PATH        = Path(__file__).parent.parent / "tracker" / "applications.db"
@@ -99,6 +100,7 @@ st.markdown("""
 .pill-queued   { background:#e8f5e9; color:#2e7d32; }
 .pill-approved { background:#ede7f6; color:#4527a0; }
 .pill-applied  { background:#fff3e0; color:#e65100; }
+.pill-oa       { background:#fff8e1; color:#f57f17; }
 .pill-interview{ background:#f3e5f5; color:#6a1b9a; }
 .pill-offer    { background:#e8f5e9; color:#1b5e20; }
 .pill-rejected { background:#ffebee; color:#b71c1c; }
@@ -109,6 +111,7 @@ st.markdown("""
 .row-queued    { border-left: 4px solid #2e7d32; padding-left: 0.6rem; }
 .row-approved  { border-left: 4px solid #4527a0; padding-left: 0.6rem; }
 .row-applied   { border-left: 4px solid #e65100; padding-left: 0.6rem; }
+.row-oa        { border-left: 4px solid #f57f17; padding-left: 0.6rem; }
 .row-interview { border-left: 4px solid #6a1b9a; padding-left: 0.6rem; }
 .row-offer     { border-left: 4px solid #1b5e20; padding-left: 0.6rem; }
 .row-rejected  { border-left: 4px solid #b71c1c; padding-left: 0.6rem; }
@@ -165,14 +168,15 @@ def score_bar_html(score: float) -> str:
 
 
 STATUS_META = {
-    STATUS_NEW:       ("🆕", "New",       "pill-new"),
-    STATUS_QUEUED:    ("✅", "Ready",     "pill-queued"),
-    STATUS_APPROVED:  ("🚀", "Approved",  "pill-approved"),
-    STATUS_SKIPPED:   ("⏭", "Skipped",   "pill-skipped"),
-    STATUS_APPLIED:   ("📤", "Applied",   "pill-applied"),
-    STATUS_INTERVIEW: ("🎤", "Interview", "pill-interview"),
-    STATUS_REJECTED:  ("❌", "Rejected",  "pill-rejected"),
-    STATUS_OFFER:     ("🎉", "Offer",     "pill-offer"),
+    STATUS_NEW:       ("🆕", "New",        "pill-new"),
+    STATUS_QUEUED:    ("✅", "Ready",      "pill-queued"),
+    STATUS_APPROVED:  ("🚀", "Approved",   "pill-approved"),
+    STATUS_SKIPPED:   ("⏭",  "Skipped",   "pill-skipped"),
+    STATUS_APPLIED:   ("📤", "Applied",    "pill-applied"),
+    STATUS_OA:        ("📝", "OA",         "pill-oa"),
+    STATUS_INTERVIEW: ("🎤", "Interview",  "pill-interview"),
+    STATUS_REJECTED:  ("❌", "Rejected",   "pill-rejected"),
+    STATUS_OFFER:     ("🎉", "Offer",      "pill-offer"),
 }
 
 STATUS_ROW_CLASS = {
@@ -180,6 +184,7 @@ STATUS_ROW_CLASS = {
     STATUS_QUEUED:    "row-queued",
     STATUS_APPROVED:  "row-approved",
     STATUS_APPLIED:   "row-applied",
+    STATUS_OA:        "row-oa",
     STATUS_INTERVIEW: "row-interview",
     STATUS_OFFER:     "row-offer",
     STATUS_REJECTED:  "row-rejected",
@@ -356,7 +361,7 @@ def _action_buttons(conn: sqlite3.Connection, job: dict) -> None:
     status = job["status"]
     jid    = job["id"]
 
-    # Primary action
+    # Primary action — next logical step in the pipeline
     if status == STATUS_NEW:
         if st.button("✨ Tailor", key=f"tailor_{jid}", type="primary",
                      use_container_width=True,
@@ -377,6 +382,17 @@ def _action_buttons(conn: sqlite3.Connection, job: dict) -> None:
             refresh(f"📤 Marked applied: {job['title']}")
 
     elif status == STATUS_APPLIED:
+        c_oa, c_int = st.columns(2)
+        if c_oa.button("📝 Got OA", key=f"oa_{jid}", type="primary",
+                       use_container_width=True, help="Received an online assessment"):
+            update_status(conn, jid, STATUS_OA)
+            refresh(f"📝 OA stage: {job['title']}")
+        if c_int.button("🎤 Got Interview", key=f"int_direct_{jid}", type="secondary",
+                        use_container_width=True, help="Moved directly to interview"):
+            update_status(conn, jid, STATUS_INTERVIEW)
+            refresh(f"🎤 Interview stage: {job['title']}")
+
+    elif status == STATUS_OA:
         if st.button("🎤 Got Interview!", key=f"int2_{jid}", type="primary",
                      use_container_width=True):
             update_status(conn, jid, STATUS_INTERVIEW)
@@ -674,6 +690,7 @@ def tab_applied(conn: sqlite3.Connection) -> None:
     pipeline_order = [
         (STATUS_OFFER,     "🎉 Offers"),
         (STATUS_INTERVIEW, "🎤 Interviews"),
+        (STATUS_OA,        "📝 Online Assessments"),
         (STATUS_APPLIED,   "📤 Applied"),
         (STATUS_REJECTED,  "❌ Rejected"),
     ]
@@ -697,7 +714,7 @@ def tab_all(conn: sqlite3.Connection) -> None:
                                 label_visibility="collapsed", key="all_search")
     status_sel = f2.selectbox("Status", ["All"] + [
         STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED, STATUS_APPLIED,
-        STATUS_INTERVIEW, STATUS_OFFER, STATUS_SKIPPED, STATUS_REJECTED,
+        STATUS_OA, STATUS_INTERVIEW, STATUS_OFFER, STATUS_SKIPPED, STATUS_REJECTED,
     ], label_visibility="collapsed", key="all_status")
     min_score  = f3.slider("Min score", 0.0, 1.0, 0.3, 0.05, key="all_min")
 
@@ -746,14 +763,155 @@ def tab_all(conn: sqlite3.Connection) -> None:
     _pagination_controls(page, total_pages, len(jobs), "all_page", PAGE_SIZE_ALL)
 
 
+# ── Sankey tab ────────────────────────────────────────────────────────────────
+
+def tab_sankey(conn: sqlite3.Connection) -> None:
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
+        st.error("plotly not installed. Run: `pip install plotly`")
+        return
+
+    stats = get_stats(conn)
+
+    # Only count externally-submitted applications for the funnel
+    n_applied   = stats.get(STATUS_APPLIED,   0)
+    n_oa        = stats.get(STATUS_OA,        0)
+    n_interview = stats.get(STATUS_INTERVIEW, 0)
+    n_offer     = stats.get(STATUS_OFFER,     0)
+    n_rejected  = stats.get(STATUS_REJECTED,  0)
+    n_total     = n_applied + n_oa + n_interview + n_offer + n_rejected
+
+    if n_total == 0:
+        st.info("No submitted applications tracked yet — import your CSV or mark some jobs as Applied.")
+        return
+
+    # Summary metrics row
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("📤 Applied",   n_total)
+    m2.metric("📝 Got OA",    n_oa + n_interview + n_offer,
+              help="Reached OA stage or beyond")
+    m3.metric("🎤 Interview", n_interview + n_offer,
+              help="Reached interview stage or beyond")
+    m4.metric("🎉 Offer",     n_offer)
+    m5.metric("❌ Rejected",  n_rejected)
+
+    st.divider()
+
+    # ── Sankey data ────────────────────────────────────────────────────────────
+    # Nodes represent cumulative "reached at least this stage" counts so that
+    # each node's in-flow equals its out-flow and the chart is balanced.
+    #
+    #  Node 0: Total Applied
+    #  Node 1: No Response (still at 'applied')
+    #  Node 2: Reached OA  (oa + interview + offer)
+    #  Node 3: Rejected    (all-stage, distributed to Total for simplicity)
+    #  Node 4: At OA stage (n_oa — awaiting OA result)
+    #  Node 5: Reached Interview (interview + offer)
+    #  Node 6: In Interview (n_interview — awaiting decision)
+    #  Node 7: Offer 🎉
+
+    reached_oa        = n_oa + n_interview + n_offer
+    reached_interview = n_interview + n_offer
+
+    labels = [
+        f"Total Applied\n({n_total})",
+        f"No Response\n({n_applied})",
+        f"Got OA\n({reached_oa})",
+        f"Rejected\n({n_rejected})",
+        f"At OA Stage\n({n_oa})",
+        f"Got Interview\n({reached_interview})",
+        f"In Interview\n({n_interview})",
+        f"Offer 🎉\n({n_offer})",
+    ]
+    node_colors = [
+        "#1565c0",  # 0 Total
+        "#9e9e9e",  # 1 No Response
+        "#f57f17",  # 2 Got OA
+        "#b71c1c",  # 3 Rejected
+        "#ff8f00",  # 4 At OA stage
+        "#6a1b9a",  # 5 Got Interview
+        "#4527a0",  # 6 In Interview
+        "#2e7d32",  # 7 Offer
+    ]
+
+    raw_links = [
+        # source, target, value, color
+        (0, 1, n_applied,   "rgba(158,158,158,0.30)"),   # Total → No Response
+        (0, 2, reached_oa,  "rgba(245,127,23,0.35)"),    # Total → Got OA+
+        (0, 3, n_rejected,  "rgba(183,28,28,0.30)"),     # Total → Rejected
+        (2, 4, n_oa,        "rgba(255,143,0,0.35)"),     # Got OA → At OA Stage
+        (2, 5, reached_interview, "rgba(106,27,154,0.35)"),  # Got OA → Got Interview+
+        (5, 6, n_interview, "rgba(69,39,160,0.35)"),     # Got Interview → In Interview
+        (5, 7, n_offer,     "rgba(46,125,50,0.40)"),     # Got Interview → Offer
+    ]
+
+    # Drop zero-value links to avoid Plotly warnings
+    raw_links = [(s, t, v, c) for s, t, v, c in raw_links if v > 0]
+
+    # Conversion rate annotations
+    def _pct(num, den):
+        return f"{num/den:.0%}" if den else "—"
+
+    st.caption(
+        f"Response rate: **{_pct(reached_oa + n_rejected, n_total)}** &nbsp;·&nbsp; "
+        f"OA → Interview: **{_pct(reached_interview, reached_oa)}** &nbsp;·&nbsp; "
+        f"Interview → Offer: **{_pct(n_offer, reached_interview)}** &nbsp;·&nbsp; "
+        f"Overall: **{_pct(n_offer, n_total)}**"
+    )
+
+    fig = go.Figure(go.Sankey(
+        arrangement="snap",
+        node=dict(
+            pad=18,
+            thickness=22,
+            line=dict(color="rgba(0,0,0,0.25)", width=0.5),
+            label=labels,
+            color=node_colors,
+            hovertemplate="%{label}<extra></extra>",
+        ),
+        link=dict(
+            source=[l[0] for l in raw_links],
+            target=[l[1] for l in raw_links],
+            value=[l[2] for l in raw_links],
+            color=[l[3] for l in raw_links],
+            hovertemplate="%{source.label} → %{target.label}: %{value}<extra></extra>",
+        ),
+    ))
+    fig.update_layout(
+        font=dict(size=13, family="Inter, system-ui, sans-serif"),
+        height=480,
+        margin=dict(l=10, r=10, t=20, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption(
+        "ℹ️ Rejections are shown at the top level since the exact pipeline stage of each "
+        "rejection isn't tracked. OA and Interview nodes show applications currently at that stage."
+    )
+
+
 # ── Import tab ─────────────────────────────────────────────────────────────────
+
+def _synthetic_url(title: str, company: str, date_applied: str = "") -> str:
+    """Generate a stable synthetic URL for jobs imported without one."""
+    raw = f"{title.lower()}|{company.lower()}|{date_applied}"
+    h   = hashlib.md5(raw.encode()).hexdigest()[:10]
+    slug = re.sub(r"[^a-z0-9]+", "-", company.lower())[:24].strip("-")
+    return f"manual://{slug}/{h}"
+
 
 def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
     """Insert a single manually-entered job. Returns (success, message)."""
-    url   = (job.get("url")   or "").strip()
     title = (job.get("title") or "").strip()
-    if not url or not title:
-        return False, "URL and Job Title are required."
+    if not title:
+        return False, "Job Title is required."
+
+    url = (job.get("url") or "").strip()
+    if not url:
+        # Generate a stable synthetic URL so the UNIQUE constraint is satisfied
+        url = _synthetic_url(title, job.get("company", ""), job.get("date_applied", ""))
 
     try:
         conn.execute(
@@ -826,14 +984,15 @@ def tab_import(conn: sqlite3.Connection) -> None:
         with col_a:
             imp_title    = st.text_input("Job Title *", placeholder="Software Engineer Intern")
             imp_company  = st.text_input("Company *",   placeholder="Google")
-            imp_url      = st.text_input("Job Posting URL *", placeholder="https://...")
+            imp_url      = st.text_input("Job Posting URL", placeholder="https://… (optional)")
             imp_location = st.text_input("Location",    placeholder="Remote / New York, NY")
         with col_b:
             imp_status = st.selectbox(
                 "Current Status *",
-                [STATUS_APPLIED, STATUS_INTERVIEW, STATUS_OFFER, STATUS_REJECTED, STATUS_NEW],
+                [STATUS_APPLIED, STATUS_OA, STATUS_INTERVIEW, STATUS_OFFER, STATUS_REJECTED, STATUS_NEW],
                 format_func=lambda s: {
                     STATUS_APPLIED:   "📤 Applied",
+                    STATUS_OA:        "📝 OA (Online Assessment)",
                     STATUS_INTERVIEW: "🎤 Interview",
                     STATUS_OFFER:     "🎉 Offer",
                     STATUS_REJECTED:  "❌ Rejected",
@@ -854,7 +1013,7 @@ def tab_import(conn: sqlite3.Connection) -> None:
             ok, msg = _insert_manual_job(conn, {
                 "title":        imp_title,
                 "company":      imp_company,
-                "url":          imp_url,
+                "url":          imp_url or "",   # empty = auto-generate synthetic URL
                 "status":       imp_status,
                 "date_applied": str(imp_date) if imp_status != STATUS_NEW else None,
                 "location":     imp_location,
@@ -867,18 +1026,21 @@ def tab_import(conn: sqlite3.Connection) -> None:
 
     # ── CSV upload ────────────────────────────────────────────────────────────────
     with csv_tab:
-        with st.expander("📋 Required CSV format", expanded=False):
+        with st.expander("📋 CSV format", expanded=False):
             st.markdown("""
-**Required columns:** `title`, `company`, `url`
+**Required columns:** `title`, `company`
 
-**Optional columns:** `status`, `date_applied`, `location`, `notes`
+**Optional columns:** `url`, `status`, `date_applied`, `location`, `notes`
 
-**Valid status values:** `applied`, `interview`, `offer`, `rejected`, `new`
+**Valid status values:** `applied`, `oa`, `interview`, `offer`, `rejected`, `new`
+
+URLs are optional — jobs without a URL get a synthetic identifier automatically.
 
 ```
 title,company,url,status,date_applied,location,notes
-ML Intern,OpenAI,https://openai.com/careers/1,applied,2026-03-15,San Francisco CA,No response yet
-Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Remote,Phone screen done
+ML Intern,OpenAI,,applied,2026-03-15,San Francisco CA,No response yet
+Research Intern,DeepMind,,oa,2026-03-20,Remote,OA received
+SDE Intern,Amazon,https://amazon.jobs/1234,interview,2026-04-01,Seattle WA,Phone screen done
 ```
 """)
             template_csv = "title,company,url,status,date_applied,location,notes\n"
@@ -922,7 +1084,7 @@ Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Rem
                     st.caption(f"… and {len(rows) - 10} more rows")
 
                 valid_statuses = {
-                    STATUS_APPLIED, STATUS_INTERVIEW, STATUS_OFFER,
+                    STATUS_APPLIED, STATUS_OA, STATUS_INTERVIEW, STATUS_OFFER,
                     STATUS_REJECTED, STATUS_NEW, STATUS_QUEUED,
                 }
 
@@ -934,7 +1096,7 @@ Research Intern,DeepMind,https://deepmind.com/careers/2,interview,2026-03-20,Rem
                         ok, msg = _insert_manual_job(conn, {
                             "title":        r.get("title", ""),
                             "company":      r.get("company", ""),
-                            "url":          r.get("url", ""),
+                            "url":          (r.get("url") or "").strip(),  # empty → synthetic URL
                             "status":       status,
                             "date_applied": r.get("date_applied") or None,
                             "location":     r.get("location", ""),
@@ -1029,11 +1191,12 @@ def main() -> None:
     n_queued   = stats.get(STATUS_QUEUED, 0)
     n_approved = stats.get(STATUS_APPROVED, 0)
     n_applied  = stats.get(STATUS_APPLIED, 0)
+    n_oa_hdr   = stats.get(STATUS_OA, 0)
     n_interview= stats.get(STATUS_INTERVIEW, 0)
     n_offer    = stats.get(STATUS_OFFER, 0)
     n_rejected = stats.get(STATUS_REJECTED, 0)
     n_tracked  = sum(stats.values())
-    n_submitted = n_applied + n_interview + n_offer
+    n_submitted = n_applied + n_oa_hdr + n_interview + n_offer
 
     def _rate(num, den):
         return f"{num/den:.0%}" if den else "—"
@@ -1059,6 +1222,11 @@ def main() -> None:
           <span class="funnel-rate">({_rate(n_submitted, n_new)})</span>
         </div>
         <span class="funnel-arrow">▶</span>
+        <div class="funnel-step {'active' if n_oa_hdr else ''}">
+          📝 {n_oa_hdr} OA
+          <span class="funnel-rate">({_rate(n_oa_hdr, n_submitted)})</span>
+        </div>
+        <span class="funnel-arrow">▶</span>
         <div class="funnel-step {'active' if n_interview else ''}">
           🎤 {n_interview} Interview
           <span class="funnel-rate">({_rate(n_interview, n_submitted)})</span>
@@ -1073,12 +1241,15 @@ def main() -> None:
     """, unsafe_allow_html=True)
 
     # ── Tabs ──────────────────────────────────────────────────────────────────
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    n_oa = stats.get(STATUS_OA, 0)
+
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         f"🆕 New ({n_new})",
         f"✅ Ready ({n_queued})",
         f"🚀 Approved ({n_approved})",
         f"📤 Applied ({n_submitted})",
         f"📋 All ({n_tracked})",
+        "📊 Sankey",
         "📥 Import",
     ])
 
@@ -1087,7 +1258,8 @@ def main() -> None:
     with tab3: tab_approved(conn)
     with tab4: tab_applied(conn)
     with tab5: tab_all(conn)
-    with tab6: tab_import(conn)
+    with tab6: tab_sankey(conn)
+    with tab7: tab_import(conn)
 
 
 if __name__ == "__main__":

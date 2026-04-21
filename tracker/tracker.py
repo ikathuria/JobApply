@@ -17,6 +17,7 @@ STATUS_QUEUED = "queued"         # tailored, awaiting human review
 STATUS_APPROVED = "approved"     # human approved — ready for GHA auto-apply
 STATUS_SKIPPED = "skipped"       # manually skipped
 STATUS_APPLIED = "applied"       # application submitted
+STATUS_OA = "oa"                 # online assessment received
 STATUS_INTERVIEW = "interview"   # interview scheduled
 STATUS_REJECTED = "rejected"
 STATUS_OFFER = "offer"
