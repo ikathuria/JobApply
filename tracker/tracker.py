@@ -52,6 +52,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             resume_path     TEXT,
             cover_letter    TEXT,
             notes           TEXT,
+            rejection_stage TEXT DEFAULT NULL,
             created_at      TEXT DEFAULT (datetime('now')),
             updated_at      TEXT DEFAULT (datetime('now'))
         );
@@ -60,7 +61,12 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_jobs_score  ON jobs(score DESC);
         CREATE INDEX IF NOT EXISTS idx_jobs_source ON jobs(source);
     """)
-    conn.commit()
+    # Migrate existing DBs that pre-date rejection_stage column
+    try:
+        conn.execute("ALTER TABLE jobs ADD COLUMN rejection_stage TEXT DEFAULT NULL")
+        conn.commit()
+    except Exception:
+        pass  # column already exists
 
 
 def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:

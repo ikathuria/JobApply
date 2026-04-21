@@ -469,7 +469,11 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                 unsafe_allow_html=True,
             )
         with h2:
-            st.link_button("Apply →", job.get("url", "#"), use_container_width=True)
+            _url = job.get("url") or ""
+            _has_real_url = _url and not _url.startswith("manual://")
+            _apply_visible = status in (STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED) and _has_real_url
+            if _apply_visible:
+                st.link_button("Apply →", _url, use_container_width=True)
 
         # Score bar with tooltip hint
         sc1, sc2 = st.columns([1, 8])
@@ -554,21 +558,44 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
                                           float(job.get("score") or 0.0), 0.05,
                                           key=f"ed_sc_{jid}",
                                           help="AI relevance score override")
+
+            # Rejection stage — only shown for rejected jobs, feeds the Sankey
+            _REJ_STAGE_OPTS  = ["—", "applied", "oa", "interview"]
+            _REJ_STAGE_LABEL = {"—": "— unknown", "applied": "📤 At Applied",
+                                 "oa": "📝 After OA", "interview": "🎤 After Interview"}
+            if status == STATUS_REJECTED:
+                cur_stage = job.get("rejection_stage") or "—"
+                if cur_stage not in _REJ_STAGE_OPTS:
+                    cur_stage = "—"
+                ed_rej_stage = ea.selectbox(
+                    "Rejected at stage",
+                    _REJ_STAGE_OPTS,
+                    index=_REJ_STAGE_OPTS.index(cur_stage),
+                    format_func=lambda s: _REJ_STAGE_LABEL[s],
+                    key=f"ed_rs_{jid}",
+                    help="Which pipeline stage was this rejected at? Used in the Sankey chart.",
+                )
+            else:
+                ed_rej_stage = None
+
             if st.button("💾 Save Changes", key=f"ed_save_{jid}"):
-                _update_job_fields(conn, jid, {
+                fields = {
                     "title":        ed_title or job["title"],
                     "company":      ed_company,
                     "location":     ed_location,
                     "url":          ed_url or job.get("url", ""),
                     "date_applied": ed_date or None,
                     "score":        ed_score,
-                })
+                }
+                if ed_rej_stage is not None:
+                    fields["rejection_stage"] = None if ed_rej_stage == "—" else ed_rej_stage
+                _update_job_fields(conn, jid, fields)
                 refresh("💾 Job updated.")
 
 
 def _update_job_fields(conn: sqlite3.Connection, job_id: int, fields: dict) -> None:
     """Update editable job fields, silently ignoring URL uniqueness violations."""
-    allowed = {"title", "company", "location", "url", "date_applied", "score"}
+    allowed = {"title", "company", "location", "url", "date_applied", "score", "rejection_stage"}
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return
@@ -904,63 +931,79 @@ def tab_sankey(conn: sqlite3.Connection) -> None:
 
     st.divider()
 
-    # ── Sankey data ────────────────────────────────────────────────────────────
-    # Nodes represent cumulative "reached at least this stage" counts so that
-    # each node's in-flow equals its out-flow and the chart is balanced.
-    #
-    #  Node 0: Total Applied
-    #  Node 1: No Response (still at 'applied')
-    #  Node 2: Reached OA  (oa + interview + offer)
-    #  Node 3: Rejected    (all-stage, distributed to Total for simplicity)
-    #  Node 4: At OA stage (n_oa — awaiting OA result)
-    #  Node 5: Reached Interview (interview + offer)
-    #  Node 6: In Interview (n_interview — awaiting decision)
-    #  Node 7: Offer 🎉
+    # ── Stage-attributed rejection counts ─────────────────────────────────────
+    # Query rejection_stage for every rejected job so the Sankey is accurate.
+    rej_rows = conn.execute(
+        "SELECT COALESCE(rejection_stage,'') as stage, COUNT(*) as cnt "
+        "FROM jobs WHERE status='rejected' GROUP BY rejection_stage"
+    ).fetchall()
+    rej_at_applied   = sum(r["cnt"] for r in rej_rows if r["stage"] in ("", "applied"))
+    rej_at_oa        = sum(r["cnt"] for r in rej_rows if r["stage"] == "oa")
+    rej_at_interview = sum(r["cnt"] for r in rej_rows if r["stage"] == "interview")
 
-    reached_oa        = n_oa + n_interview + n_offer
-    reached_interview = n_interview + n_offer
+    # ── Sankey nodes ──────────────────────────────────────────────────────────
+    # Balanced cumulative-stage approach so every node's inflow == outflow.
+    #
+    #  0  Total Applied
+    #  1  No Response          (still at 'applied', pending first reply)
+    #  2  Reached OA           (got OA or beyond)
+    #  3  Rejected (applied)   (direct rejection, no OA)
+    #  4  At OA Stage          (currently in OA, awaiting result)
+    #  5  Rejected (after OA)
+    #  6  Reached Interview    (got interview or beyond)
+    #  7  In Interview         (currently in interviews)
+    #  8  Rejected (after interview)
+    #  9  Offer 🎉
+
+    reached_oa        = n_oa + n_interview + n_offer + rej_at_oa + rej_at_interview
+    reached_interview = n_interview + n_offer + rej_at_interview
 
     labels = [
         f"Total Applied\n({n_total})",
         f"No Response\n({n_applied})",
-        f"Got OA\n({reached_oa})",
-        f"Rejected\n({n_rejected})",
+        f"Reached OA\n({reached_oa})",
+        f"Rejected\n({rej_at_applied})",
         f"At OA Stage\n({n_oa})",
+        f"Rejected after OA\n({rej_at_oa})",
         f"Got Interview\n({reached_interview})",
         f"In Interview\n({n_interview})",
+        f"Rejected after Interview\n({rej_at_interview})",
         f"Offer 🎉\n({n_offer})",
     ]
     node_colors = [
-        "#1565c0",  # 0 Total
+        "#1565c0",  # 0 Total Applied
         "#9e9e9e",  # 1 No Response
-        "#f57f17",  # 2 Got OA
-        "#b71c1c",  # 3 Rejected
-        "#ff8f00",  # 4 At OA stage
-        "#6a1b9a",  # 5 Got Interview
-        "#4527a0",  # 6 In Interview
-        "#2e7d32",  # 7 Offer
+        "#f57f17",  # 2 Reached OA
+        "#b71c1c",  # 3 Rejected (applied stage)
+        "#ff8f00",  # 4 At OA Stage
+        "#c62828",  # 5 Rejected after OA
+        "#6a1b9a",  # 6 Got Interview
+        "#4527a0",  # 7 In Interview
+        "#ad1457",  # 8 Rejected after Interview
+        "#2e7d32",  # 9 Offer
     ]
 
     raw_links = [
-        # source, target, value, color
-        (0, 1, n_applied,   "rgba(158,158,158,0.30)"),   # Total → No Response
-        (0, 2, reached_oa,  "rgba(245,127,23,0.35)"),    # Total → Got OA+
-        (0, 3, n_rejected,  "rgba(183,28,28,0.30)"),     # Total → Rejected
-        (2, 4, n_oa,        "rgba(255,143,0,0.35)"),     # Got OA → At OA Stage
-        (2, 5, reached_interview, "rgba(106,27,154,0.35)"),  # Got OA → Got Interview+
-        (5, 6, n_interview, "rgba(69,39,160,0.35)"),     # Got Interview → In Interview
-        (5, 7, n_offer,     "rgba(46,125,50,0.40)"),     # Got Interview → Offer
+        # src, tgt, value, color
+        (0, 1, n_applied,        "rgba(158,158,158,0.28)"),  # Total → No Response
+        (0, 2, reached_oa,       "rgba(245,127,23,0.35)"),   # Total → Reached OA+
+        (0, 3, rej_at_applied,   "rgba(183,28,28,0.28)"),    # Total → Direct Rejected
+        (2, 4, n_oa,             "rgba(255,143,0,0.35)"),    # Reached OA → At OA
+        (2, 5, rej_at_oa,        "rgba(198,40,40,0.30)"),    # Reached OA → Rejected at OA
+        (2, 6, reached_interview,"rgba(106,27,154,0.35)"),   # Reached OA → Got Interview+
+        (6, 7, n_interview,      "rgba(69,39,160,0.35)"),    # Got Interview → In Interview
+        (6, 8, rej_at_interview, "rgba(173,20,87,0.35)"),    # Got Interview → Rejected at Int.
+        (6, 9, n_offer,          "rgba(46,125,50,0.45)"),    # Got Interview → Offer
     ]
-
-    # Drop zero-value links to avoid Plotly warnings
     raw_links = [(s, t, v, c) for s, t, v, c in raw_links if v > 0]
 
-    # Conversion rate annotations
+    # Conversion rate caption
     def _pct(num, den):
         return f"{num/den:.0%}" if den else "—"
 
+    n_responded = reached_oa + n_rejected
     st.caption(
-        f"Response rate: **{_pct(reached_oa + n_rejected, n_total)}** &nbsp;·&nbsp; "
+        f"Response rate: **{_pct(n_responded, n_total)}** &nbsp;·&nbsp; "
         f"OA → Interview: **{_pct(reached_interview, reached_oa)}** &nbsp;·&nbsp; "
         f"Interview → Offer: **{_pct(n_offer, reached_interview)}** &nbsp;·&nbsp; "
         f"Overall: **{_pct(n_offer, n_total)}**"
@@ -969,8 +1012,7 @@ def tab_sankey(conn: sqlite3.Connection) -> None:
     fig = go.Figure(go.Sankey(
         arrangement="snap",
         node=dict(
-            pad=18,
-            thickness=22,
+            pad=18, thickness=22,
             line=dict(color="rgba(0,0,0,0.25)", width=0.5),
             label=labels,
             color=node_colors,
@@ -986,15 +1028,15 @@ def tab_sankey(conn: sqlite3.Connection) -> None:
     ))
     fig.update_layout(
         font=dict(size=13, family="Inter, system-ui, sans-serif"),
-        height=480,
+        height=500,
         margin=dict(l=10, r=10, t=20, b=10),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
     st.plotly_chart(fig, use_container_width=True)
     st.caption(
-        "ℹ️ Rejections are shown at the top level since the exact pipeline stage of each "
-        "rejection isn't tracked. OA and Interview nodes show applications currently at that stage."
+        "ℹ️ Set **Rejected at stage** in a job's ✏️ Edit details to place rejections "
+        "at the correct Sankey node. Untagged rejections appear as direct rejections from Applied."
     )
 
 
