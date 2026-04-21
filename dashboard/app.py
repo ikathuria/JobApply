@@ -535,6 +535,7 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
             update_status(conn, job["id"], status, notes=new_notes)
 
         # Edit fields (collapsed by default)
+        jid = job["id"]
         with st.expander("✏️ Edit details", expanded=False):
             ea, eb = st.columns(2)
             ed_title    = ea.text_input("Title",    value=job.get("title") or "",
