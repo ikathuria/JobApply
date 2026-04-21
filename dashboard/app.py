@@ -53,45 +53,27 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* Funnel header */
-.funnel-header {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    padding: 1.2rem 2rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* ── Tabs — bigger, bolder, more readable ── */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 6px;
+    padding: 0 2px 0;
+    border-bottom: 2px solid rgba(128,128,128,0.2);
 }
-.funnel-header h1 { margin: 0; font-size: 1.5rem; color: white; }
-.funnel-header p  { margin: 0.2rem 0 0; opacity: 0.7; font-size: 0.85rem; }
-.funnel-steps {
-    display: flex; align-items: center; gap: 0.4rem;
-    font-size: 0.82rem;
-}
-.funnel-step {
-    background: rgba(255,255,255,0.12);
-    padding: 0.25rem 0.7rem;
-    border-radius: 20px;
-    color: white;
+.stTabs [data-baseweb="tab"] {
+    height: 2.8rem;
+    padding: 0 1.2rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+    letter-spacing: 0.01em;
     white-space: nowrap;
 }
-.funnel-step.active { background: rgba(255,255,255,0.28); font-weight: 700; }
-.funnel-arrow { opacity: 0.45; font-size: 0.75rem; }
-.funnel-rate  { opacity: 0.55; font-size: 0.7rem; margin-left: 0.15rem; }
 
-/* Score bar */
-.score-bar-wrap { height: 6px; background: #e0e0e0; border-radius: 3px; }
+/* ── Score bar ── */
+.score-bar-wrap { height: 6px; background: rgba(128,128,128,0.2); border-radius: 3px; }
 .score-bar      { height: 6px; border-radius: 3px; }
 
-/* Compact job row */
-.compact-row {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.1rem 0;
-}
-
-/* Status pill */
+/* ── Status pill ── */
 .pill {
     display: inline-block; padding: 2px 10px; border-radius: 20px;
     font-size: 0.75rem; font-weight: 600;
@@ -106,7 +88,7 @@ st.markdown("""
 .pill-rejected { background:#ffebee; color:#b71c1c; }
 .pill-skipped  { background:#f5f5f5; color:#616161; }
 
-/* All-tab row left border by status */
+/* ── All-tab row left border by status ── */
 .row-new       { border-left: 4px solid #1565c0; padding-left: 0.6rem; }
 .row-queued    { border-left: 4px solid #2e7d32; padding-left: 0.6rem; }
 .row-approved  { border-left: 4px solid #4527a0; padding-left: 0.6rem; }
@@ -117,14 +99,14 @@ st.markdown("""
 .row-rejected  { border-left: 4px solid #b71c1c; padding-left: 0.6rem; }
 .row-skipped   { border-left: 4px solid #9e9e9e; padding-left: 0.6rem; }
 
-/* Section label */
+/* ── Section label ── */
 .section-label {
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: #888; margin: 1rem 0 0.4rem;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; color: #888; margin: 0.9rem 0 0.35rem;
 }
 
-/* Action button row */
-.action-hint { font-size: 0.72rem; color: #888; margin-top: 0.2rem; }
+/* ── Edit section ── */
+.edit-section { background: rgba(128,128,128,0.06); border-radius: 8px; padding: 0.8rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -281,74 +263,96 @@ def sidebar(conn: sqlite3.Connection) -> None:
         st.caption("AI/ML Internship Hunter · Summer 2026")
         st.divider()
 
-        total = sum(stats.values())
+        total       = sum(stats.values())
+        n_applied   = stats.get(STATUS_APPLIED,   0)
+        n_oa        = stats.get(STATUS_OA,        0)
+        n_interview = stats.get(STATUS_INTERVIEW, 0)
+        n_offer     = stats.get(STATUS_OFFER,     0)
+        n_queued    = stats.get(STATUS_QUEUED,    0)
+        n_approved  = stats.get(STATUS_APPROVED,  0)
+        n_pending   = n_oa + n_interview   # advanced stages still awaiting decision
 
-        # Funnel metrics
         st.markdown('<p class="section-label">Pipeline</p>', unsafe_allow_html=True)
+        # Row 1: what matters most day-to-day
         c1, c2, c3 = st.columns(3)
-        c1.metric("Total",    total)
-        c2.metric("Ready",    stats.get(STATUS_QUEUED, 0))
-        c3.metric("Applied",  stats.get(STATUS_APPLIED, 0))
+        c1.metric("📤 Applied",  n_applied,  help="Submitted, awaiting first response")
+        c2.metric("⏳ Pending",  n_pending,  help="OA or Interview stage — awaiting decision")
+        c3.metric("🎉 Offer",    n_offer)
 
+        # Row 2: pipeline health
         c4, c5, c6 = st.columns(3)
-        c4.metric("New",         stats.get(STATUS_NEW, 0))
-        c5.metric("🚀 Approved", stats.get(STATUS_APPROVED, 0))
-        c6.metric("Offer 🎉",    stats.get(STATUS_OFFER, 0))
+        c4.metric("Total",       total)
+        c5.metric("✅ Ready",    n_queued,   help="Tailored, ready to apply")
+        c6.metric("🚀 Approved", n_approved, help="Approved for auto-apply")
 
-        # Progress bar: applied / total
+        # Submission progress bar
+        n_submitted = n_applied + n_oa + n_interview + n_offer
         if total:
-            applied_pct = (
-                stats.get(STATUS_APPLIED, 0)
-                + stats.get(STATUS_INTERVIEW, 0)
-                + stats.get(STATUS_OFFER, 0)
-            ) / total
-            st.progress(applied_pct, text=f"Applied: {applied_pct:.0%}")
+            sub_pct = n_submitted / total
+            st.progress(sub_pct, text=f"Submitted {n_submitted} of {total} ({sub_pct:.0%})")
 
         st.divider()
-        st.markdown('<p class="section-label">Actions</p>', unsafe_allow_html=True)
+
+        # ── Actions ───────────────────────────────────────────────────────────
+        st.markdown('<p class="section-label">Tailor</p>', unsafe_allow_html=True)
+        n_tailor = st.number_input("Jobs", min_value=1, max_value=100, value=10, step=5,
+                                   key="n_tailor_sb", label_visibility="collapsed")
+        if st.button("✨ Tailor Jobs", use_container_width=True, type="primary",
+                     help="Generate tailored resume + cover letter for top new jobs"):
+            with st.spinner(f"Tailoring {n_tailor} jobs…"):
+                ok, out = _run_tailor(n_tailor)
+            if ok:
+                refresh("✨ Tailoring done! Check the Ready tab.")
+            else:
+                st.error(out[-600:])
 
         if not IS_CLOUD:
-            if st.button("🔍 Run Discovery", use_container_width=True):
-                with st.spinner("Scraping intern-list.com..."):
-                    r = subprocess.run(
-                        [sys.executable, "main.py", "--source", "intern_list"],
-                        capture_output=True, text=True, cwd=ROOT_DIR,
-                    )
+            st.markdown('<p class="section-label">Discovery</p>', unsafe_allow_html=True)
+            src = st.selectbox("Source", ["all", "intern_list", "linkedin", "handshake"],
+                               label_visibility="collapsed", key="disc_src")
+            if st.button("🔍 Run Discovery", use_container_width=True,
+                         help="Scrape new job listings from selected source"):
+                cmd = [sys.executable, "main.py"]
+                if src != "all":
+                    cmd += ["--source", src]
+                with st.spinner(f"Scraping {src}…"):
+                    r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT_DIR)
                 if r.returncode == 0:
                     refresh("✅ Discovery complete!")
                 else:
                     st.error(r.stderr[-400:])
-        else:
-            st.caption("🤖 Discovery runs daily via GitHub Actions.")
 
-        n_tailor = st.number_input("Jobs to tailor", min_value=1, max_value=50, value=10, step=5)
-        if st.button("✨ Tailor Jobs", use_container_width=True, type="primary"):
-            with st.spinner(f"Tailoring {n_tailor} jobs..."):
-                ok, out = _run_tailor(n_tailor)
-            if ok:
-                refresh("✨ Tailoring done! Check Ready tab.")
-            else:
-                st.error(out[-400:])
-
-        if not IS_CLOUD:
-            st.divider()
-            st.markdown('<p class="section-label">Dry Run</p>', unsafe_allow_html=True)
-            st.caption("Fills forms + saves screenshots without submitting.")
-            n_dry = st.number_input("Jobs to dry-run", min_value=1, max_value=20,
-                                    value=5, step=1, key="n_dry")
-            if st.button("🔍 Dry Run Queued", use_container_width=True):
-                with st.spinner(f"Dry-running {n_dry} jobs (browser will open)…"):
-                    ok, out = _run_dry_run(limit=n_dry)
+            st.markdown('<p class="section-label">Apply</p>', unsafe_allow_html=True)
+            n_apply = st.number_input("Jobs", min_value=1, max_value=20, value=5, step=1,
+                                      key="n_apply_sb", label_visibility="collapsed")
+            a1, a2 = st.columns(2)
+            if a1.button("🚀 Apply", use_container_width=True,
+                         help="Auto-apply to approved jobs (browser will open)"):
+                with st.spinner(f"Applying to {n_apply} jobs…"):
+                    cmd = [sys.executable, "main.py", "--apply", "--limit", str(n_apply)]
+                    r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT_DIR)
+                if r.returncode == 0:
+                    refresh("✅ Apply run complete.")
+                else:
+                    st.error(r.stderr[-400:])
+            if a2.button("🔍 Dry Run", use_container_width=True,
+                         help="Fill forms + screenshot without submitting"):
+                with st.spinner(f"Dry-running {n_apply} jobs…"):
+                    ok, out = _run_dry_run(limit=n_apply)
                 if ok:
-                    refresh("📸 Done! Screenshots saved.")
+                    refresh("📸 Screenshots saved.")
                 else:
                     st.error(out[-400:])
-
-        if st.button("🔄 Refresh", use_container_width=True):
-            refresh()
+        else:
+            st.caption("🤖 Discovery & Apply run via GitHub Actions.")
+            st.link_button("📋 View GHA runs →",
+                           "https://github.com/ikathuria/JobApply/actions",
+                           use_container_width=True)
 
         st.divider()
-        st.caption("Powered by Gemini 2.5 Flash · ReportLab · Playwright")
+        if st.button("🔄 Refresh", use_container_width=True):
+            refresh()
+        st.caption("Gemini 2.5 Flash · ReportLab · Playwright")
 
 
 # ── Action buttons (simplified) ────────────────────────────────────────────────
@@ -520,15 +524,61 @@ def job_card(conn: sqlite3.Connection, job: dict, show_pdf: bool = True) -> None
         st.markdown("---")
         _action_buttons(conn, job)
 
-        # Notes
+        # Notes (always visible, inline)
         st.markdown("")
         new_notes = st.text_input(
             "Notes", value=job.get("notes") or "",
-            placeholder="Add notes…", key=f"notes_{job['id']}",
+            placeholder="💬 Add notes…", key=f"notes_{job['id']}",
             label_visibility="collapsed",
         )
         if new_notes != (job.get("notes") or ""):
             update_status(conn, job["id"], status, notes=new_notes)
+
+        # Edit fields (collapsed by default)
+        with st.expander("✏️ Edit details", expanded=False):
+            ea, eb = st.columns(2)
+            ed_title    = ea.text_input("Title",    value=job.get("title") or "",
+                                        key=f"ed_t_{jid}")
+            ed_company  = eb.text_input("Company",  value=job.get("company") or "",
+                                        key=f"ed_co_{jid}")
+            ed_location = ea.text_input("Location", value=job.get("location") or "",
+                                        key=f"ed_lo_{jid}")
+            ed_url      = eb.text_input("URL",      value=job.get("url") or "",
+                                        key=f"ed_url_{jid}")
+            ed_date     = ea.text_input("Date Applied",
+                                        value=(job.get("date_applied") or "")[:10],
+                                        placeholder="YYYY-MM-DD",
+                                        key=f"ed_dt_{jid}")
+            ed_score    = eb.number_input("Score", 0.0, 1.0,
+                                          float(job.get("score") or 0.0), 0.05,
+                                          key=f"ed_sc_{jid}",
+                                          help="AI relevance score override")
+            if st.button("💾 Save Changes", key=f"ed_save_{jid}"):
+                _update_job_fields(conn, jid, {
+                    "title":        ed_title or job["title"],
+                    "company":      ed_company,
+                    "location":     ed_location,
+                    "url":          ed_url or job.get("url", ""),
+                    "date_applied": ed_date or None,
+                    "score":        ed_score,
+                })
+                refresh("💾 Job updated.")
+
+
+def _update_job_fields(conn: sqlite3.Connection, job_id: int, fields: dict) -> None:
+    """Update editable job fields, silently ignoring URL uniqueness violations."""
+    allowed = {"title", "company", "location", "url", "date_applied", "score"}
+    updates = {k: v for k, v in fields.items() if k in allowed}
+    if not updates:
+        return
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    set_clause += ", updated_at = datetime('now')"
+    updates["id"] = job_id
+    try:
+        conn.execute(f"UPDATE jobs SET {set_clause} WHERE id = :id", updates)
+        conn.commit()
+    except sqlite3.IntegrityError:
+        st.error("❌ That URL is already used by another job — choose a different one.")
 
 
 def _tailor_single(conn: sqlite3.Connection, job: dict) -> None:
@@ -589,11 +639,66 @@ def compact_job_row(conn: sqlite3.Connection, job: dict) -> None:
 
         new_notes = st.text_input(
             "Notes", value=job.get("notes") or "",
-            placeholder="Add notes…", key=f"notes_c_{job['id']}",
+            placeholder="💬 Add notes…", key=f"notes_c_{job['id']}",
             label_visibility="collapsed",
         )
         if new_notes != (job.get("notes") or ""):
             update_status(conn, job["id"], STATUS_NEW, notes=new_notes)
+
+        with st.expander("✏️ Edit details", expanded=False):
+            jid = job["id"]
+            ea, eb = st.columns(2)
+            ed_title    = ea.text_input("Title",    value=job.get("title") or "",    key=f"ced_t_{jid}")
+            ed_company  = eb.text_input("Company",  value=job.get("company") or "",  key=f"ced_co_{jid}")
+            ed_location = ea.text_input("Location", value=job.get("location") or "", key=f"ced_lo_{jid}")
+            ed_url      = eb.text_input("URL",      value=job.get("url") or "",      key=f"ced_url_{jid}")
+            if st.button("💾 Save", key=f"ced_save_{jid}"):
+                _update_job_fields(conn, jid, {
+                    "title":    ed_title or job["title"],
+                    "company":  ed_company,
+                    "location": ed_location,
+                    "url":      ed_url or job.get("url", ""),
+                })
+                refresh("💾 Job updated.")
+
+
+# ── Global search ──────────────────────────────────────────────────────────────
+
+def tab_search(conn: sqlite3.Connection, query: str) -> None:
+    q = query.strip().lower()
+    all_jobs = rows_to_dicts(get_jobs(conn, limit=5000))
+    results = [
+        j for j in all_jobs
+        if q in (j.get("title")    or "").lower()
+        or q in (j.get("company")  or "").lower()
+        or q in (j.get("location") or "").lower()
+        or q in (j.get("notes")    or "").lower()
+    ]
+
+    if not results:
+        st.info(f"No jobs found matching **'{query}'** — try a different term.")
+        return
+
+    # Group by status for scannability
+    from collections import defaultdict
+    by_status: dict[str, list] = defaultdict(list)
+    for j in results:
+        by_status[j["status"]].append(j)
+
+    st.caption(f"**{len(results)}** result{'s' if len(results) != 1 else ''} for '{query}'")
+
+    order = [STATUS_OFFER, STATUS_INTERVIEW, STATUS_OA, STATUS_APPLIED,
+             STATUS_QUEUED, STATUS_APPROVED, STATUS_NEW, STATUS_REJECTED, STATUS_SKIPPED]
+    for s in order:
+        group = by_status.get(s, [])
+        if not group:
+            continue
+        icon, label, _ = STATUS_META.get(s, ("", s, ""))
+        st.markdown(f"**{icon} {label}** &nbsp; `{len(group)}`")
+        for job in group[:20]:
+            job_card(conn, job, show_pdf=False)
+        if len(group) > 20:
+            st.caption(f"… and {len(group) - 20} more")
 
 
 # ── Pagination helpers ─────────────────────────────────────────────────────────
@@ -1182,73 +1287,41 @@ def main() -> None:
     stats = get_stats(conn)
 
     sidebar(conn)
-
-    # Keyboard nav injection
     components.html(_KEYBOARD_JS, height=0)
 
-    # ── Funnel header ─────────────────────────────────────────────────────────
-    n_new      = stats.get(STATUS_NEW, 0)
-    n_queued   = stats.get(STATUS_QUEUED, 0)
-    n_approved = stats.get(STATUS_APPROVED, 0)
-    n_applied  = stats.get(STATUS_APPLIED, 0)
-    n_oa_hdr   = stats.get(STATUS_OA, 0)
-    n_interview= stats.get(STATUS_INTERVIEW, 0)
-    n_offer    = stats.get(STATUS_OFFER, 0)
-    n_rejected = stats.get(STATUS_REJECTED, 0)
-    n_tracked  = sum(stats.values())
-    n_submitted = n_applied + n_oa_hdr + n_interview + n_offer
+    # ── Page header ───────────────────────────────────────────────────────────
+    st.markdown("### 🎯 JobApply")
+    st.caption("Ishani Kathuria · Summer 2026 AI/ML Internship Search")
 
-    def _rate(num, den):
-        return f"{num/den:.0%}" if den else "—"
+    # ── Global search ─────────────────────────────────────────────────────────
+    search = st.text_input(
+        "search",
+        placeholder="🔍  Search by title, company, or location…",
+        label_visibility="collapsed",
+        key="global_search",
+    )
+    if search.strip():
+        tab_search(conn, search.strip())
+        return   # don't render tabs when search is active
 
-    st.markdown(f"""
-    <div class="funnel-header">
-      <div>
-        <h1>🎯 JobApply</h1>
-        <p>Ishani Kathuria &nbsp;·&nbsp; Summer 2026 AI/ML Internship Search</p>
-      </div>
-      <div class="funnel-steps">
-        <div class="funnel-step {'active' if n_new else ''}">
-          🆕 {n_new} Discovered
-        </div>
-        <span class="funnel-arrow">▶</span>
-        <div class="funnel-step {'active' if n_queued else ''}">
-          ✅ {n_queued} Ready
-          <span class="funnel-rate">({_rate(n_queued, n_new)})</span>
-        </div>
-        <span class="funnel-arrow">▶</span>
-        <div class="funnel-step {'active' if n_submitted else ''}">
-          📤 {n_submitted} Applied
-          <span class="funnel-rate">({_rate(n_submitted, n_new)})</span>
-        </div>
-        <span class="funnel-arrow">▶</span>
-        <div class="funnel-step {'active' if n_oa_hdr else ''}">
-          📝 {n_oa_hdr} OA
-          <span class="funnel-rate">({_rate(n_oa_hdr, n_submitted)})</span>
-        </div>
-        <span class="funnel-arrow">▶</span>
-        <div class="funnel-step {'active' if n_interview else ''}">
-          🎤 {n_interview} Interview
-          <span class="funnel-rate">({_rate(n_interview, n_submitted)})</span>
-        </div>
-        <span class="funnel-arrow">▶</span>
-        <div class="funnel-step {'active' if n_offer else ''}">
-          🎉 {n_offer} Offer
-          <span class="funnel-rate">({_rate(n_offer, n_submitted)})</span>
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ── Tab counts ────────────────────────────────────────────────────────────
+    n_new       = stats.get(STATUS_NEW,       0)
+    n_queued    = stats.get(STATUS_QUEUED,    0)
+    n_approved  = stats.get(STATUS_APPROVED,  0)
+    n_applied   = stats.get(STATUS_APPLIED,   0)
+    n_oa        = stats.get(STATUS_OA,        0)
+    n_interview = stats.get(STATUS_INTERVIEW, 0)
+    n_offer     = stats.get(STATUS_OFFER,     0)
+    n_tracked   = sum(stats.values())
+    n_submitted = n_applied + n_oa + n_interview + n_offer
 
     # ── Tabs ──────────────────────────────────────────────────────────────────
-    n_oa = stats.get(STATUS_OA, 0)
-
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        f"🆕 New ({n_new})",
-        f"✅ Ready ({n_queued})",
-        f"🚀 Approved ({n_approved})",
-        f"📤 Applied ({n_submitted})",
-        f"📋 All ({n_tracked})",
+        f"🆕 New  {n_new}",
+        f"✅ Ready  {n_queued}",
+        f"🚀 Approved  {n_approved}",
+        f"📤 Applied  {n_submitted}",
+        f"📋 All  {n_tracked}",
         "📊 Sankey",
         "📥 Import",
     ])
