@@ -36,12 +36,26 @@ sources:
     enabled: true
   linkedin:
     enabled: true
-    search_query: "AI intern"
+    search_query: "AI ML internship"
     easy_apply_only: true
+    max_jobs: 60
+  handshake:
+    enabled: true
+    queries:
+      - "AI intern"
+      - "machine learning intern"
+      - "LLM intern"
+      - "data science intern"
+      - "NLP intern"
+    max_jobs: 80
 
 linkedin:
-  email: ""      # fill in .env
-  password: ""   # fill in .env
+  email: ""      # fill in .env as LINKEDIN_EMAIL
+  password: ""   # fill in .env as LINKEDIN_PASSWORD
+
+handshake:
+  email: ""      # fill in .env as HANDSHAKE_EMAIL
+  password: ""   # fill in .env as HANDSHAKE_PASSWORD
 
 llm:
   provider: "gemini"       # options: "gemini", "anthropic"

@@ -9,6 +9,10 @@ on:
         description: 'Max jobs to tailor (default: 50)'
         default: '50'
         required: false
+      sources:
+        description: 'Sources to run (all / intern_list / linkedin / handshake)'
+        default: 'all'
+        required: false
 
 permissions:
   contents: write
@@ -37,21 +41,48 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt playwright
 
-      - name: Install Playwright browsers (for intern-list scraper)
+      - name: Install Playwright browsers
         run: playwright install chromium --with-deps
 
-      - name: Discover new jobs (intern-list)
+      # ── Discovery ─────────────────────────────────────────────────────────────
+      # Each source runs independently with continue-on-error so one failure
+      # never blocks the others.
+
+      - name: Discover — intern-list.com
+        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'intern_list' }}
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: python main.py --source intern_list
-        continue-on-error: true   # don't abort tailor if discovery fails
+        continue-on-error: true
 
-      - name: Tailor resumes
+      - name: Discover — LinkedIn
+        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'linkedin' }}
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          LINKEDIN_EMAIL: ${{ secrets.LINKEDIN_EMAIL }}
+          LINKEDIN_PASSWORD: ${{ secrets.LINKEDIN_PASSWORD }}
+        run: python main.py --source linkedin
+        continue-on-error: true   # skips gracefully if secrets not set
+
+      - name: Discover — Handshake
+        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'handshake' }}
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          HANDSHAKE_EMAIL: ${{ secrets.HANDSHAKE_EMAIL }}
+          HANDSHAKE_PASSWORD: ${{ secrets.HANDSHAKE_PASSWORD }}
+        run: python main.py --source handshake
+        continue-on-error: true   # skips gracefully if secrets not set
+
+      # ── Tailor ────────────────────────────────────────────────────────────────
+
+      - name: Tailor resumes for top new jobs
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           LIMIT=${{ github.event.inputs.limit || '50' }}
           python main.py --tailor --limit $LIMIT
+
+      # ── Commit ────────────────────────────────────────────────────────────────
 
       - name: Commit updated tracker and generated PDFs
         run: |

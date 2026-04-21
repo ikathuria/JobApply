@@ -33,6 +33,7 @@ from dotenv import load_dotenv
 
 from scrapers.intern_list_scraper import scrape_intern_list
 from scrapers.linkedin_scraper import scrape_linkedin_sync
+from scrapers.handshake_scraper import scrape_handshake_sync
 from pipeline.job_filter import filter_jobs, deduplicate
 from pipeline.jd_fetcher import fetch_jd
 from pipeline.resume_tailor import tailor_resume
@@ -68,6 +69,10 @@ def load_config() -> dict:
 
 # -- Phase 1: Discovery --------------------------------------------------------
 
+# In CI (GitHub Actions) there's no display — always run browsers headlessly.
+_CI_HEADLESS = bool(os.getenv("CI"))
+
+
 def run_discovery(config: dict, source: str | None = None) -> list[dict]:
     all_jobs = []
     sources = config.get("sources", {})
@@ -85,10 +90,21 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
             query=li_cfg.get("search_query", "AI ML internship"),
             location="United States",
             easy_apply_only=li_cfg.get("easy_apply_only", True),
-            max_jobs=50,
-            headless=False,
+            max_jobs=li_cfg.get("max_jobs", 60),
+            headless=_CI_HEADLESS,   # headed locally, headless in GHA
         )
         logger.info(f"LinkedIn: {len(jobs)} raw listings")
+        all_jobs.extend(jobs)
+
+    if source in (None, "handshake") and sources.get("handshake", {}).get("enabled"):
+        logger.info("=== Scraping Handshake ===")
+        hs_cfg = sources["handshake"]
+        jobs = scrape_handshake_sync(
+            queries=hs_cfg.get("queries"),
+            max_jobs=hs_cfg.get("max_jobs", 80),
+            headless=_CI_HEADLESS,   # headed locally, headless in GHA
+        )
+        logger.info(f"Handshake: {len(jobs)} raw listings")
         all_jobs.extend(jobs)
 
     return all_jobs
@@ -242,7 +258,7 @@ def _slug(text: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
-    parser.add_argument("--source", choices=["intern_list", "linkedin"])
+    parser.add_argument("--source", choices=["intern_list", "linkedin", "handshake"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
     parser.add_argument("--apply",    action="store_true", help="Auto-apply to queued jobs (human confirms each)")
     parser.add_argument("--dry-run",  action="store_true", help="Fill forms + screenshot, never submit")
