@@ -1068,7 +1068,8 @@ def tab_applied(conn: sqlite3.Connection) -> None:
         jobs = all_applied
 
     # Starred first, then most-recent date_applied first
-    jobs.sort(key=lambda j: (-(j.get("starred") or 0), -(j.get("date_applied") or "0000")))
+    # reverse=True: (1, "2026-04-20") > (0, "2026-04-01") → starred+newer floats up
+    jobs.sort(key=lambda j: (j.get("starred") or 0, j.get("date_applied") or ""), reverse=True)
 
     st.caption(f"{len(jobs)} job{'s' if len(jobs) != 1 else ''}")
 
