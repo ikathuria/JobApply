@@ -142,45 +142,78 @@ async def scrape_handshake(
 
 
 async def _login(page: Page, email: str, password: str) -> bool:
+    """
+    Handshake login flow (as of 2026):
+      1. Enter email → Tab away to activate Next button → click Next
+      2. "Get connected" SSO screen appears → click "Log in another way"
+      3. Enter password → submit
+    """
     logger.info("Navigating to Handshake login...")
     await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=30_000)
     await asyncio.sleep(2)
 
-    # Handshake shows a school search first — enter email to pick university SSO
-    # or use direct email/password login
     try:
-        # Try the "Sign in with email" path first
-        email_btn = await page.query_selector("a[href*='email']")
-        if email_btn:
-            await email_btn.click()
-            await asyncio.sleep(1)
-    except Exception:
-        pass
+        # ── Step 1: fill email field ──────────────────────────────────────────
+        email_sel = "input[type='email'], input[name='email'], #email"
+        await page.wait_for_selector(email_sel, timeout=10_000)
+        await page.fill(email_sel, email)
+        await asyncio.sleep(0.3)
 
-    try:
-        await page.fill("input[type='email'], input[name='email'], #email", email, timeout=8_000)
-        await asyncio.sleep(0.5)
+        # Tab away — this triggers the field's blur handler which activates Next
+        await page.keyboard.press("Tab")
+        await asyncio.sleep(0.8)
 
-        # Some Handshake flows show password on the same page, others after clicking Next
-        next_btn = await page.query_selector("button[type='submit'], input[type='submit']")
+        # Click the Next / Continue button
+        next_btn = await page.query_selector(
+            "button[type='submit'], input[type='submit'], button:has-text('Next'), button:has-text('Continue')"
+        )
         if next_btn:
             await next_btn.click()
+        else:
+            await page.keyboard.press("Enter")
+        logger.info("Handshake: submitted email, waiting for SSO screen...")
+        await asyncio.sleep(3)
+
+        # ── Step 2: "Get connected" SSO screen ───────────────────────────────
+        # Look for "Log in another way" link/button to bypass university SSO
+        alt_login = await page.query_selector(
+            "button:has-text('Log in another way'), "
+            "a:has-text('Log in another way'), "
+            "button:has-text('another way'), "
+            "a:has-text('another way')"
+        )
+        if alt_login:
+            logger.info("Handshake: clicking 'Log in another way' to use email/password...")
+            await alt_login.click()
             await asyncio.sleep(2)
+        else:
+            logger.info("Handshake: no SSO intercept found — proceeding directly to password.")
 
-        await page.fill("input[type='password'], input[name='password'], #password", password, timeout=8_000)
-        await asyncio.sleep(0.5)
+        # ── Step 3: fill password ─────────────────────────────────────────────
+        pw_sel = "input[type='password'], input[name='password'], #password"
+        await page.wait_for_selector(pw_sel, timeout=10_000)
+        await page.fill(pw_sel, password)
+        await asyncio.sleep(0.3)
 
-        submit = await page.query_selector("button[type='submit'], input[type='submit']")
+        await page.keyboard.press("Tab")   # activate submit button
+        await asyncio.sleep(0.4)
+
+        submit = await page.query_selector(
+            "button[type='submit'], input[type='submit'], button:has-text('Sign in'), button:has-text('Log in')"
+        )
         if submit:
             await submit.click()
+        else:
+            await page.keyboard.press("Enter")
 
-        # Wait for dashboard / student landing page
+        logger.info("Handshake: submitted password, waiting for redirect...")
+
+        # ── Step 4: confirm login ─────────────────────────────────────────────
         try:
             await page.wait_for_url("**/stu/**", timeout=30_000)
             logger.info("Handshake login successful.")
             return True
         except PWTimeout:
-            # Check if we're still on a recognisable post-login page
             current = page.url
             if "handshake" in current and "login" not in current:
                 logger.info(f"Handshake: landed on {current} — assuming logged in.")
@@ -189,7 +222,7 @@ async def _login(page: Page, email: str, password: str) -> bool:
             return False
 
     except Exception as e:
-        logger.error(f"Handshake login error: {e}")
+        logger.error(f"Handshake login error: {e}", exc_info=True)
         return False
 
 
