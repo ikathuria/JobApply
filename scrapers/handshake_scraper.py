@@ -11,6 +11,7 @@ Requires env vars:
 import asyncio
 import logging
 import os
+import re
 from datetime import datetime
 
 from playwright.async_api import async_playwright, Page, TimeoutError as PWTimeout
@@ -18,67 +19,20 @@ from playwright.async_api import async_playwright, Page, TimeoutError as PWTimeo
 logger = logging.getLogger(__name__)
 
 LOGIN_URL = "https://app.joinhandshake.com/login"
-# job_type=3 = Internship; sorted by recent; work_study_required=false
-JOBS_URL  = (
-    "https://app.joinhandshake.com/stu/postings"
-    "?job_type=3&work_study_required=false&sort_direction=desc&sort_column=created_at"
-)
+# Landing page after login — clicking Jobs nav reaches the job search
+JOBS_BASE_URL = "https://app.joinhandshake.com/jobs"
 
-# Selectors — Handshake uses data-hook attrs which are more stable than class names
-_CARD_SELECTORS = [
-    "[data-hook='job-card']",
-    "li[class*='posting-list']",
-    "li[class*='job-card']",
-    "div[class*='JobCard']",
-]
-_TITLE_SELECTORS = [
-    "[data-hook='jobs-card-title']",
-    "a[data-hook='job-card-title-link']",
-    "a[class*='job-title']",
-    "a[class*='JobCard__title']",
-]
-_COMPANY_SELECTORS = [
-    "[data-hook='job-card-employer-name']",
-    "[data-hook='job-card-employer']",
-    "span[class*='employer-name']",
-    "span[class*='JobCard__employer']",
-]
-_LOCATION_SELECTORS = [
-    "[data-hook='job-card-location']",
-    "span[class*='location']",
-    "div[class*='JobCard__location']",
+# Selectors for the search input on the jobs page
+_SEARCH_INPUT_SELECTORS = [
+    "input[placeholder*='Search']",
+    "input[aria-label*='search' i]",
+    "input[type='search']",
+    "input[data-hook*='search']",
+    "input[class*='search' i]",
 ]
 
-
-async def _first_text(el, selectors: list[str]) -> str:
-    for sel in selectors:
-        child = await el.query_selector(sel)
-        if child:
-            try:
-                return (await child.inner_text()).strip()
-            except Exception:
-                continue
-    return ""
-
-
-async def _first_href(el, selectors: list[str]) -> str:
-    for sel in selectors:
-        child = await el.query_selector(sel)
-        if child:
-            try:
-                href = await child.get_attribute("href") or ""
-                return href.strip()
-            except Exception:
-                continue
-    return ""
-
-
-async def _find_cards(page: Page):
-    for sel in _CARD_SELECTORS:
-        cards = await page.query_selector_all(sel)
-        if cards:
-            return cards
-    return []
+# Job posting URLs always contain /jobs/ or /postings/ followed by a numeric ID
+_JOB_URL_PATTERN = re.compile(r"/(jobs|postings)/\d+")
 
 
 async def scrape_handshake(
@@ -226,68 +180,155 @@ async def _login(page: Page, email: str, password: str) -> bool:
         return False
 
 
+async def _type_search(page: Page, query: str) -> bool:
+    """Find the search box, type the query, and submit. Returns True on success."""
+    for sel in _SEARCH_INPUT_SELECTORS:
+        try:
+            inp = await page.query_selector(sel)
+            if inp:
+                await inp.triple_click()           # select-all to clear existing text
+                await inp.type(query, delay=60)    # human-ish typing speed
+                await asyncio.sleep(0.4)
+                await page.keyboard.press("Enter")
+                await asyncio.sleep(3)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+async def _extract_job_links(page: Page, seen: set[str], limit: int) -> list[dict]:
+    """
+    Extract job cards by finding all <a> tags whose href matches a Handshake
+    job/posting URL pattern.  Each anchor's closest list item / card container
+    is scraped for company + location text.
+    """
+    date_scraped = datetime.utcnow().isoformat()
+    jobs: list[dict] = []
+
+    # Pull all job-link hrefs + surrounding text via a single page.evaluate call
+    # (much faster than querying each element individually)
+    raw = await page.evaluate(r"""
+        () => {
+            const results = [];
+            const anchors = document.querySelectorAll('a[href]');
+            const pattern = /\/(jobs|postings)\/\d+/;
+            const seen = new Set();
+
+            for (const a of anchors) {
+                const href = a.getAttribute('href') || '';
+                if (!pattern.test(href)) continue;
+                const url = href.split('?')[0];
+                if (seen.has(url)) continue;
+                seen.add(url);
+
+                const title = (a.innerText || a.textContent || '').trim();
+                if (!title) continue;
+
+                // Walk up to find a card-like container (li or div with role)
+                let card = a.closest('li') ||
+                           a.closest('[role="listitem"]') ||
+                           a.closest('[class*="card" i]') ||
+                           a.parentElement;
+
+                const cardText = card ? (card.innerText || '') : '';
+                const lines = cardText
+                    .split('\n')
+                    .map(l => l.trim())
+                    .filter(Boolean);
+
+                // Heuristic: company is usually the 2nd distinct non-title line
+                // Location usually contains Remote, city, or "United States"
+                let company = '';
+                let location = '';
+                for (const line of lines) {
+                    if (line === title) continue;
+                    if (!company && line.length < 80 && !/^\$/.test(line)) {
+                        company = line;
+                        continue;
+                    }
+                    if (!location && (
+                        /remote/i.test(line) ||
+                        /united states/i.test(line) ||
+                        /,\s+[A-Z]{2}/.test(line) ||
+                        /new york|san francisco|chicago|seattle|boston|austin/i.test(line)
+                    )) {
+                        location = line;
+                    }
+                }
+
+                results.push({ href, title, company, location });
+            }
+            return results;
+        }
+    """)
+
+    for item in raw:
+        if len(jobs) >= limit:
+            break
+        href = item.get("href", "")
+        job_url = (
+            f"https://app.joinhandshake.com{href}"
+            if href.startswith("/") else href
+        ).split("?")[0]
+
+        if job_url in seen:
+            continue
+        seen.add(job_url)
+
+        jobs.append({
+            "title":        item["title"],
+            "company":      item.get("company", ""),
+            "location":     item.get("location", ""),
+            "url":          job_url,
+            "source":       "handshake",
+            "easy_apply":   False,
+            "date_scraped": date_scraped,
+        })
+
+    return jobs
+
+
 async def _collect_jobs(page: Page, query: str, limit: int) -> list[dict]:
-    url = f"{JOBS_URL}&query={query.replace(' ', '+')}"
     logger.info(f"Searching Handshake: '{query}'")
 
-    await page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-    await asyncio.sleep(3)
+    # Navigate to the jobs landing page
+    await page.goto(JOBS_BASE_URL, wait_until="domcontentloaded", timeout=30_000)
+    await asyncio.sleep(2)
 
-    jobs = []
-    date_scraped = datetime.utcnow().isoformat()
-    scroll_rounds = 0
-    max_scrolls = 8
+    # Type into search box (preferred) — falls back to URL param if box not found
+    typed = await _type_search(page, query)
+    if not typed:
+        # Fallback: append query as URL parameter (works on some Handshake versions)
+        fallback_url = f"{JOBS_BASE_URL}?query={query.replace(' ', '+')}&job_type=3"
+        logger.info(f"Search box not found — trying URL fallback: {fallback_url}")
+        await page.goto(fallback_url, wait_until="domcontentloaded", timeout=30_000)
+        await asyncio.sleep(3)
 
-    while len(jobs) < limit and scroll_rounds < max_scrolls:
-        cards = await _find_cards(page)
-        if not cards:
-            logger.warning(f"No job cards found on Handshake for query '{query}' — page may need login refresh.")
+    seen: set[str] = set()
+    jobs: list[dict] = []
+    max_scrolls = 6
+
+    for scroll_round in range(max_scrolls):
+        batch = await _extract_job_links(page, seen, limit - len(jobs))
+        jobs.extend(batch)
+        logger.info(f"  Scroll {scroll_round + 1}/{max_scrolls}: +{len(batch)} → {len(jobs)} total")
+
+        if len(jobs) >= limit:
             break
 
-        for card in cards:
-            if len(jobs) >= limit:
-                break
-            try:
-                title    = await _first_text(card, _TITLE_SELECTORS)
-                company  = await _first_text(card, _COMPANY_SELECTORS)
-                location = await _first_text(card, _LOCATION_SELECTORS)
-                href     = await _first_href(card, _TITLE_SELECTORS)
-
-                if not title or not href:
-                    continue
-
-                job_url = (
-                    f"https://app.joinhandshake.com{href}"
-                    if href.startswith("/") else href
-                ).split("?")[0]
-
-                # Skip duplicates within this query pass
-                if any(j["url"] == job_url for j in jobs):
-                    continue
-
-                jobs.append({
-                    "title":        title,
-                    "company":      company,
-                    "location":     location,
-                    "url":          job_url,
-                    "source":       "handshake",
-                    "easy_apply":   False,
-                    "date_scraped": date_scraped,
-                })
-
-            except Exception as e:
-                logger.debug(f"Handshake card parse error: {e}")
-                continue
-
-        # Scroll to load more
-        prev_count = len(jobs)
-        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        # Scroll the result list to trigger lazy-loading
+        prev_link_count = len(await page.query_selector_all("a[href]"))
+        await page.evaluate("""
+            const list = document.querySelector('[class*="result" i], [class*="list" i], main, body');
+            if (list) list.scrollTop += 1200;
+            window.scrollBy(0, 1200);
+        """)
         await asyncio.sleep(2.5)
-        scroll_rounds += 1
 
-        # Stop if no new jobs appeared after scroll
-        cards_after = await _find_cards(page)
-        if len(cards_after) == len(cards):
+        new_link_count = len(await page.query_selector_all("a[href]"))
+        if new_link_count == prev_link_count and scroll_round > 0:
+            logger.info("  No new links after scroll — stopping.")
             break
 
     logger.info(f"Collected {len(jobs)} jobs for query '{query}'")
