@@ -28,7 +28,7 @@ scoring:
     role_relevance: 0.3
     recency: 0.2
     sponsorship_friendly: 0.1
-  min_score: 0.3   # jobs below this are discarded
+  min_score: 0.0   # keep all listings; score used only for sorting
 
 sources:
   intern_list:

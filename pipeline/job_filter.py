@@ -75,9 +75,10 @@ def score_job(job: dict) -> float:
     return round(min(score, 1.0), 3)
 
 
-def filter_jobs(jobs: list[dict], min_score: float = 0.30) -> list[dict]:
+def filter_jobs(jobs: list[dict], min_score: float = 0.0) -> list[dict]:
     """
     Score all jobs, attach score, filter below threshold, sort by score desc.
+    min_score=0.0 keeps all listings (score still computed for ranking).
     """
     scored = []
     for job in jobs:
