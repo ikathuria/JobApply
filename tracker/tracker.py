@@ -111,6 +111,7 @@ def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
             skipped += 1  # URL already exists
 
     conn.commit()
+    conn.execute("PRAGMA wal_checkpoint(PASSIVE)")  # flush WAL → main DB
     logger.info(f"Upserted jobs: {inserted} new, {skipped} already known.")
     return inserted, skipped
 
@@ -146,6 +147,7 @@ def update_status(conn: sqlite3.Connection, job_id: int, status: str, **kwargs) 
 
     conn.execute(f"UPDATE jobs SET {set_clause} WHERE id = :id", updates)
     conn.commit()
+    conn.execute("PRAGMA wal_checkpoint(PASSIVE)")  # flush WAL → main DB
 
 
 def get_stats(conn: sqlite3.Connection) -> dict:

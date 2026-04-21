@@ -135,7 +135,9 @@ def get_conn() -> sqlite3.Connection:
 def refresh(toast_msg: str | None = None) -> None:
     if toast_msg:
         st.toast(toast_msg)
-    st.cache_resource.clear()
+    # Do NOT clear cache_resource — the cached connection already sees its own
+    # committed writes, and destroying the connection on Windows/OneDrive can
+    # prevent the WAL from checkpointing, causing silent data loss.
     st.cache_data.clear()
     st.rerun()
 
@@ -1342,6 +1344,8 @@ def _insert_manual_job(conn: sqlite3.Connection, job: dict) -> tuple[bool, str]:
             },
         )
         conn.commit()
+        # Checkpoint WAL → main DB so data survives a hard close (esp. on OneDrive)
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
         return True, f"✅ Added: {title}"
     except sqlite3.IntegrityError:
         existing = conn.execute(
