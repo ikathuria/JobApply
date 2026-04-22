@@ -61,12 +61,11 @@ def db():
     if _conn is None:
         if os.environ.get("TURSO_DATABASE_URL"):
             from api.turso import connect as turso_connect
-            _conn = turso_connect(DB_PATH)
-            # Run schema migrations on the Turso connection
             from tracker.tracker import _create_tables  # type: ignore[attr-defined]
-            _create_tables(_conn)
+            _conn = turso_connect(DB_PATH)   # seeds from git DB on first boot
+            _create_tables(_conn)            # create / migrate schema in Turso
         else:
-            _conn = init_db(DB_PATH)
+            _conn = init_db(DB_PATH)         # local: plain sqlite3
     return _conn
 
 

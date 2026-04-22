@@ -1,38 +1,31 @@
 """
-Turso / libsql adapter — makes a libsql connection look like sqlite3.Connection
-so tracker.py works unmodified.
+Pure-Python Turso adapter using the Turso HTTP API.
+No Rust, no native compilation — just requests.
 
 Used automatically by api/main.py when TURSO_DATABASE_URL is set.
 """
 
 from __future__ import annotations
 import os
+import sqlite3
+from pathlib import Path
+from typing import Any
+
+import requests as _requests
 
 
-class _EmptyCursor:
-    """Returned for PRAGMA statements that Turso doesn't support."""
-    description = None
-    lastrowid   = None
-
-    def fetchone(self):  return None
-    def fetchall(self):  return []
-
+# ── Row wrapper ───────────────────────────────────────────────────────────────
 
 class _DictRow:
-    """
-    Dict- and index-accessible row, mimics sqlite3.Row.
-    Supports row["col"], row[0], row.get("col"), row.keys(), iter(row).
-    """
+    """Dict- and index-accessible row, mimics sqlite3.Row."""
     __slots__ = ("_d", "_v")
 
-    def __init__(self, keys: list[str], values):
+    def __init__(self, keys: list[str], values: list):
         self._v = list(values)
         self._d = dict(zip(keys, values))
 
     def __getitem__(self, key):
-        if isinstance(key, int):
-            return self._v[key]
-        return self._d[key]
+        return self._v[key] if isinstance(key, int) else self._d[key]
 
     def get(self, key, default=None):
         return self._d.get(key, default)
@@ -47,129 +40,206 @@ class _DictRow:
         return repr(self._d)
 
 
-class _Cursor:
-    """Wraps a libsql cursor; fetchone / fetchall return _DictRow objects."""
+# ── Cursor wrappers ───────────────────────────────────────────────────────────
 
-    def __init__(self, cursor):
-        self._c = cursor
-        self._keys: list[str] | None = None
+class _EmptyCursor:
+    description = None
+    lastrowid   = None
+    def fetchone(self):  return None
+    def fetchall(self):  return []
 
-    def _resolve_keys(self):
-        if self._keys is None and self._c.description:
-            self._keys = [d[0] for d in self._c.description]
-        return self._keys or []
+
+class _StaticCursor:
+    """Holds rows already fetched from the HTTP response."""
+
+    def __init__(self, cols: list[str], rows: list[_DictRow], lastrowid=None):
+        self._rows    = rows
+        self._pos     = 0
+        self.lastrowid   = lastrowid
+        self.description = [(c, None, None, None, None, None, None) for c in cols]
 
     def fetchone(self):
-        row = self._c.fetchone()
-        return None if row is None else _DictRow(self._resolve_keys(), row)
+        if self._pos >= len(self._rows):
+            return None
+        row = self._rows[self._pos]
+        self._pos += 1
+        return row
 
     def fetchall(self):
-        rows = self._c.fetchall()
-        keys = self._resolve_keys()
-        return [_DictRow(keys, r) for r in rows]
-
-    @property
-    def description(self):
-        return self._c.description
-
-    @property
-    def lastrowid(self):
-        return getattr(self._c, "lastrowid", None)
+        rows = self._rows[self._pos:]
+        self._pos = len(self._rows)
+        return rows
 
 
-_PRAGMA_PREFIXES = ("PRAGMA",)
-
+# ── HTTP connection ───────────────────────────────────────────────────────────
 
 class TursoConn:
     """
-    sqlite3.Connection-compatible wrapper for a libsql connection.
+    sqlite3.Connection-compatible wrapper that talks to Turso over HTTPS.
 
-    Key differences handled transparently:
-    - row_factory setter → no-op (rows handled by _Cursor / _DictRow)
-    - PRAGMA statements → silently skipped (not supported by Turso)
-    - commit() → also syncs to the remote Turso database
+    Handles:
+    - row_factory setter → no-op
+    - PRAGMA statements → silently skipped
+    - executescript → splits on ';' and runs each statement
+    - last_insert_rowid() → intercepted, returns value from last INSERT
     """
 
-    def __init__(self, conn):
-        self._conn = conn
+    def __init__(self, url: str, token: str):
+        # Accept both libsql:// and https:// forms
+        base = url.replace("libsql://", "https://").replace("wss://", "https://")
+        self._url     = base.rstrip("/") + "/v2/pipeline"
+        self._headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type":  "application/json",
+        }
+        self._last_rowid: int | None = None
 
-    # ── row_factory compatibility ─────────────────────────────────────────────
+    # ── row_factory compat ────────────────────────────────────────────────────
     @property
-    def row_factory(self):
-        return None
-
+    def row_factory(self):  return None
     @row_factory.setter
-    def row_factory(self, _):
-        pass   # sqlite3.Row assignment — ignored, _Cursor handles this
+    def row_factory(self, _): pass
+
+    # ── internal HTTP call ────────────────────────────────────────────────────
+    def _pipeline(self, stmts: list[dict]) -> list[dict]:
+        resp = _requests.post(
+            self._url,
+            headers=self._headers,
+            json={"requests": stmts},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json()["results"]
+
+    # ── type coercion ─────────────────────────────────────────────────────────
+    @staticmethod
+    def _to_arg(val: Any) -> dict:
+        if val is None:                         return {"type": "null"}
+        if isinstance(val, bool):               return {"type": "integer", "value": str(int(val))}
+        if isinstance(val, int):                return {"type": "integer", "value": str(val)}
+        if isinstance(val, float):              return {"type": "float",   "value": str(val)}
+        return {"type": "text", "value": str(val)}
+
+    @staticmethod
+    def _from_val(typed: dict) -> Any:
+        t = typed.get("type", "null")
+        v = typed.get("value")
+        if t == "null":    return None
+        if t == "integer": return int(v)   if v is not None else 0
+        if t == "float":   return float(v) if v is not None else 0.0
+        return v   # text / blob
 
     # ── execute ───────────────────────────────────────────────────────────────
-    def execute(self, sql: str, params=()):
+    def execute(self, sql: str, params=()) -> _StaticCursor | _EmptyCursor:
         stripped = sql.strip().upper()
-        if any(stripped.startswith(p) for p in _PRAGMA_PREFIXES):
-            return _EmptyCursor()
-        return _Cursor(self._conn.execute(sql, params))
 
-    def executemany(self, sql: str, seq):
-        stripped = sql.strip().upper()
-        if any(stripped.startswith(p) for p in _PRAGMA_PREFIXES):
+        # Skip PRAGMAs — Turso doesn't support them
+        if stripped.startswith("PRAGMA"):
             return _EmptyCursor()
-        return self._conn.executemany(sql, seq)
 
-    def executescript(self, sql: str):
-        """sqlite3.executescript compat — splits on ';' and runs each statement."""
-        for stmt in sql.split(";"):
-            stmt = stmt.strip()
-            if stmt:
-                self.execute(stmt)
-        self.commit()
+        # Intercept last_insert_rowid() — return the cached value
+        if "LAST_INSERT_ROWID" in stripped:
+            val = self._last_rowid or 0
+            return _StaticCursor(["last_insert_rowid()"],
+                                  [_DictRow(["last_insert_rowid()"], [val])])
+
+        args = [self._to_arg(p) for p in (params or [])]
+        results = self._pipeline([
+            {"type": "execute", "stmt": {"sql": sql, "args": args}},
+            {"type": "close"},
+        ])
+
+        res = results[0]
+        if res.get("type") == "error":
+            raise sqlite3.OperationalError(res.get("error", {}).get("message", str(res)))
+
+        result = res["response"]["result"]
+
+        # Cache last_insert_rowid for subsequent SELECT last_insert_rowid()
+        rawid = result.get("last_insert_rowid")
+        if rawid is not None:
+            self._last_rowid = int(rawid)
+
+        cols = [c["name"] for c in result.get("cols", [])]
+        rows = [
+            _DictRow(cols, [self._from_val(cell) for cell in row])
+            for row in result.get("rows", [])
+        ]
+        return _StaticCursor(cols, rows, self._last_rowid)
+
+    def executemany(self, sql: str, seq) -> _EmptyCursor:
+        for params in seq:
+            self.execute(sql, params)
         return _EmptyCursor()
 
-    # ── commit / sync ─────────────────────────────────────────────────────────
+    def executescript(self, sql: str) -> _EmptyCursor:
+        """sqlite3.executescript compat — splits on ';' and runs each."""
+        for stmt in sql.split(";"):
+            s = stmt.strip()
+            if s:
+                self.execute(s)
+        return _EmptyCursor()
+
     def commit(self):
-        self._conn.commit()
-        # libsql embedded-replica: push local writes to Turso
-        if hasattr(self._conn, "sync"):
-            self._conn.sync()
+        pass   # Turso HTTP API is auto-commit per statement
 
-    # ── misc ──────────────────────────────────────────────────────────────────
     def close(self):
-        self._conn.close()
+        pass
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        self.close()
+    def __enter__(self):  return self
+    def __exit__(self, *_): self.close()
 
 
-def connect(db_path: str) -> TursoConn:
+# ── Factory + first-boot seeding ─────────────────────────────────────────────
+
+def connect(db_path: Path) -> TursoConn:
     """
-    Build a TursoConn.
-
-    In production (TURSO_DATABASE_URL set):
-      - Creates an embedded replica synced to Turso.
-      - Local writes are durable on disk AND replicated to the cloud.
-      - db_path is used as the local replica file path.
-
-    Locally (TURSO_DATABASE_URL not set):
-      - Falls through to a plain sqlite3 connection (see api/main.py).
+    Create a TursoConn and (on first deploy) seed it from the git-committed
+    SQLite file so existing jobs carry over automatically.
     """
-    try:
-        import libsql_experimental as libsql
-    except ImportError as e:
-        raise RuntimeError(
-            "libsql-experimental is not installed. "
-            "Run: pip install libsql-experimental"
-        ) from e
-
     url   = os.environ["TURSO_DATABASE_URL"]
     token = os.environ.get("TURSO_AUTH_TOKEN", "")
+    conn  = TursoConn(url, token)
 
-    # Embedded replica: keeps a local SQLite file, syncs with Turso
-    conn = libsql.connect(
-        database=str(db_path),
-        sync_url=url,
-        auth_token=token,
-    )
-    conn.sync()   # pull latest from remote on startup
-    return TursoConn(conn)
+    # Seed from local SQLite if the remote jobs table is empty
+    _maybe_seed(conn, db_path)
+    return conn
+
+
+def _maybe_seed(turso: TursoConn, sqlite_path: Path) -> None:
+    """Copy all rows from the local SQLite DB into Turso if Turso is empty."""
+    if not sqlite_path.exists():
+        return
+
+    # Check whether Turso already has data
+    try:
+        cur = turso.execute("SELECT COUNT(*) FROM jobs")
+        row = cur.fetchone()
+        if row and (row[0] or 0) > 0:
+            return   # already populated
+    except Exception:
+        return   # table might not exist yet — _create_tables will handle it
+
+    try:
+        src = sqlite3.connect(str(sqlite_path))
+        src.row_factory = sqlite3.Row
+        jobs = [dict(r) for r in src.execute("SELECT * FROM jobs").fetchall()]
+        src.close()
+    except Exception:
+        return
+
+    if not jobs:
+        return
+
+    cols = [c for c in jobs[0].keys() if c != "id"]
+    placeholders = ", ".join("?" * len(cols))
+    col_names    = ", ".join(cols)
+    sql = f"INSERT OR IGNORE INTO jobs ({col_names}) VALUES ({placeholders})"
+
+    for job in jobs:
+        try:
+            turso.execute(sql, [job.get(c) for c in cols])
+        except Exception:
+            pass   # skip rows that fail (e.g. URL conflicts)
+
+    print(f"[turso] seeded {len(jobs)} jobs from local DB")

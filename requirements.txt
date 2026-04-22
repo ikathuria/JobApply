@@ -12,4 +12,4 @@ plotly>=5.18.0
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 python-multipart>=0.0.12
-libsql-experimental>=0.0.6   # Turso/libsql adapter for cloud SQLite persistence
+# Turso persistence uses the HTTP API via requests (already listed above) — no extra dep needed
