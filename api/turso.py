@@ -203,6 +203,7 @@ def seed_from_sqlite(turso: TursoConn, sqlite_path: Path) -> None:
     """
     Copy all rows from a local SQLite DB into Turso if the remote table is empty.
     Call this AFTER _create_tables so the schema already exists.
+    Uses batched pipeline requests (50 rows per HTTP call) for speed.
     """
     if not sqlite_path.exists():
         print(f"[turso] seed skipped — {sqlite_path} not found")
@@ -213,7 +214,7 @@ def seed_from_sqlite(turso: TursoConn, sqlite_path: Path) -> None:
         cur = turso.execute("SELECT COUNT(*) FROM jobs")
         row = cur.fetchone()
         if row and (row[0] or 0) > 0:
-            print(f"[turso] seed skipped — remote DB already has {row[0]} rows")
+            print(f"[turso] seed skipped — remote already has {row[0]} rows")
             return
     except Exception as e:
         print(f"[turso] seed skipped — could not query remote: {e}")
@@ -237,12 +238,25 @@ def seed_from_sqlite(turso: TursoConn, sqlite_path: Path) -> None:
     col_names    = ", ".join(cols)
     sql = f"INSERT OR IGNORE INTO jobs ({col_names}) VALUES ({placeholders})"
 
+    # Batch 50 rows per HTTP pipeline request instead of 1 per request
+    BATCH = 50
     ok = fail = 0
-    for job in jobs:
+    for i in range(0, len(jobs), BATCH):
+        batch = jobs[i : i + BATCH]
+        stmts = []
+        for job in batch:
+            args = [turso._to_arg(job.get(c)) for c in cols]
+            stmts.append({"type": "execute", "stmt": {"sql": sql, "args": args}})
+        stmts.append({"type": "close"})
         try:
-            turso.execute(sql, [job.get(c) for c in cols])
-            ok += 1
-        except Exception:
-            fail += 1
+            results = turso._pipeline(stmts)
+            for r in results:
+                if r.get("type") == "error":
+                    fail += 1
+                elif r.get("type") == "ok":
+                    ok += 1
+        except Exception as e:
+            fail += len(batch)
+            print(f"[turso] batch {i//BATCH + 1} failed: {e}")
 
-    print(f"[turso] seeded {ok} jobs from {sqlite_path}" + (f" ({fail} skipped)" if fail else ""))
+    print(f"[turso] seeded {ok} jobs from {sqlite_path}" + (f" ({fail} skipped/failed)" if fail else ""))

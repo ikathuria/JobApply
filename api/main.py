@@ -62,11 +62,15 @@ def db():
     global _conn
     if _conn is None:
         if os.environ.get("TURSO_DATABASE_URL"):
+            import threading
             from api.turso import connect as turso_connect, seed_from_sqlite
             from tracker.tracker import _create_tables  # type: ignore[attr-defined]
-            _conn = turso_connect()          # just opens the HTTP connection
-            _create_tables(_conn)            # schema must exist before seeding
-            seed_from_sqlite(_conn, _GIT_DB) # copy git DB → Turso if empty
+            _conn = turso_connect()
+            _create_tables(_conn)            # schema first (fast, ~5 HTTP calls)
+            # Seed in background — app responds immediately, jobs appear within seconds
+            threading.Thread(
+                target=seed_from_sqlite, args=(_conn, _GIT_DB), daemon=True
+            ).start()
         else:
             _conn = init_db(DB_PATH)         # local: plain sqlite3
     return _conn
