@@ -117,7 +117,7 @@ class TursoConn:
         if val is None:                         return {"type": "null"}
         if isinstance(val, bool):               return {"type": "integer", "value": str(int(val))}
         if isinstance(val, int):                return {"type": "integer", "value": str(val)}
-        if isinstance(val, float):              return {"type": "float",   "value": str(val)}
+        if isinstance(val, float):              return {"type": "float",   "value": val}   # must be numeric, not string
         return {"type": "text", "value": str(val)}
 
     @staticmethod
