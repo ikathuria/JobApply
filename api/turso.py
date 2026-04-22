@@ -192,23 +192,20 @@ class TursoConn:
 
 # ── Factory + first-boot seeding ─────────────────────────────────────────────
 
-def connect(db_path: Path) -> TursoConn:
-    """
-    Create a TursoConn and (on first deploy) seed it from the git-committed
-    SQLite file so existing jobs carry over automatically.
-    """
+def connect() -> TursoConn:
+    """Create a TursoConn from TURSO_DATABASE_URL / TURSO_AUTH_TOKEN env vars."""
     url   = os.environ["TURSO_DATABASE_URL"]
     token = os.environ.get("TURSO_AUTH_TOKEN", "")
-    conn  = TursoConn(url, token)
-
-    # Seed from local SQLite if the remote jobs table is empty
-    _maybe_seed(conn, db_path)
-    return conn
+    return TursoConn(url, token)
 
 
-def _maybe_seed(turso: TursoConn, sqlite_path: Path) -> None:
-    """Copy all rows from the local SQLite DB into Turso if Turso is empty."""
+def seed_from_sqlite(turso: TursoConn, sqlite_path: Path) -> None:
+    """
+    Copy all rows from a local SQLite DB into Turso if the remote table is empty.
+    Call this AFTER _create_tables so the schema already exists.
+    """
     if not sqlite_path.exists():
+        print(f"[turso] seed skipped — {sqlite_path} not found")
         return
 
     # Check whether Turso already has data
@@ -216,19 +213,23 @@ def _maybe_seed(turso: TursoConn, sqlite_path: Path) -> None:
         cur = turso.execute("SELECT COUNT(*) FROM jobs")
         row = cur.fetchone()
         if row and (row[0] or 0) > 0:
-            return   # already populated
-    except Exception:
-        return   # table might not exist yet — _create_tables will handle it
+            print(f"[turso] seed skipped — remote DB already has {row[0]} rows")
+            return
+    except Exception as e:
+        print(f"[turso] seed skipped — could not query remote: {e}")
+        return
 
     try:
         src = sqlite3.connect(str(sqlite_path))
         src.row_factory = sqlite3.Row
         jobs = [dict(r) for r in src.execute("SELECT * FROM jobs").fetchall()]
         src.close()
-    except Exception:
+    except Exception as e:
+        print(f"[turso] seed skipped — could not read local DB: {e}")
         return
 
     if not jobs:
+        print("[turso] seed skipped — local DB is empty")
         return
 
     cols = [c for c in jobs[0].keys() if c != "id"]
@@ -236,10 +237,12 @@ def _maybe_seed(turso: TursoConn, sqlite_path: Path) -> None:
     col_names    = ", ".join(cols)
     sql = f"INSERT OR IGNORE INTO jobs ({col_names}) VALUES ({placeholders})"
 
+    ok = fail = 0
     for job in jobs:
         try:
             turso.execute(sql, [job.get(c) for c in cols])
+            ok += 1
         except Exception:
-            pass   # skip rows that fail (e.g. URL conflicts)
+            fail += 1
 
-    print(f"[turso] seeded {len(jobs)} jobs from local DB")
+    print(f"[turso] seeded {ok} jobs from {sqlite_path}" + (f" ({fail} skipped)" if fail else ""))

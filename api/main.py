@@ -56,14 +56,17 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", str(ROOT / "output" / "resumes"))
 _conn = None
 
 
+_GIT_DB = ROOT / "tracker" / "applications.db"   # always the git-committed copy
+
 def db():
     global _conn
     if _conn is None:
         if os.environ.get("TURSO_DATABASE_URL"):
-            from api.turso import connect as turso_connect
+            from api.turso import connect as turso_connect, seed_from_sqlite
             from tracker.tracker import _create_tables  # type: ignore[attr-defined]
-            _conn = turso_connect(DB_PATH)   # seeds from git DB on first boot
-            _create_tables(_conn)            # create / migrate schema in Turso
+            _conn = turso_connect()          # just opens the HTTP connection
+            _create_tables(_conn)            # schema must exist before seeding
+            seed_from_sqlite(_conn, _GIT_DB) # copy git DB → Turso if empty
         else:
             _conn = init_db(DB_PATH)         # local: plain sqlite3
     return _conn
@@ -285,18 +288,51 @@ def api_tailor(job_id: int) -> dict:
 # ── Resume PDF ────────────────────────────────────────────────────────────────
 
 
+def _resolve_resume_path(raw: str) -> Path | None:
+    """
+    Find a resume PDF regardless of which machine generated it.
+
+    Tries in order:
+    1. The stored path as-is (works locally when path matches)
+    2. The stored path relative to ROOT (works when a relative path was stored)
+    3. The 'output/resumes/...' suffix relative to ROOT (fixes GHA / cross-machine paths)
+    4. Just the filename under ROOT/output/resumes/ (last resort)
+    """
+    stored = Path(raw.replace("\\", "/"))
+
+    candidates = [stored]
+    if not stored.is_absolute():
+        candidates.append(ROOT / stored)
+
+    # Extract the portable suffix: everything from 'output/resumes/' onward
+    parts = stored.parts
+    for i, part in enumerate(parts):
+        if part in ("output", "resumes"):
+            # Try joining from here to the end
+            suffix = Path(*parts[i:])
+            candidates.append(ROOT / suffix)
+            break
+
+    # Also try just slug/resume.pdf under ROOT/output/resumes/
+    if len(parts) >= 2:
+        candidates.append(ROOT / "output" / "resumes" / Path(*parts[-2:]))
+
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
+
 @app.get("/api/jobs/{job_id}/resume")
 def api_get_resume(job_id: int):
     row = db().execute("SELECT resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
     if not row or not row["resume_path"]:
         raise HTTPException(404, "No resume found")
-    p = Path(str(row["resume_path"]).replace("\\", "/"))
-    if not p.is_absolute():
-        p = ROOT / p
-    if not p.exists():
+    p = _resolve_resume_path(str(row["resume_path"]))
+    if not p:
         raise HTTPException(404, "Resume file not found on disk")
     return FileResponse(str(p), media_type="application/pdf",
-                        headers={"Content-Disposition": f"inline; filename=resume.pdf"})
+                        headers={"Content-Disposition": "inline; filename=resume.pdf"})
 
 
 # ── Cover letter ──────────────────────────────────────────────────────────────
@@ -307,9 +343,10 @@ def api_get_cover_letter(job_id: int) -> PlainTextResponse:
     row = db().execute("SELECT resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
     if not row or not row["resume_path"]:
         raise HTTPException(404, "No resume path")
-    cl_txt = Path(str(row["resume_path"]).replace("\\", "/")).parent / "cover_letter.txt"
-    if not cl_txt.is_absolute():
-        cl_txt = ROOT / cl_txt
+    resume_p = _resolve_resume_path(str(row["resume_path"]))
+    if not resume_p:
+        raise HTTPException(404, "Resume directory not found")
+    cl_txt = resume_p.parent / "cover_letter.txt"
     if not cl_txt.exists():
         raise HTTPException(404, "Cover letter not found")
     return PlainTextResponse(cl_txt.read_text(encoding="utf-8"))
@@ -324,9 +361,13 @@ def api_patch_cover_letter(job_id: int, body: CoverLetterPatch) -> dict:
     row = db().execute("SELECT resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
     if not row or not row["resume_path"]:
         raise HTTPException(404, "No resume path")
-    cl_txt = Path(str(row["resume_path"]).replace("\\", "/")).parent / "cover_letter.txt"
-    if not cl_txt.is_absolute():
-        cl_txt = ROOT / cl_txt
+    resume_p = _resolve_resume_path(str(row["resume_path"]))
+    # If we can't find the original, write next to where it should be relative to ROOT
+    if resume_p:
+        cl_txt = resume_p.parent / "cover_letter.txt"
+    else:
+        stored = Path(str(row["resume_path"]).replace("\\", "/"))
+        cl_txt = ROOT / "output" / "resumes" / Path(*stored.parts[-2:]).parent / "cover_letter.txt"
     cl_txt.parent.mkdir(parents=True, exist_ok=True)
     cl_txt.write_text(body.text, encoding="utf-8")
     return {"status": "ok"}
