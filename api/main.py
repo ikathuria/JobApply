@@ -51,14 +51,22 @@ if _db_env and not DB_PATH.exists() and _git_db.exists():
 OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", str(ROOT / "output" / "resumes")))
 
 # ── Singleton DB connection ───────────────────────────────────────────────────
+# Uses Turso (libsql) when TURSO_DATABASE_URL is set, sqlite3 otherwise.
 
-_conn: sqlite3.Connection | None = None
+_conn = None
 
 
-def db() -> sqlite3.Connection:
+def db():
     global _conn
     if _conn is None:
-        _conn = init_db(DB_PATH)
+        if os.environ.get("TURSO_DATABASE_URL"):
+            from api.turso import connect as turso_connect
+            _conn = turso_connect(DB_PATH)
+            # Run schema migrations on the Turso connection
+            from tracker.tracker import _create_tables  # type: ignore[attr-defined]
+            _create_tables(_conn)
+        else:
+            _conn = init_db(DB_PATH)
     return _conn
 
 

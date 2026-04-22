@@ -3,7 +3,7 @@ services:
     name: jobapply
     runtime: python
     region: ohio        # us-east-2 — closest to Purdue / West Lafayette
-    plan: free          # upgrade to starter ($7/mo) for persistent disk
+    plan: free
     buildCommand: |
       pip install -r requirements.txt
       cd web && npm ci && npm run build
@@ -14,19 +14,18 @@ services:
       - key: PYTHON_VERSION
         value: "3.12"
       - key: DB_PATH
-        value: /data/applications.db
+        value: /tmp/applications.db   # local replica for embedded-replica mode
       - key: OUTPUT_DIR
-        value: /data/resumes
+        value: /tmp/resumes
+      - key: TURSO_DATABASE_URL
+        sync: false          # e.g. libsql://jobapply.turso.io — set in Render dashboard
+      - key: TURSO_AUTH_TOKEN
+        sync: false          # from Turso dashboard → your db → Generate token
       - key: GOOGLE_API_KEY
-        sync: false          # set manually in Render dashboard
+        sync: false
       - key: ANTHROPIC_API_KEY
-        sync: false          # optional fallback LLM
+        sync: false
       - key: LINKEDIN_EMAIL
         sync: false
       - key: LINKEDIN_PASSWORD
         sync: false
-
-    disk:
-      name: jobapply-data
-      mountPath: /data
-      sizeGB: 1
