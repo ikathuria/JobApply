@@ -71,6 +71,7 @@ export default function App() {
                   setTab={setTab}
                   stats={stats}
                   onRefresh={refreshKey}
+                  triggerRefresh={onRefresh}
                 />
               </div>
               {selectedJob && (

@@ -1,9 +1,114 @@
 import { useState, useMemo, useEffect, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
-import { Input, EmptyState, Spinner } from './ui/index.jsx'
+import { Input, Btn, EmptyState, Spinner } from './ui/index.jsx'
 import JobRow from './JobRow.jsx'
 import { api } from '../api.js'
+
+// ── Import modal ─────────────────────────────────────────────────────────────
+const STATUS_OPTIONS = ['new','queued','approved','applied','oa','interview','offer','rejected','skipped']
+const BLANK = { title:'', company:'', url:'', status:'applied', date_applied:'', location:'', notes:'' }
+
+function ImportModal({ dark, onClose, onSuccess }) {
+  const T = dark ? DARK : LIGHT
+  const [form, setForm]     = useState({ ...BLANK, date_applied: new Date().toISOString().slice(0,10) })
+  const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState('')
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const submit = async () => {
+    if (!form.title.trim() || !form.company.trim()) { setError('Title and Company are required.'); return }
+    setSaving(true); setError('')
+    try {
+      await api.import({
+        title:        form.title.trim(),
+        company:      form.company.trim(),
+        url:          form.url.trim(),
+        status:       form.status,
+        date_applied: form.date_applied || null,
+        location:     form.location.trim(),
+        notes:        form.notes.trim(),
+      })
+      onSuccess()
+      onClose()
+    } catch (e) {
+      setError(e.message || 'Import failed')
+      setSaving(false)
+    }
+  }
+
+  const overlay = {
+    position:'fixed', inset:0, zIndex:1000,
+    background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)',
+    display:'flex', alignItems:'center', justifyContent:'center',
+  }
+  const modal = {
+    background: T.card, border: `1px solid ${T.border}`,
+    borderRadius: 14, padding: '28px 32px', width: 520, maxWidth: '95vw',
+    boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+  }
+  const label = { fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }
+  const inp = {
+    width: '100%', padding: '8px 12px', borderRadius: 8,
+    border: `1px solid ${T.border}`, background: dark ? '#1A1A28' : '#FAFAFA',
+    color: T.text, fontSize: 13, fontFamily: 'DM Sans, sans-serif', outline: 'none',
+    boxSizing: 'border-box',
+  }
+
+  return (
+    <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
+          <div style={{ fontSize:16, fontWeight:800, color:T.text }}>Import Job</div>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:T.muted, fontSize:20, cursor:'pointer', lineHeight:1 }}>×</button>
+        </div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px 16px' }}>
+          <div style={{ gridColumn:'1/-1' }}>
+            <div style={label}>Job Title *</div>
+            <input style={inp} value={form.title} onChange={e => set('title', e.target.value)} placeholder="Software Engineer Intern" />
+          </div>
+          <div>
+            <div style={label}>Company *</div>
+            <input style={inp} value={form.company} onChange={e => set('company', e.target.value)} placeholder="Acme Corp" />
+          </div>
+          <div>
+            <div style={label}>Status</div>
+            <select style={inp} value={form.status} onChange={e => set('status', e.target.value)}>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+            </select>
+          </div>
+          <div style={{ gridColumn:'1/-1' }}>
+            <div style={label}>Job URL</div>
+            <input style={inp} value={form.url} onChange={e => set('url', e.target.value)} placeholder="https://jobs.example.com/..." />
+          </div>
+          <div>
+            <div style={label}>Date Applied</div>
+            <input type="date" style={inp} value={form.date_applied} onChange={e => set('date_applied', e.target.value)} />
+          </div>
+          <div>
+            <div style={label}>Location</div>
+            <input style={inp} value={form.location} onChange={e => set('location', e.target.value)} placeholder="Remote / NYC" />
+          </div>
+          <div style={{ gridColumn:'1/-1' }}>
+            <div style={label}>Notes</div>
+            <textarea style={{ ...inp, resize:'vertical', minHeight:68 }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Referral from Jane, apply before May 1…" />
+          </div>
+        </div>
+
+        {error && <div style={{ marginTop:12, fontSize:12, color:'#EF4444' }}>{error}</div>}
+
+        <div style={{ display:'flex', gap:10, marginTop:22 }}>
+          <Btn variant="primary" onClick={submit} disabled={saving}>
+            {saving ? 'Importing…' : 'Import Job'}
+          </Btn>
+          <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Focus queue ───────────────────────────────────────────────────────────────
 function FocusQueue({ focus, onSelectJob, setTab, dark }) {
@@ -52,7 +157,7 @@ const TABS = [
   { id: 'all',      label: 'All',      statusFilter: null },
 ]
 
-export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats, onRefresh }) {
+export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats, onRefresh, triggerRefresh }) {
   const { dark } = useContext(ThemeCtx)
   const T = dark ? DARK : LIGHT
 
@@ -62,6 +167,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   const [jobs, setJobs]           = useState([])
   const [focus, setFocus]         = useState([])
   const [loading, setLoading]     = useState(true)
+  const [showImport, setShowImport] = useState(false)
 
   // Fetch jobs when tab or filters change
   useEffect(() => {
@@ -148,7 +254,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           padding: '6px 12px', borderRadius: 6, border: `1px solid ${T.border}`,
           background: 'transparent', color: T.muted, fontSize: 11, fontWeight: 600,
           cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', marginBottom: 2,
-        }}>+ Import</button>
+        }} onClick={() => setShowImport(true)}>+ Import</button>
       </div>
 
       {/* Filter bar */}
@@ -196,6 +302,14 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           ))
         )}
       </div>
+
+      {showImport && (
+        <ImportModal
+          dark={dark}
+          onClose={() => setShowImport(false)}
+          onSuccess={() => triggerRefresh?.()}
+        />
+      )}
     </div>
   )
 }
