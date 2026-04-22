@@ -1,9 +1,11 @@
 # JobApply
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?logo=streamlit&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?logo=google&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Daily%20Automation-2088FF?logo=githubactions&logoColor=white)
+![Render](https://img.shields.io/badge/Deployed-Render-46E3B7?logo=render&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 An end-to-end automated AI/ML internship application system. JobApply discovers job listings, scores and filters them, generates tailored resumes and cover letters via LLM, and auto-fills ATS application forms — all with a human-in-the-loop confirmation step before any form is submitted.
@@ -21,7 +23,7 @@ Built for Ishani Kathuria (MS AI @ Purdue, ex-AWS SDE) targeting Summer 2026 AI/
 - [Setup](#setup)
 - [Usage](#usage)
 - [GitHub Actions](#github-actions)
-- [Streamlit Dashboard](#streamlit-dashboard)
+- [Dashboard](#dashboard)
 - [Configuration](#configuration)
 - [Design Decisions](#design-decisions)
 - [Contributing](#contributing)
@@ -53,7 +55,8 @@ JobApply runs a four-phase pipeline fully automated from discovery to applicatio
 - **No fabrication** — LLM is explicitly instructed never to invent skills or experience
 - **Deduplication** — SQLite UNIQUE constraint on job URL prevents duplicate entries
 - **Daily CI pipeline** — GitHub Actions discovers and tailors up to 50 jobs every morning
-- **Streamlit dashboard** — browse, review, and trigger tailoring from a hosted web UI
+- **React dashboard** — browse, review, edit, and trigger tailoring from a hosted web UI (deployed on Render)
+- **CSV import** — bulk-import jobs from any spreadsheet export
 
 ---
 
@@ -102,8 +105,8 @@ JobApply runs a four-phase pipeline fully automated from discovery to applicatio
           └───────────┬────────────┘
                       │ status: applied / rejected
           ┌───────────▼────────────┐
-          │  Streamlit Dashboard   │
-          │  Review · Stats · Tag  │
+          │   FastAPI + React UI   │  ← deployed on Render
+          │  Review · Edit · Stats │
           └────────────────────────┘
 ```
 
@@ -124,6 +127,9 @@ Jobs are sorted descending by score; only the top-N proceed to tailoring.
 ```
 JobApply/
 ├── main.py                      # CLI orchestrator
+├── Makefile                     # make dev / make build / make prod
+├── requirements.txt             # Python deps (includes fastapi, uvicorn)
+├── render.yaml                  # Render one-click deploy config
 ├── config/
 │   ├── settings.yaml            # sources, scoring weights, LLM provider
 │   └── profile.json             # candidate profile (resume data, work auth)
@@ -143,13 +149,33 @@ JobApply/
 │   ├── lever_apply.py           # Lever form handler
 │   └── linkedin_apply.py        # LinkedIn Easy Apply handler
 ├── tracker/
-│   └── tracker.py               # SQLite CRUD
-├── dashboard/
-│   └── app.py                   # Streamlit review dashboard
+│   ├── tracker.py               # SQLite CRUD
+│   └── applications.db          # job database (committed by GHA)
+├── api/
+│   └── main.py                  # FastAPI REST API (stats, jobs, tailor, import)
+├── web/
+│   ├── index.html               # Vite entry point
+│   ├── package.json
+│   ├── vite.config.js           # proxies /api → :8000 in dev
+│   ├── dist/                    # built React bundle (served by FastAPI)
+│   └── src/
+│       ├── App.jsx              # root — routing, theme, state
+│       ├── theme.js             # DARK / LIGHT design tokens
+│       ├── api.js               # typed fetch wrappers
+│       └── components/
+│           ├── Sidebar.jsx      # nav, pipeline stats, theme toggle
+│           ├── JobsView.jsx     # tab bar, search, job list, import modal
+│           ├── JobRow.jsx       # score circle, status badge, starred
+│           ├── JobDrawer.jsx    # detail panel — overview/resume/cover letter/edit
+│           ├── AnalyticsView.jsx# funnel, conversion rates, pipeline SVG
+│           ├── SettingsView.jsx # profile, API keys, preferences
+│           ├── ThemeContext.jsx  # React context for dark/light
+│           └── ui/index.jsx     # shared primitives (Btn, Input, Badge…)
 ├── output/
 │   └── resumes/                 # generated PDFs (committed by GHA)
 └── .github/workflows/
-    └── daily_tailor.yml         # daily GHA: discover + tailor 50 jobs
+    ├── daily_tailor.yml         # 9 AM UTC: discover + tailor 50 jobs
+    └── auto_apply.yml           # manual trigger: apply to approved jobs
 ```
 
 ---
@@ -159,6 +185,7 @@ JobApply/
 ### Prerequisites
 
 - Python 3.12+
+- Node.js 18+ and npm
 - A Google AI Studio API key — [aistudio.google.com](https://aistudio.google.com)
 - (Optional) LinkedIn account credentials for LinkedIn scraping
 
@@ -171,10 +198,17 @@ cd JobApply
 
 ### 2. Install dependencies
 
-Playwright is installed separately to maintain Streamlit Cloud compatibility.
+```bash
+make install
+# equivalent to:
+#   pip install -r requirements.txt
+#   cd web && npm install
+```
+
+Playwright is installed separately (OS-level browser deps):
 
 ```bash
-pip install -r requirements.txt playwright
+pip install playwright
 playwright install chromium
 ```
 
@@ -190,6 +224,7 @@ Open `.env` and fill in:
 GOOGLE_API_KEY=your_key_from_aistudio
 LINKEDIN_EMAIL=your@email.com
 LINKEDIN_PASSWORD=yourpassword
+ANTHROPIC_API_KEY=optional_fallback
 ```
 
 ### 4. Configure your profile
@@ -204,7 +239,7 @@ Edit `config/settings.yaml` to change scoring weights, keyword lists, job source
 
 ## Usage
 
-All commands run from the project root.
+### Pipeline (CLI)
 
 ```bash
 # Discover jobs from all configured sources
@@ -222,31 +257,55 @@ python main.py --apply --limit 10
 
 # Show application tracker statistics
 python main.py --stats
+```
 
-# Launch the Streamlit review dashboard (local)
-streamlit run dashboard/app.py
+### Dashboard (local dev)
+
+```bash
+make dev
+# Opens two terminals:
+#   FastAPI backend  →  http://localhost:8000
+#   React dev server →  http://localhost:3000
+```
+
+Or run servers separately:
+
+```bash
+make api   # FastAPI only (port 8000)
+make web   # React dev server only (port 3000)
+```
+
+### Production (self-hosted)
+
+```bash
+make prod
+# Builds React → web/dist/, then serves everything from FastAPI on port 8000
 ```
 
 ### Application status flow
 
 ```
-new  →  queued  →  applied  →  interview
-                          ↘  offer
-                          ↘  rejected
+new  →  queued  →  approved  →  applied  →  oa  →  interview  →  offer
+  ↘ skipped                  ↘ rejected
 ```
 
 ---
 
 ## GitHub Actions
 
-A daily workflow runs automatically at **9:00 AM UTC** every day.
+Two workflows are available:
 
-**What it does:**
+### `daily_tailor.yml` — runs automatically at 9:00 AM UTC
+
 1. Scrapes intern-list.com for new listings
 2. Scores and filters jobs
 3. Tailors the top 50 jobs (Gemini 2.5 Flash)
 4. Renders PDFs to `output/resumes/`
 5. Commits the updated `tracker/applications.db` and new PDFs back to the repository
+
+### `auto_apply.yml` — manual trigger only
+
+Applies to all jobs in `approved` status, up to the specified limit. Runs headless; takes screenshots before each submission.
 
 **Required repository secret:**
 
@@ -256,34 +315,54 @@ A daily workflow runs automatically at **9:00 AM UTC** every day.
 
 Set this under **Settings → Secrets and variables → Actions → New repository secret**.
 
-LinkedIn scraping is intentionally excluded from the GHA workflow because it requires interactive 2FA. Run `python main.py --source linkedin` locally when you want to pull LinkedIn listings.
+LinkedIn scraping is intentionally excluded from the GHA workflows because it requires interactive 2FA. Run `python main.py --source linkedin` locally when you want to pull LinkedIn listings.
 
 ---
 
-## Streamlit Dashboard
+## Dashboard
 
-The dashboard is deployable to [Streamlit Community Cloud](https://share.streamlit.io) and reads from the `tracker/applications.db` file committed to the repository by GitHub Actions.
+The React dashboard is deployed on **[Render](https://render.com)** and served by the FastAPI backend. It reads and writes to the SQLite database on a persistent Render disk.
 
-**Features:**
-- Browse all discovered jobs with scores and statuses
-- View generated resume and cover letter for any tailored job
-- Trigger tailoring for individual jobs (cloud-compatible)
-- Filter by status, score range, or keyword
-- View summary statistics
+### Features
 
-**Cloud-only limitations:**
+| Feature | What it does |
+|---------|-------------|
+| **Jobs view** | Browse all jobs with tab filters (New / Ready / Approved / Applied / All), search, sort, and score slider |
+| **Today's Focus** | Smart queue surfacing the highest-priority action right now |
+| **Job drawer** | Click any row — overview, tailored resume preview, cover letter editor, and full edit form |
+| **Edit tab** | Edit title, company, location, URL, status, score, recruiter, salary, interview/follow-up dates, rejection stage, and starred |
+| **Import** | Single job form or CSV bulk import (with template download and row preview) |
+| **Analytics** | Application funnel, conversion rates, pipeline flow diagram |
+| **Dark / Light mode** | Persisted across sessions |
 
-| Feature | Local | Streamlit Cloud |
-|---------|-------|-----------------|
-| Discovery (scraping) | Yes | No (Playwright not available) |
-| Tailor | Yes | Yes |
-| Apply | Yes | No (Playwright not available) |
-| Review / Stats | Yes | Yes |
+### Capability comparison
 
-**Deploy to Streamlit Cloud:**
-1. Push the repo to GitHub
-2. Connect it at share.streamlit.io
-3. Add `GOOGLE_API_KEY` to **App settings → Secrets**
+| Feature | Local | Render (deployed) |
+|---------|-------|-------------------|
+| Discovery (scraping) | ✅ | ❌ Playwright not available |
+| Tailor with AI | ✅ | ✅ |
+| Confirm & Apply | ✅ | ❌ Playwright not available |
+| Review / Edit / Stats | ✅ | ✅ |
+| CSV import | ✅ | ✅ |
+
+### Deploy your own to Render
+
+The repo includes `render.yaml` for one-click deploys:
+
+1. Go to [render.com](https://render.com) → **New → Web Service**
+2. Connect the GitHub repo — Render auto-detects `render.yaml`
+3. Add environment variables in the Render dashboard:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GOOGLE_API_KEY` | Yes | Gemini API key for tailoring |
+| `ANTHROPIC_API_KEY` | No | Optional Claude fallback |
+| `LINKEDIN_EMAIL` | No | Used by apply pipeline locally |
+| `LINKEDIN_PASSWORD` | No | Used by apply pipeline locally |
+
+4. Click **Create Web Service** — build and deploy runs automatically
+
+The build command installs Python deps and builds the React bundle. The start command is `uvicorn api.main:app --host 0.0.0.0 --port $PORT`. The SQLite database is seeded from the git copy on first boot and persisted to a 1 GB Render disk at `/data`.
 
 ---
 
@@ -346,8 +425,10 @@ Contains all candidate data used by the LLM to tailor applications:
 |----------|-----------|
 | **Human-in-the-loop apply** | The apply step always pauses for confirmation before submitting any form. No accidental submissions. |
 | **No LLM fabrication** | The system prompt explicitly prohibits inventing skills, experience, or credentials. Tailoring only reframes real content. |
-| **SQLite over a remote DB** | Keeps the project self-contained and portable; the DB is small enough to commit to git. |
-| **Playwright separate from requirements.txt** | Playwright has OS-level browser dependencies that break Streamlit Cloud installs if included in the main requirements file. |
+| **SQLite over a remote DB** | Keeps the project self-contained; the DB is small enough to commit to git, giving free CI-driven backups. |
+| **React + FastAPI over Streamlit** | Streamlit's execution model made fine-grained UI state (drawers, modals, inline edits) awkward. FastAPI serves as both the API layer and the static file host for the built React bundle, keeping the deployment a single process. |
+| **`web/dist` committed to git** | Render's free tier build time is limited; committing the pre-built bundle means zero frontend build time on deploy and faster cold starts. |
+| **Playwright separate from requirements.txt** | Playwright has OS-level browser dependencies that fail on cloud installs if included in the main requirements file. |
 | **thinking_budget=0** | Disables chain-of-thought on structured JSON tasks, preventing token budget overruns that would truncate output. |
 | **2s sleep between Gemini calls** | Stays comfortably within the paid tier limit of 1,000 RPM / 10,000 RPD. |
 
@@ -360,11 +441,11 @@ This is a personal automation project. If you want to adapt it for your own job 
 1. Fork the repository
 2. Replace `config/profile.json` with your own resume data
 3. Adjust keywords in `config/settings.yaml` to match your target roles
-4. Add your `GOOGLE_API_KEY` to `.env` (local) and to GitHub / Streamlit secrets (CI/cloud)
+4. Add your `GOOGLE_API_KEY` to `.env` (local) and to GitHub / Render secrets (CI/cloud)
 5. Run `python main.py` to start your first discovery pass
 
 Bug reports and pull requests are welcome. Please open an issue first for any significant changes.
 
 ---
 
-*Built with Python 3.12, Playwright, Gemini 2.5 Flash, ReportLab, and Streamlit.*
+*Built with Python 3.12, React 18, FastAPI, Playwright, Gemini 2.5 Flash, and ReportLab.*
