@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: jobapply
+    runtime: python
+    region: ohio        # us-east-2 — closest to Purdue / West Lafayette
+    plan: free          # upgrade to starter ($7/mo) for persistent disk
+    buildCommand: |
+      pip install -r requirements.txt
+      cd web && npm ci && npm run build
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/stats
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: DB_PATH
+        value: /data/applications.db
+      - key: OUTPUT_DIR
+        value: /data/resumes
+      - key: GOOGLE_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false          # optional fallback LLM
+      - key: LINKEDIN_EMAIL
+        sync: false
+      - key: LINKEDIN_PASSWORD
+        sync: false
+
+    disk:
+      name: jobapply-data
+      mountPath: /data
+      sizeGB: 1

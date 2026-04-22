@@ -5,3 +5,4 @@ __pycache__/
 *.pyo
 logs/
 output/resumes/_test/
+web/node_modules/

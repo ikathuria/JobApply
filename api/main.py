@@ -5,7 +5,9 @@ Run: uvicorn api.main:app --reload --port 8000
 
 from __future__ import annotations
 import hashlib
+import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -35,8 +37,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_PATH = ROOT / "tracker" / "applications.db"
-OUTPUT_DIR = ROOT / "output" / "resumes"
+# In production (Render), DB_PATH env var points to the persistent disk.
+# Locally it falls back to tracker/applications.db in the repo.
+_db_env = os.environ.get("DB_PATH")
+DB_PATH = Path(_db_env) if _db_env else ROOT / "tracker" / "applications.db"
+
+# Seed the persistent-disk DB from the repo copy on first deploy
+_git_db = ROOT / "tracker" / "applications.db"
+if _db_env and not DB_PATH.exists() and _git_db.exists():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(_git_db, DB_PATH)
+
+OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", str(ROOT / "output" / "resumes")))
 
 # ── Singleton DB connection ───────────────────────────────────────────────────
 

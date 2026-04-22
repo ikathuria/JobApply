@@ -1,12 +1,12 @@
-.PHONY: dev api web install build
+.PHONY: dev api web install build prod
 
-# Run both servers concurrently (requires 'concurrently' or just use two terminals)
+# Dev: open two cmd windows (Windows) running both servers
 dev:
-	@echo "Starting FastAPI + Vite dev servers..."
+	@echo "Starting FastAPI (8000) + Vite (3000)..."
 	@start cmd /k "uvicorn api.main:app --reload --port 8000"
 	@start cmd /k "cd web && npm run dev"
 
-# Run only the FastAPI backend
+# Run only the FastAPI backend (dev, with hot-reload)
 api:
 	uvicorn api.main:app --reload --port 8000
 
@@ -18,7 +18,11 @@ web:
 build:
 	cd web && npm run build
 
-# Install all dependencies
+# Production: build React then serve everything from FastAPI
+prod: build
+	uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Install all dependencies (Python + Node)
 install:
 	pip install -r requirements.txt
 	cd web && npm install
