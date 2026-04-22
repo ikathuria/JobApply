@@ -13,12 +13,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12"
-      - key: DB_PATH
-        value: /tmp/applications.db   # local replica for embedded-replica mode
-      - key: OUTPUT_DIR
-        value: /tmp/resumes
+      # DB_PATH intentionally omitted — defaults to tracker/applications.db in the repo.
+      # Set DB_PATH + TURSO_DATABASE_URL + TURSO_AUTH_TOKEN to enable cloud persistence.
       - key: TURSO_DATABASE_URL
-        sync: false          # e.g. libsql://jobapply.turso.io — set in Render dashboard
+        sync: false          # optional — set in Render dashboard for persistent storage
       - key: TURSO_AUTH_TOKEN
         sync: false          # from Turso dashboard → your db → Generate token
       - key: GOOGLE_API_KEY
