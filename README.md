@@ -22,6 +22,7 @@ Built for Ishani Kathuria (MS AI @ Purdue, ex-AWS SDE) targeting Summer 2026 AI/
 - [Project Structure](#project-structure)
 - [Setup](#setup)
 - [Usage](#usage)
+- [Local Testing](#local-testing)
 - [GitHub Actions](#github-actions)
 - [Dashboard](#dashboard)
 - [Configuration](#configuration)
@@ -288,6 +289,167 @@ make prod
 new  →  queued  →  approved  →  applied  →  oa  →  interview  →  offer
   ↘ skipped                  ↘ rejected
 ```
+
+---
+
+## Local Testing
+
+### 1. Start the full stack
+
+```bash
+make dev
+# FastAPI →  http://localhost:8000
+# React   →  http://localhost:3000  (proxies /api to :8000)
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser. Changes to `web/src/` hot-reload instantly; changes to `api/main.py` reload via uvicorn's `--reload`.
+
+---
+
+### 2. API smoke tests
+
+With the API server running, execute the test script:
+
+```bash
+# Terminal 1
+uvicorn api.main:app --reload --port 8000
+
+# Terminal 2
+python api/test_api.py
+```
+
+The script covers every endpoint — stats, focus, jobs list (with filters), import, single-job fetch, patch, and 404 paths. It creates and cleans up a throwaway `_TestCo` job so it is safe to run against your live database.
+
+Expected output:
+
+```
+── Stats ────────────────────────────────────────────────
+  ✓  GET /stats → 200
+  ✓  stats has required keys
+
+── Focus ────────────────────────────────────────────────
+  ✓  GET /focus → 200
+  ✓  focus returns list
+
+── Jobs list ────────────────────────────────────────────
+  ✓  GET /jobs → 200
+  ✓  jobs response has 'jobs' key
+  ✓  jobs response has 'total' key
+  ✓  GET /jobs?status=new&limit=5 → 200
+  ✓  GET /jobs?min_score=0.7&sort=company → 200
+
+── Import ───────────────────────────────────────────────
+  ✓  POST /jobs/import → 200/201
+  ✓  import returns job id
+  ✓  duplicate import → 200 (update)
+  ✓  duplicate returns 'updated' status
+  ...
+
+  22/22 checks passed
+```
+
+---
+
+### 3. API spot checks with curl
+
+```bash
+# Overall stats
+curl http://localhost:8000/api/stats | python -m json.tool
+
+# List top-5 jobs sorted by score
+curl "http://localhost:8000/api/jobs?limit=5&sort=score" | python -m json.tool
+
+# List only new jobs
+curl "http://localhost:8000/api/jobs?status=new" | python -m json.tool
+
+# Fetch a single job (replace 1 with a real id)
+curl http://localhost:8000/api/jobs/1 | python -m json.tool
+
+# Patch a job's status
+curl -X PATCH http://localhost:8000/api/jobs/1 \
+  -H "Content-Type: application/json" \
+  -d '{"status": "applied", "date_applied": "2026-04-21"}'
+
+# Import a job manually
+curl -X POST http://localhost:8000/api/jobs/import \
+  -H "Content-Type: application/json" \
+  -d '{"title":"ML Intern","company":"Acme AI","status":"applied","date_applied":"2026-04-21"}'
+```
+
+The interactive API docs (Swagger UI) are also available at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+---
+
+### 4. Pipeline component tests
+
+Test individual pipeline modules without running the full scrape + apply cycle:
+
+```bash
+# Verify DB initialises and basic CRUD works
+python - <<'EOF'
+from pathlib import Path
+from tracker.tracker import init_db, get_stats
+conn = init_db(Path("tracker/applications.db"))
+print("Stats:", get_stats(conn))
+EOF
+
+# Fetch a job description from a URL
+python - <<'EOF'
+from pipeline.jd_fetcher import fetch_jd
+text = fetch_jd("https://www.linkedin.com/jobs/view/123456789")
+print(text[:500] if text else "fetch failed (expected without auth)")
+EOF
+
+# Score a batch of dummy jobs
+python - <<'EOF'
+from pipeline.job_filter import score_jobs
+jobs = [
+    {"title": "ML Research Intern", "description": "LLM RAG deep learning Python"},
+    {"title": "Administrative Assistant", "description": "filing scheduling"},
+]
+scored = score_jobs(jobs)
+for j in scored:
+    print(f"{j['score']:.2f}  {j['title']}")
+EOF
+
+# Test LLM connectivity (uses GOOGLE_API_KEY from .env)
+python - <<'EOF'
+from pipeline.llm_client import LLMClient
+client = LLMClient()
+resp = client.complete("Reply with just: ok")
+print("LLM response:", resp)
+EOF
+```
+
+---
+
+### 5. End-to-end smoke run (no browser, no real jobs)
+
+Run discovery in dry-run mode against a single source to verify the pipeline without touching LinkedIn or submitting anything:
+
+```bash
+# Discover from intern-list only, tailor 0 jobs (just scrape + score)
+python main.py --source intern_list --limit 0
+
+# Check what landed in the DB
+python main.py --stats
+```
+
+---
+
+### 6. React UI checks
+
+With `make dev` running:
+
+| What to check | Where |
+|--------------|-------|
+| Dark/light toggle persists on reload | Sidebar bottom |
+| Tab counts match `GET /api/stats` | Jobs tab bar badges |
+| Job rows open the drawer on click | Any job row |
+| Edit tab saves and updates the header | Drawer → Edit |
+| Import single job appears in list | `+ Import` → Single Job |
+| Import CSV with template file | `+ Import` → CSV Bulk → Download template |
+| Analytics funnel matches stats | Analytics screen |
 
 ---
 
