@@ -81,18 +81,40 @@ def db():
 
 @app.get("/api/stats")
 def api_stats() -> dict:
-    s = get_stats(db())
+    conn = db()
+    s = get_stats(conn)
+
+    # Breakdown of rejected jobs by which stage they were rejected at
+    stage_rows = conn.execute(
+        "SELECT COALESCE(rejection_stage, 'Unknown') as stage, COUNT(*) as cnt "
+        "FROM jobs WHERE status = 'rejected' GROUP BY rejection_stage "
+        "ORDER BY cnt DESC"
+    ).fetchall()
+    rejection_stages = {row["stage"]: row["cnt"] for row in stage_rows}
+
+    applied_n   = s.get(STATUS_APPLIED,   0)
+    oa_n        = s.get(STATUS_OA,        0)
+    interview_n = s.get(STATUS_INTERVIEW, 0)
+    offer_n     = s.get(STATUS_OFFER,     0)
+    rejected_n  = s.get(STATUS_REJECTED,  0)
+
+    # total_applied = everyone who actually submitted an application
+    # (jobs that progressed past "applied" status also count as applied)
+    total_applied = applied_n + oa_n + interview_n + offer_n + rejected_n
+
     return {
-        "total":     sum(s.values()),
-        "new":       s.get(STATUS_NEW,       0),
-        "ready":     s.get(STATUS_QUEUED,    0),
-        "approved":  s.get(STATUS_APPROVED,  0),
-        "applied":   s.get(STATUS_APPLIED,   0),
-        "oa":        s.get(STATUS_OA,        0),
-        "interview": s.get(STATUS_INTERVIEW, 0),
-        "offer":     s.get(STATUS_OFFER,     0),
-        "rejected":  s.get(STATUS_REJECTED,  0),
-        "skipped":   s.get(STATUS_SKIPPED,   0),
+        "total":         sum(s.values()),
+        "new":           s.get(STATUS_NEW,       0),
+        "ready":         s.get(STATUS_QUEUED,    0),
+        "approved":      s.get(STATUS_APPROVED,  0),
+        "applied":       applied_n,
+        "total_applied": total_applied,
+        "oa":            oa_n,
+        "interview":     interview_n,
+        "offer":         offer_n,
+        "rejected":      rejected_n,
+        "skipped":       s.get(STATUS_SKIPPED,   0),
+        "rejection_stages": rejection_stages,
     }
 
 
