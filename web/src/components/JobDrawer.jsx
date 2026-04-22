@@ -197,7 +197,71 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
     await api.saveCL(job.id, coverLetter)
   }
 
-  const drawerTabs = ['overview', 'resume', 'cover letter']
+  // ── Edit tab ──
+  const [editForm, setEditForm]   = useState(null)   // null = not open yet
+  const [editSaving, setEditSaving] = useState(false)
+  const [editMsg, setEditMsg]       = useState('')
+
+  // Populate edit form when switching to edit tab
+  useEffect(() => {
+    if (activeTab === 'edit') {
+      setEditForm({
+        title:          job.title         || '',
+        company:        job.company       || '',
+        location:       job.location      || '',
+        url:            job.url           || '',
+        status:         job.status        || 'new',
+        score:          job.score         ?? '',
+        date_applied:   job.date_applied  ? job.date_applied.slice(0,10) : '',
+        recruiter:      job.recruiter     || '',
+        salary_range:   job.salary_range  || '',
+        interview_date: job.interview_date ? job.interview_date.slice(0,10) : '',
+        follow_up_date: job.follow_up_date ? job.follow_up_date.slice(0,10) : '',
+        rejection_stage:job.rejection_stage || '',
+        starred:        job.starred       ? true : false,
+      })
+      setEditMsg('')
+    }
+  }, [activeTab, job?.id])
+
+  const setEF = (k, v) => setEditForm(f => ({ ...f, [k]: v }))
+
+  async function saveEdit() {
+    setEditSaving(true); setEditMsg('')
+    try {
+      const payload = {
+        title:           editForm.title.trim()          || undefined,
+        company:         editForm.company.trim()         || undefined,
+        location:        editForm.location.trim()        || undefined,
+        url:             editForm.url.trim()             || undefined,
+        status:          editForm.status                 || undefined,
+        score:           editForm.score !== '' ? parseFloat(editForm.score) : undefined,
+        date_applied:    editForm.date_applied           || undefined,
+        recruiter:       editForm.recruiter.trim()       || undefined,
+        salary_range:    editForm.salary_range.trim()    || undefined,
+        interview_date:  editForm.interview_date         || undefined,
+        follow_up_date:  editForm.follow_up_date         || undefined,
+        rejection_stage: editForm.rejection_stage.trim() || undefined,
+        starred:         editForm.starred ? 1 : 0,
+      }
+      // strip undefineds
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k])
+      const updated = await api.patch(job.id, payload)
+      setJob(updated)
+      setNotes(updated.notes || '')
+      onRefresh?.()
+      setEditMsg('✓ Saved')
+      setTimeout(() => setEditMsg(''), 2000)
+    } catch (e) {
+      setEditMsg('❌ ' + (e.message || 'Save failed'))
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const STATUS_OPTS = ['new','queued','approved','applied','oa','interview','offer','rejected','skipped']
+
+  const drawerTabs = ['overview', 'resume', 'cover letter', 'edit']
 
   return (
     <>
@@ -404,6 +468,89 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
               )}
             </div>
           )}
+
+          {/* ── Edit ── */}
+          {activeTab === 'edit' && editForm && (() => {
+            const lbl = { fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }
+            const inp = { width: '100%', padding: '7px 10px', borderRadius: 7, border: `1px solid ${T.border}`, background: dark ? '#1A1A28' : '#FAFAFA', color: T.text, fontSize: 12, fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box' }
+            const row = { marginBottom: 12 }
+            return (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+                  <div style={{ ...row, gridColumn: '1/-1' }}>
+                    <div style={lbl}>Title</div>
+                    <input style={inp} value={editForm.title} onChange={e => setEF('title', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Company</div>
+                    <input style={inp} value={editForm.company} onChange={e => setEF('company', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Location</div>
+                    <input style={inp} value={editForm.location} onChange={e => setEF('location', e.target.value)} />
+                  </div>
+                  <div style={{ ...row, gridColumn: '1/-1' }}>
+                    <div style={lbl}>Job URL</div>
+                    <input style={inp} value={editForm.url} onChange={e => setEF('url', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Status</div>
+                    <select style={inp} value={editForm.status} onChange={e => setEF('status', e.target.value)}>
+                      {STATUS_OPTS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+                    </select>
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Score (0–1)</div>
+                    <input style={inp} type="number" min={0} max={1} step={0.01} value={editForm.score} onChange={e => setEF('score', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Date Applied</div>
+                    <input style={inp} type="date" value={editForm.date_applied} onChange={e => setEF('date_applied', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Interview Date</div>
+                    <input style={inp} type="date" value={editForm.interview_date} onChange={e => setEF('interview_date', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Follow-up Date</div>
+                    <input style={inp} type="date" value={editForm.follow_up_date} onChange={e => setEF('follow_up_date', e.target.value)} />
+                  </div>
+                  <div style={row}>
+                    <div style={lbl}>Recruiter</div>
+                    <input style={inp} value={editForm.recruiter} onChange={e => setEF('recruiter', e.target.value)} placeholder="Name / email" />
+                  </div>
+                  <div style={{ ...row, gridColumn: '1/-1' }}>
+                    <div style={lbl}>Salary Range</div>
+                    <input style={inp} value={editForm.salary_range} onChange={e => setEF('salary_range', e.target.value)} placeholder="$40–50/hr" />
+                  </div>
+                  <div style={{ ...row, gridColumn: '1/-1' }}>
+                    <div style={lbl}>Rejection Stage</div>
+                    <input style={inp} value={editForm.rejection_stage} onChange={e => setEF('rejection_stage', e.target.value)} placeholder="e.g. OA, Phone screen" />
+                  </div>
+                  <div style={{ ...row, gridColumn: '1/-1' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12, color: T.text }}>
+                      <input type="checkbox" checked={editForm.starred} onChange={e => setEF('starred', e.target.checked)}
+                        style={{ width: 15, height: 15, accentColor: '#F59E0B' }} />
+                      ★ Starred
+                    </label>
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Btn variant="primary" onClick={saveEdit} disabled={editSaving}>
+                    {editSaving ? 'Saving…' : '💾 Save Changes'}
+                  </Btn>
+                  {editMsg && (
+                    <span style={{ fontSize: 12, color: editMsg.startsWith('✓') ? '#22C55E' : '#EF4444' }}>
+                      {editMsg}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </div>
     </>
