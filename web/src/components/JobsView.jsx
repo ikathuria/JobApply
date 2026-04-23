@@ -301,9 +301,9 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     const params = { min_score: minScore, sort, limit: 500 }
 
     if (tab === 'applied') {
-      // fetch all applied-stage statuses
-      Promise.all(['applied','oa','interview','offer'].map(s =>
-        api.jobs({ ...params, status: s, limit: 200 })
+      // fetch all post-application statuses (applied includes later-rejected)
+      Promise.all(['applied','oa','interview','offer','rejected'].map(s =>
+        api.jobs({ ...params, status: s, limit: 500 })
       )).then(results => {
         setJobs(results.flatMap(r => r.jobs))
         setLoading(false)
@@ -335,7 +335,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     if (tabId === 'new')      return stats.new
     if (tabId === 'ready')    return stats.ready
     if (tabId === 'approved') return stats.approved
-    if (tabId === 'applied')  return stats.applied + stats.oa + stats.interview
+    if (tabId === 'applied')  return (stats.total_applied ?? (stats.applied + stats.oa + stats.interview + stats.offer + stats.rejected))
     if (tabId === 'all')      return stats.total
     return 0
   }

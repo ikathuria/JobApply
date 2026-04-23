@@ -136,17 +136,31 @@ def api_focus() -> list[dict]:
             "cta": "Review Ready", "tab": "ready", "jobId": None,
         })
 
-    ready_job = conn.execute(
-        "SELECT * FROM jobs WHERE status=? ORDER BY score DESC LIMIT 1", (STATUS_QUEUED,)
+    # Highlight top approved job waiting for submission
+    approved_job = conn.execute(
+        "SELECT * FROM jobs WHERE status=? ORDER BY score DESC LIMIT 1", (STATUS_APPROVED,)
     ).fetchone()
-    if ready_job:
-        j = dict(ready_job)
+    if approved_job:
+        j = dict(approved_job)
         items.append({
             "id": "f_approve", "type": "confirm",
             "icon": "⚡", "color": "#8B5CF6",
-            "label": f"{j['company']} application awaits your approval",
-            "cta": "Confirm & Apply", "tab": "ready", "jobId": j["id"],
+            "label": f"{j['company']} is approved — ready to submit",
+            "cta": "Submit Application", "tab": "approved", "jobId": j["id"],
         })
+    elif stats.get(STATUS_QUEUED, 0):
+        # Fall back to top queued job awaiting approval
+        ready_job = conn.execute(
+            "SELECT * FROM jobs WHERE status=? ORDER BY score DESC LIMIT 1", (STATUS_QUEUED,)
+        ).fetchone()
+        if ready_job:
+            j = dict(ready_job)
+            items.append({
+                "id": "f_approve", "type": "confirm",
+                "icon": "✓", "color": "#8B5CF6",
+                "label": f"{j['company']} application awaits your approval",
+                "cta": "Review & Approve", "tab": "ready", "jobId": j["id"],
+            })
 
     oa_job = conn.execute(
         "SELECT * FROM jobs WHERE status=? ORDER BY date_applied DESC LIMIT 1", (STATUS_OA,)

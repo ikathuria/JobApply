@@ -149,8 +149,10 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
 
   const primaryAction = {
     new:       { label: '✦ Tailor with AI',       color: T.accent,    action: handleTailor },
-    queued:    { label: '⚡ Approve & Apply',       color: '#8B5CF6',   action: () => setShowConfirm(true) },
-    approved:  { label: '⚡ Submit Application',    color: '#8B5CF6',   action: () => setShowConfirm(true) },
+    // Step 1: just approve (no modal) — job moves to Approved tab
+    queued:    { label: '✓ Approve',               color: '#8B5CF6',   action: () => patchStatus('approved') },
+    // Step 2: confirm you've actually submitted — job moves to Applied tab
+    approved:  { label: '⚡ Mark as Applied',       color: '#8B5CF6',   action: () => setShowConfirm(true) },
     applied:   { label: '📝 Got OA?',              color: '#F59E0B',   action: () => patchStatus('oa') },
     oa:        { label: '🎤 Got Interview?',        color: '#EC4899',   action: () => patchStatus('interview') },
     interview: { label: '🎉 Got Offer?',           color: '#10B981',   action: () => patchStatus('offer') },
@@ -407,8 +409,11 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                 {job.status === 'new' && (
                   <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>✕ Reject</Btn>
                 )}
-                {['queued', 'approved'].includes(job.status) && (
+                {job.status === 'queued' && (
                   <Btn variant="ghost" size="sm" onClick={() => patchStatus('new')} style={{ width: '100%', color: T.muted }}>↩ Undo Tailor</Btn>
+                )}
+                {job.status === 'approved' && (
+                  <Btn variant="ghost" size="sm" onClick={() => patchStatus('queued')} style={{ width: '100%', color: T.muted }}>↩ Back to Ready</Btn>
                 )}
                 {['applied', 'oa', 'interview'].includes(job.status) && (
                   <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>✕ Got Rejected</Btn>
