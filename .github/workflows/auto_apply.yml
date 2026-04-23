@@ -1,11 +1,17 @@
 name: Auto Apply
 
 on:
+  schedule:
+    - cron: '0 14 * * 1-5'   # 10 AM ET (UTC-4) on weekdays
   workflow_dispatch:
     inputs:
       limit:
         description: 'Max jobs to apply to (default: 20)'
         default: '20'
+        required: false
+      dry_run:
+        description: 'Dry run — fill forms + screenshot, never submit'
+        default: 'false'
         required: false
 
 permissions:
@@ -38,17 +44,26 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install chromium --with-deps
 
-      - name: Run auto-apply (headless, approved jobs only)
+      - name: Run auto-apply (headless, approved jobs from Turso)
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:   ${{ secrets.TURSO_AUTH_TOKEN }}
+          GOOGLE_API_KEY:     ${{ secrets.GOOGLE_API_KEY }}
+          LINKEDIN_EMAIL:     ${{ secrets.LINKEDIN_EMAIL }}
+          LINKEDIN_PASSWORD:  ${{ secrets.LINKEDIN_PASSWORD }}
         run: |
           LIMIT=${{ github.event.inputs.limit || '20' }}
-          python main.py --apply --headless --limit $LIMIT
+          DRY=${{ github.event.inputs.dry_run || 'false' }}
+          if [ "$DRY" = "true" ]; then
+            python main.py --apply --headless --dry-run --limit $LIMIT
+          else
+            python main.py --apply --headless --limit $LIMIT
+          fi
 
-      - name: Commit updated tracker and screenshots
+      - name: Commit screenshots
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tracker/applications.db output/apply_screenshots/ || true
+          git add output/apply_screenshots/ || true
           git diff --staged --quiet && echo "Nothing to commit" || \
-            git commit -m "chore: auto-apply run $(date -u +%Y-%m-%d)" && git push
+            git commit -m "chore: auto-apply screenshots $(date -u +%Y-%m-%d)" && git push

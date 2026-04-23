@@ -4,97 +4,52 @@ import { DARK, LIGHT } from '../theme.js'
 import { Btn, StatusBadge, ScoreBar, Tag, Textarea, Divider, Spinner } from './ui/index.jsx'
 import { api } from '../api.js'
 
-// ── Confirm Apply Modal ───────────────────────────────────────────────────────
+// ── Manual Apply Confirmation Modal ──────────────────────────────────────────
+// Shown when user clicks "✓ Applied Manually" on an approved job.
+// The auto-apply bot handles Greenhouse/Lever/LinkedIn automatically;
+// this modal is the fallback for unsupported ATS or manual submissions.
 function ConfirmModal({ job, onConfirm, onCancel, dark }) {
   const T = dark ? DARK : LIGHT
-  const [step, setStep] = useState('review')
   const [checked, setChecked] = useState(false)
-
-  if (step === 'done') {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
-        <div style={{ background: T.surface, borderRadius: 16, padding: 40, textAlign: 'center', maxWidth: 400, border: `1px solid ${T.border}` }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 8 }}>Application Submitted!</div>
-          <div style={{ fontSize: 13, color: T.muted, marginBottom: 24 }}>
-            Your application to <strong style={{ color: T.text }}>{job.company}</strong> has been submitted successfully.
-          </div>
-          <Btn variant="primary" onClick={onConfirm} size="lg">Done</Btn>
-        </div>
-      </div>
-    )
-  }
-
   const score = job.score ?? 0
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
-      <div style={{ background: T.surface, borderRadius: 16, width: 560, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', border: `1px solid ${T.border}`, boxShadow: '0 32px 80px rgba(0,0,0,0.4)' }}>
+      <div style={{ background: T.surface, borderRadius: 16, width: 480, border: `1px solid ${T.border}`, boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#8B5CF620', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>⚡</div>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#22C55E20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✓</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Confirm Application</div>
-            <div style={{ fontSize: 12, color: T.muted }}>Human-in-the-loop review — your approval is required</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Mark as Manually Applied</div>
+            <div style={{ fontSize: 12, color: T.muted }}>Use this if you applied outside the auto-apply bot</div>
           </div>
           <button onClick={onCancel} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18 }}>✕</button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div style={{ padding: '20px 24px' }}>
           {/* Job summary */}
-          <div style={{ background: dark ? '#1A1A28' : '#F8F8FF', border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ background: dark ? '#1A1A28' : '#F8F8FF', border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>{job.title}</div>
             <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <span>🏢 {job.company}</span>
-              <span>📍 {job.location}</span>
+              {job.location && <span>📍 {job.location}</span>}
               <span style={{ color: '#22C55E', fontWeight: 700 }}>✦ {Math.round(score * 100)}% match</span>
             </div>
           </div>
 
-          {/* Resume preview placeholder */}
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Tailored Resume</div>
-          <div style={{ borderRadius: 8, overflow: 'hidden', border: `1px solid ${T.border}`, marginBottom: 16, maxHeight: 220, overflowY: 'auto', background: '#fff', padding: '20px 24px' }}>
-            <div style={{ textAlign: 'center', borderBottom: '2px solid #1A1A2E', paddingBottom: 10, marginBottom: 12 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.05em', fontFamily: 'DM Sans, sans-serif', color: '#1A1A2E' }}>ISHANI KATHURIA</div>
-              <div style={{ fontSize: 10, color: '#555', marginTop: 4 }}>Purdue University · MS AI 2025 · 4.0 GPA</div>
-            </div>
-            <div style={{ fontSize: 11, color: '#333', lineHeight: 1.6 }}>
-              <strong>Tailored for:</strong> {job.title} at {job.company}<br />
-              <em>Resume generated by AI — verify before submitting</em>
-            </div>
-          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: T.text, marginBottom: 24 }}>
+            <input type="checkbox" onChange={e => setChecked(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: '#22C55E' }} />
+            I have submitted my application to <strong style={{ marginLeft: 4 }}>{job.company}</strong>
+          </label>
 
-          {/* Warning */}
-          <div style={{ background: '#F59E0B15', border: '1px solid #F59E0B40', borderRadius: 8, padding: '10px 14px', marginBottom: 16, display: 'flex', gap: 10 }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
-            <div style={{ fontSize: 12, color: T.text, lineHeight: 1.5 }}>
-              <strong>This action cannot be undone.</strong> The AI will auto-fill and submit the application form on your behalf.
-            </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Btn variant="secondary" onClick={onCancel} style={{ flex: 1 }}>Cancel</Btn>
+            <Btn variant="primary" disabled={!checked} onClick={onConfirm}
+              style={{ flex: 2, background: checked ? '#22C55E' : undefined }}>
+              ✓ Confirm Applied
+            </Btn>
           </div>
-
-          {/* Checklist */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-            {[
-              'Resume is tailored and accurate',
-              'Cover letter looks good',
-              `I'm ready to apply to ${job.company}`,
-            ].map((item, i) => (
-              <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: T.text }}>
-                <input type="checkbox" onChange={i === 2 ? e => setChecked(e.target.checked) : undefined}
-                  style={{ width: 16, height: 16, accentColor: '#8B5CF6' }} />
-                {item}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: '16px 24px', borderTop: `1px solid ${T.border}`, display: 'flex', gap: 10 }}>
-          <Btn variant="secondary" onClick={onCancel} style={{ flex: 1 }}>Go Back</Btn>
-          <Btn variant="primary" disabled={!checked} onClick={() => setStep('done')}
-            style={{ flex: 2, background: checked ? '#8B5CF6' : undefined }}>
-            ⚡ Submit Application
-          </Btn>
         </div>
       </div>
     </div>
@@ -151,8 +106,8 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
     new:       { label: '✦ Tailor with AI',       color: T.accent,    action: handleTailor },
     // Step 1: just approve (no modal) — job moves to Approved tab
     queued:    { label: '✓ Approve',               color: '#8B5CF6',   action: () => patchStatus('approved') },
-    // Step 2: confirm you've actually submitted — job moves to Applied tab
-    approved:  { label: '⚡ Mark as Applied',       color: '#8B5CF6',   action: () => setShowConfirm(true) },
+    // Step 2: auto-apply bot picks this up; button is manual fallback
+    approved:  { label: '✓ Applied Manually',       color: '#22C55E',   action: () => setShowConfirm(true) },
     applied:   { label: '📝 Got OA?',              color: '#F59E0B',   action: () => patchStatus('oa') },
     oa:        { label: '🎤 Got Interview?',        color: '#EC4899',   action: () => patchStatus('interview') },
     interview: { label: '🎉 Got Offer?',           color: '#10B981',   action: () => patchStatus('offer') },
@@ -352,6 +307,21 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
           {/* ── Overview ── */}
           {activeTab === 'overview' && (
             <div>
+              {/* Auto-apply queued banner */}
+              {job.status === 'approved' && (
+                <div style={{ background: '#8B5CF615', border: '1px solid #8B5CF640', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 18, flexShrink: 0 }}>🤖</span>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8B5CF6', marginBottom: 2 }}>Auto-apply queued</div>
+                    <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
+                      The bot will auto-submit this on the next scheduled run (weekdays 10 AM ET).<br />
+                      Supports Greenhouse, Lever, and LinkedIn Easy Apply.{' '}
+                      If the ATS isn't supported, use <strong>✓ Applied Manually</strong> instead.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* JD */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Job Description</div>

@@ -30,6 +30,19 @@ from tracker.tracker import (
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+ROOT = Path(__file__).parent.parent
+
+
+def _get_db():
+    """Return a DB connection — Turso when available, local SQLite otherwise."""
+    if os.environ.get("TURSO_DATABASE_URL"):
+        from api.turso import connect as turso_connect
+        from tracker.tracker import _create_tables
+        conn = turso_connect()
+        _create_tables(conn)
+        return conn
+    return init_db()
+
 PROFILE_PATH   = Path("config/profile.json")
 SCREENSHOT_DIR = Path("output/apply_screenshots")
 
@@ -56,9 +69,25 @@ def _detect_ats(url: str) -> str:
 
 
 def _find_resume(job: dict) -> Path | None:
-    path = job.get("resume_path")
-    if path and Path(path).exists():
-        return Path(path)
+    """Resolve resume PDF regardless of which machine generated it."""
+    raw = job.get("resume_path")
+    if not raw:
+        return None
+    stored = Path(raw.replace("\\", "/"))
+    candidates = [stored]
+    if not stored.is_absolute():
+        candidates.append(ROOT / stored)
+    # Extract portable suffix from 'output/resumes/...' onward
+    parts = stored.parts
+    for i, part in enumerate(parts):
+        if part in ("output", "resumes"):
+            candidates.append(ROOT / Path(*parts[i:]))
+            break
+    if len(parts) >= 2:
+        candidates.append(ROOT / "output" / "resumes" / Path(*parts[-2:]))
+    for p in candidates:
+        if p.exists():
+            return p
     return None
 
 
@@ -137,7 +166,7 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
     - default       : headed browser, human confirms each submit
     """
     profile = _load_profile()
-    conn    = init_db()
+    conn    = _get_db()
 
     # Headless GHA mode picks up 'approved' jobs; local modes use 'queued'
     target_status = STATUS_APPROVED if headless else STATUS_QUEUED
@@ -147,7 +176,7 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
         label = "approved" if headless else "queued"
         print(f"No {label} jobs to apply to.")
         if headless:
-            print("  Approve jobs via the Streamlit dashboard first.")
+            print("  Approve jobs via the web dashboard first.")
         else:
             print("  Run --tailor first.")
         conn.close()
