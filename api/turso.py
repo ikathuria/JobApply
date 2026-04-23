@@ -143,15 +143,33 @@ class TursoConn:
             return _StaticCursor(["last_insert_rowid()"],
                                   [_DictRow(["last_insert_rowid()"], [val])])
 
-        args = [self._to_arg(p) for p in (params or [])]
+        # Named params (dict) → Turso named_args; positional (list/tuple) → args
+        if isinstance(params, dict):
+            stmt = {
+                "sql": sql,
+                "named_args": [
+                    {"name": k, "value": self._to_arg(v)}
+                    for k, v in params.items()
+                ],
+            }
+        else:
+            stmt = {
+                "sql": sql,
+                "args": [self._to_arg(p) for p in (params or [])],
+            }
+
         results = self._pipeline([
-            {"type": "execute", "stmt": {"sql": sql, "args": args}},
+            {"type": "execute", "stmt": stmt},
             {"type": "close"},
         ])
 
         res = results[0]
         if res.get("type") == "error":
-            raise sqlite3.OperationalError(res.get("error", {}).get("message", str(res)))
+            msg = res.get("error", {}).get("message", str(res))
+            # Raise IntegrityError for constraint violations so callers can dedup
+            if "UNIQUE constraint" in msg or "UNIQUE" in msg.upper():
+                raise sqlite3.IntegrityError(msg)
+            raise sqlite3.OperationalError(msg)
 
         result = res["response"]["result"]
 

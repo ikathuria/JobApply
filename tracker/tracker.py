@@ -143,8 +143,13 @@ def get_jobs(
 
 def update_status(conn: sqlite3.Connection, job_id: int, status: str, **kwargs) -> None:
     """Update a job's status and any optional fields (resume_path, notes, etc.)."""
-    allowed = {"resume_path", "cover_letter", "notes", "date_applied",
-               "starred", "interview_date", "recruiter", "salary_range", "follow_up_date"}
+    allowed = {
+        "resume_path", "cover_letter", "notes", "date_applied",
+        "starred", "interview_date", "recruiter", "salary_range",
+        "follow_up_date", "rejection_stage",
+        # direct-edit fields
+        "title", "company", "location", "url", "score",
+    }
     updates = {"status": status, "updated_at": datetime.utcnow().isoformat()}
     updates.update({k: v for k, v in kwargs.items() if k in allowed})
 
