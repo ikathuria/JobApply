@@ -28,5 +28,6 @@ export const api = {
   coverLetter:(id)        => req('GET',   `/jobs/${id}/cover_letter`).then(r => r),
   saveCL:     (id, text)  => req('PATCH', `/jobs/${id}/cover_letter`, { text }),
   import:     (job)       => req('POST',  '/jobs/import', job),
+  bulk:       (ids, status) => req('POST', '/jobs/bulk', { ids, status }),
   resumeUrl:  (id)        => `${BASE}/jobs/${id}/resume`,
 }

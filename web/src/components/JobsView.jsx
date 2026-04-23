@@ -293,10 +293,46 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   const [focus, setFocus]         = useState([])
   const [loading, setLoading]     = useState(true)
   const [showImport, setShowImport] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+
+  const multiSelectMode = selectedIds.size > 0
+
+  function toggleSelect(id) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(filteredJobs.map(j => j.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function bulkApply(status) {
+    const ids = [...selectedIds]
+    if (!ids.length) return
+    setBulkLoading(true)
+    try {
+      await api.bulk(ids, status)
+      clearSelection()
+      triggerRefresh?.()
+    } catch (e) {
+      alert('Bulk update failed: ' + e.message)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   // Fetch jobs when tab or filters change
   useEffect(() => {
     setLoading(true)
+    clearSelection()
     const tabDef = TABS.find(t => t.id === tab)
     const params = { min_score: minScore, sort, limit: 500 }
 
@@ -341,7 +377,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
       {/* Focus queue */}
       <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
         <FocusQueue focus={focus} onSelectJob={onSelectJob} setTab={setTab} dark={dark} />
@@ -414,7 +450,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
       </div>
 
       {/* Job list */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 24px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 24px', position: 'relative' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Spinner size={28} />
@@ -423,10 +459,82 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           <EmptyState icon="◌" title="No jobs match these filters" sub="Try adjusting the score slider or search term" />
         ) : (
           filteredJobs.map(job => (
-            <JobRow key={job.id} job={job} onSelect={onSelectJob} selected={selectedJob?.id === job.id} />
+            <JobRow
+              key={job.id}
+              job={job}
+              onSelect={onSelectJob}
+              selected={selectedJob?.id === job.id}
+              checked={selectedIds.has(job.id)}
+              onCheck={toggleSelect}
+              multiSelectMode={multiSelectMode}
+            />
           ))
         )}
       </div>
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          background: dark ? '#1A1A28' : '#fff',
+          borderTop: `2px solid #8B5CF6`,
+          padding: '12px 20px',
+          display: 'flex', alignItems: 'center', gap: 10,
+          boxShadow: '0 -8px 24px rgba(0,0,0,0.15)',
+          zIndex: 50, flexWrap: 'wrap',
+        }}>
+          {/* Clear + count */}
+          <button onClick={clearSelection} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 16, lineHeight: 1, padding: 2 }}>✕</button>
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.text, minWidth: 80 }}>
+            {selectedIds.size} selected
+          </span>
+
+          {/* Select all */}
+          {selectedIds.size < filteredJobs.length && (
+            <button onClick={selectAll} style={{
+              background: 'none', border: `1px solid ${T.border}`, borderRadius: 6,
+              padding: '5px 10px', fontSize: 11, fontWeight: 600, color: T.muted,
+              cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+            }}>
+              Select all {filteredJobs.length}
+            </button>
+          )}
+
+          <div style={{ flex: 1 }} />
+
+          {/* Tab-contextual primary actions */}
+          {tab === 'ready' && (
+            <button onClick={() => bulkApply('approved')} disabled={bulkLoading}
+              style={{ background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif', opacity: bulkLoading ? 0.7 : 1 }}>
+              {bulkLoading ? '…' : `✓ Approve (${selectedIds.size})`}
+            </button>
+          )}
+          {tab === 'approved' && (
+            <button onClick={() => bulkApply('applied')} disabled={bulkLoading}
+              style={{ background: '#22C55E', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif', opacity: bulkLoading ? 0.7 : 1 }}>
+              {bulkLoading ? '…' : `✓ Mark Applied (${selectedIds.size})`}
+            </button>
+          )}
+          {tab === 'new' && (
+            <button onClick={() => bulkApply('queued')} disabled={bulkLoading}
+              style={{ background: T.accent, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif', opacity: bulkLoading ? 0.7 : 1 }}>
+              {bulkLoading ? '…' : `✦ Tailor Queue (${selectedIds.size})`}
+            </button>
+          )}
+
+          {/* Always available: skip + reject */}
+          {['new', 'ready', 'approved', 'all'].includes(tab) && (
+            <button onClick={() => bulkApply('skipped')} disabled={bulkLoading}
+              style={{ background: 'none', border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600, color: T.muted, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+              ⏭ Skip
+            </button>
+          )}
+          <button onClick={() => bulkApply('rejected')} disabled={bulkLoading}
+            style={{ background: 'none', border: '1px solid #EF444440', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600, color: '#EF4444', cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+            ✕ Reject
+          </button>
+        </div>
+      )}
 
       {showImport && (
         <ImportModal

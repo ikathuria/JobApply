@@ -269,12 +269,32 @@ def api_patch_job(job_id: int, patch: JobPatch) -> dict:
     current = dict(row)
     new_status = patch.status or current["status"]
 
-    # Only pass non-None kwargs that update_status allows
     kwargs = {k: v for k, v in patch.model_dump(exclude={"status"}).items() if v is not None}
     update_status(conn, job_id, new_status, **kwargs)
 
     updated = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
     return dict(updated)
+
+
+# ── Bulk status update ────────────────────────────────────────────────────────
+
+
+class BulkPatch(BaseModel):
+    ids: list[int]
+    status: str
+
+
+@app.post("/api/jobs/bulk")
+def api_bulk_patch(body: BulkPatch) -> dict:
+    """Update status for multiple jobs in one call."""
+    from datetime import date as _date
+    conn = db()
+    extra = {}
+    if body.status == "applied":
+        extra["date_applied"] = str(_date.today())
+    for job_id in body.ids:
+        update_status(conn, job_id, body.status, **extra)
+    return {"updated": len(body.ids), "status": body.status}
 
 
 # ── Tailor ────────────────────────────────────────────────────────────────────
