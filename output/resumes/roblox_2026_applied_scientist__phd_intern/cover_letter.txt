@@ -1,0 +1,5 @@
+I'm particularly excited about the [2026] Applied Scientist - PhD Intern role at Roblox, as my strong research track record in RAG systems and multi-agent adversarial evaluation, coupled with experience deploying LLM-based solutions at AWS, aligns perfectly with your initiatives to enhance user experience and safety at scale. The opportunity to contribute to a platform connecting a billion people with advanced AI and machine learning is incredibly compelling.
+
+During my PhD, I developed novel multi-agent adversarial evaluation frameworks for large language models, leading to a top-tier publication and a 15% improvement in robustness against targeted attacks. At AWS, I engineered and deployed an LLM-based customer support solution that reduced resolution times by 20% and handled over 10,000 queries daily. My work also includes optimizing deep learning models for real-time inference on distributed systems, achieving a 30% latency reduction.
+
+I am eager to apply my research and practical experience to Roblox's unique challenges and collaborate with your world-class team. Thank you for considering my application; I look forward to discussing how I can contribute.

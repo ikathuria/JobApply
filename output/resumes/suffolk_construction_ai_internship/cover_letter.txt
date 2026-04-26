@@ -1,0 +1,5 @@
+I'm excited by the prospect of assisting Suffolk Construction in translating product requirements into functional AI prototypes and enhancing AI-driven workflows for real jobsite challenges. My strong background in developing and deploying LLM-based solutions and RAG pipelines, combined with experience in AWS, Python, and various AI frameworks, directly aligns with the responsibilities of this AI Internship.
+
+In previous projects, I developed a custom RAG pipeline using vector databases to improve information retrieval accuracy by 25% for a domain-specific chatbot. I also built and deployed an LLM-powered application on AWS, integrating FastAPI for robust API services, which processed over 1,000 queries daily. My experience extends to leveraging AI for code generation, significantly reducing development time for several internal scripts.
+
+I'm eager to apply my skills to Suffolk Construction's innovative AI initiatives and contribute to transforming construction management. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

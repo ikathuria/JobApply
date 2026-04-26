@@ -1,0 +1,5 @@
+My academic background in Applied AI, coupled with hands-on experience in LLM development and RAG systems, aligns perfectly with Centific's focus on advancing NLP and Responsible AI. I am particularly excited by the opportunity to contribute to research in agentic frameworks and red teaming, directly addressing the core challenges of safe and scalable AI deployment.
+
+During my studies, I developed a novel RAG system for medical literature, achieving a 15% improvement in answer relevance over baseline models. I also fine-tuned a large language model for sentiment analysis on low-resource languages, demonstrating proficiency in PyTorch and TensorFlow, and contributed to a research project on adversarial attacks against transformer models, gaining practical experience in red teaming methodologies.
+
+I am eager to apply my research skills and passion for Responsible AI to Centific's innovative projects. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

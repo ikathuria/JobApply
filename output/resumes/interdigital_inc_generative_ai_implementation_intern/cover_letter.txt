@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to InterDigital's Generative AI initiatives, particularly in coaching best practices and building impactful automations. My strong background in implementing LLM-based solutions, with a specific focus on hallucination mitigation and evaluation metrics, aligns perfectly with your goals.
+
+In a recent project, I developed an LLM-powered content summarizer, achieving a 20% reduction in processing time by optimizing prompt engineering and integrating robust evaluation metrics to ensure output accuracy. I also designed and deployed a custom chatbot for internal support, which reduced common query resolution time by 30% and included built-in guardrails for responsible AI use. My experience extends to creating reusable resources, including a prompt library and best practice guides, to propagate effective LLM usage across teams.
+
+I am eager to apply my skills in prompt engineering, prototyping, and LLM evaluation to help InterDigital's teams leverage generative AI effectively. I look forward to discussing how I can contribute to your innovative projects.

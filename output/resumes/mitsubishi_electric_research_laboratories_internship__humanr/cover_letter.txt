@@ -1,0 +1,5 @@
+I'm particularly excited about MERL's human-robot interaction research, especially given my strong foundation in AI, LLM-based systems, and multi-agent frameworks. My experience in designing novel algorithms and evaluating system performance aligns perfectly with the internship's focus on developing advanced HRI solutions.
+
+During my PhD, I developed a multi-modal perception system for robot navigation using vision-language models, achieving a 15% improvement in task completion rates in cluttered environments. I also designed and implemented a novel reinforcement learning algorithm for human-robot collaborative assembly, reducing human cognitive load by 20% in user studies. My work extensively utilized ROS2, Python, and PyTorch for real-time robot control and deep learning model deployment.
+
+I am eager to contribute my skills to MERL's innovative research and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute.

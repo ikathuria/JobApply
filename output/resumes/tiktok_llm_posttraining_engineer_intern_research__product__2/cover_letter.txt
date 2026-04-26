@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to TikTok's Multimedia AI team as an LLM Post-training Engineer Intern. My background in LLM development, RAG systems, and building robust evaluation pipelines aligns perfectly with developing and optimizing post-training strategies for LLMs. I'm particularly drawn to bridging research and production, especially within multimodal AI applications.
+
+In a recent project, I developed a custom RAG system, achieving a 15% improvement in response accuracy by fine-tuning a pre-trained LLM on domain-specific data. I also designed and implemented an automated evaluation pipeline for LLM outputs, reducing manual review time by 30% while ensuring model helpfulness and safety. Furthermore, I have experience with synthetic data generation and fine-tuning transformer architectures, which were crucial in improving model performance for a content classification task.
+
+I am eager to apply my skills and passion for AI product application to TikTok's innovative environment. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

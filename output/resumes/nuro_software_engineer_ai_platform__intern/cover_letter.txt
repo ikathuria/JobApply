@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Nuro's mission of making autonomy accessible, especially as an AI Platform intern. My experience at AWS in building and optimizing large-scale distributed AI systems, coupled with my research in RAG systems, directly aligns with your need to develop and optimize software solutions for autonomous driving.
+
+At AWS, I optimized a critical data processing pipeline, reducing latency by 30% and improving resource utilization by 20% through C++ and Python-based performance tuning. My research into RAG systems involved developing novel algorithms for efficient data retrieval and integration, which directly translates to building robust and scalable AI infrastructure. I also have hands-on experience with various compute modalities, including GPU optimization for machine learning workloads.
+
+I'm eager to apply my skills in distributed systems, machine learning, and performance optimization to Nuro's cutting-edge autonomous driving challenges. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+I'm excited by the opportunity to apply state-of-the-art AI to analog circuit design workflows at Analog Devices, especially contributing to automated data extraction and model deployment in production EDA workflows. My experience in designing and deploying LLM-based systems and optimizing algorithmic pipelines, combined with a strong understanding of GNNs and PyTorch, directly aligns with the needs of this AI/ML Design Layout Intern role.
+
+In previous projects, I developed and deployed an LLM-based system for natural language understanding, achieving a 15% improvement in response accuracy. I also optimized a graph-based algorithm for route planning, reducing computation time by 20% through efficient PyTorch implementations. Furthermore, I built automated data pipelines for a machine learning project, ensuring data quality and enabling seamless model training and deployment.
+
+I am eager to contribute my skills to Analog Devices and learn from your innovative team. Thank you for considering my application; I look forward to discussing how I can contribute to your work.

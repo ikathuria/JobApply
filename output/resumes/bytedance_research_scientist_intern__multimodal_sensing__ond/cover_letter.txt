@@ -1,0 +1,5 @@
+My research in multimodal knowledge graphs and on-device inference, combined with practical experience in deploying LLM-based systems, aligns perfectly with ByteDance's focus on integrating sensing with computing for advanced eye tracking and on-device perception. I'm particularly excited by the prospect of contributing to novel sensor architectures and closing the loop between foundation model requirements and hardware design.
+
+During my PhD, I developed and optimized distributed systems for real-time data processing, achieving a 30% reduction in latency for complex multimodal data streams. I also designed and implemented a proactive anomaly detection system for sensor networks, improving detection accuracy by 15% while operating under strict power and bandwidth constraints. My work includes hands-on experience with hardware prototyping and co-optimizing machine vision models for embedded deployment.
+
+I am eager to apply my expertise in multimodal sensing and on-device perception to ByteDance's innovative projects. Thank you for considering my application; I look forward to discussing how my skills can contribute to your team.

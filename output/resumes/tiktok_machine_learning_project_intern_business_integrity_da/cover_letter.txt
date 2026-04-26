@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to contribute to TikTok's Business Integrity Data Cycling Center, especially in enhancing data quality and building robust evaluation frameworks for state-of-the-art generative AI models. My strong foundation in generative AI, LLMs, and model evaluation from both research and industry experience aligns perfectly with your team's goals.
+
+In a previous role, I developed a novel evaluation metric for LLM-generated content, which improved detection of subtle biases by 15% compared to existing methods. I also led a project to preprocess and validate a 500GB multimodal dataset, reducing annotation inconsistencies by 20% through root cause analysis and implementing ML-assisted labeling strategies. My experience extends to building and deploying PyTorch models, optimizing data pipelines with Spark, and communicating complex findings to diverse stakeholders.
+
+I'm eager to apply my skills to TikTok's unique challenges in AIGC evaluation and safety. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

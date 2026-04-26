@@ -1,0 +1,5 @@
+My strong background in fine-tuning LLMs, developing agentic workflows, and a publication record in AI makes me eager to contribute to Zillow's foundational AQ & EQ team. My experience aligns perfectly with the role's focus on advancing intelligent systems to enhance the home-buying experience, and I'm particularly excited by the prospect of applying state-of-the-art research to such a tangible, impactful domain.
+
+During my PhD, I've successfully fine-tuned large language models on domain-specific datasets, achieving significant performance gains in specialized NLP tasks. I also designed and implemented an agentic system that autonomously navigated complex information retrieval, demonstrating proficiency in creating intelligent workflows. My research has resulted in multiple peer-reviewed publications, showcasing my ability to conduct rigorous research and contribute to the scientific community.
+
+I am enthusiastic about the opportunity to apply my skills in LLM fine-tuning and agentic AI to Zillow's mission. I am confident I can make meaningful contributions to your team and would welcome the chance to discuss my qualifications further.

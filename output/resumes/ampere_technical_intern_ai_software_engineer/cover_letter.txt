@@ -1,0 +1,5 @@
+I'm particularly excited by Ampere's focus on energy-efficient AI compute and performance analysis for AI applications. My proven experience designing and optimizing LLM-based backend services at AWS, coupled with my current research in RAG systems, aligns perfectly with your mission and the responsibilities of this role.
+
+At AWS, I developed and deployed a scalable backend service for an LLM-powered chatbot, reducing inference latency by 15% through strategic caching and API optimization. I also designed and implemented a data pipeline for real-time model monitoring, ensuring high throughput and data integrity. My current academic research involves building and evaluating RAG systems for improved factual grounding in generative AI, directly relevant to developing robust AI agent functionality.
+
+I am eager to apply my skills in Python, LLMs, and cloud platforms to contribute to Ampere's innovative work. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

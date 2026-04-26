@@ -1,0 +1,5 @@
+I'm particularly excited about the Applied AI Engineer Intern role at Adobe because my experience in building and deploying LLM-powered solutions, including RAG and multi-agent systems, directly aligns with your need to enhance strategic marketing initiatives. I am eager to contribute to designing and integrating generative AI into marketing applications to improve performance and engagement.
+
+During my research, I developed a multi-agent system for dynamic content generation, which improved user engagement metrics by 15% in a simulated marketing environment. I also built and deployed a RAG-based chatbot that reduced customer query resolution time by 20%, demonstrating my ability to create efficient, data-driven solutions. My work has involved end-to-end machine learning pipelines, from data ingestion to model deployment, using Python and PyTorch.
+
+I am enthusiastic about the opportunity to apply my skills at Adobe and contribute to your innovative work in digital experiences. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+I'm genuinely excited by Higharc's vision for natural-language AI in home design, and my experience building and evaluating LLM-based systems, especially with multimodal knowledge graphs and agentic frameworks, feels like a perfect fit. The opportunity to apply my skills in vision-language models and structured output generation to the unique challenges of AEC data is particularly compelling.
+
+In my research, I've developed agentic LLM systems that reason over structured state and produce structured edits, directly relevant to enhancing design workflows. I also have hands-on experience with post-training techniques like DPO and RLHF, and have built robust evaluation suites and error taxonomies for complex generative tasks, ensuring rigorous model performance. My work also includes designing data pipelines to extract and curate structured datasets, a key responsibility for this role.
+
+I'm eager to contribute my research and engineering skills to Higharc's innovative approach. Thank you for considering my application; I look forward to discussing how I can help advance your special projects.
