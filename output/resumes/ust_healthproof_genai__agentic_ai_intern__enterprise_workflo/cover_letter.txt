@@ -1,0 +1,5 @@
+With a proven track record in developing and evaluating LLM-based systems and multi-agent frameworks, I am eager to contribute to UST HealthProof's mission of transforming healthcare through agentic AI, specifically in designing and building solutions for enterprise workflows. The opportunity to move beyond traditional chat interfaces and build truly intelligent systems for healthcare is incredibly exciting.
+
+My experience includes designing and implementing multi-agent systems using Python and various LLM frameworks, focusing on complex task orchestration. I've also built robust evaluation pipelines to measure accuracy, reliability, and latency, ensuring system performance and identifying areas for improvement. Furthermore, I have integrated with various APIs, demonstrating strong system thinking in connecting disparate services.
+
+I am enthusiastic about the prospect of applying my skills to real-world healthcare challenges at UST HealthProof. I am confident I can make a meaningful contribution to your team and would welcome the chance to discuss my qualifications further.

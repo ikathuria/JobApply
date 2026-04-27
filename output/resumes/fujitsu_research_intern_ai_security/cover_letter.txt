@@ -1,0 +1,5 @@
+With a strong research background in LLMs, multi-agent systems, and AI security, coupled with a track record of publications and innovative projects like AutoRedTeam, I am eager to contribute to Fujitsu's Data and Security Laboratory's focus on AI security, privacy, and alignment. The opportunity to develop algorithms and models for privacy-preserving and adversarial detection in agentic AI systems aligns perfectly with my research interests.
+
+My experience includes developing novel adversarial attack and defense strategies for LLMs, resulting in multiple peer-reviewed publications. I also led the development of AutoRedTeam, a multi-agent system designed to autonomously identify and mitigate security vulnerabilities in AI models. This involved extensive dataset generation, experimentation, and data analysis to evaluate system performance against various threat models.
+
+I am enthusiastic about the prospect of contributing to Fujitsu's cutting-edge research and publishing impactful work. Thank you for considering my application; I look forward to discussing how my skills and passion can benefit your team.

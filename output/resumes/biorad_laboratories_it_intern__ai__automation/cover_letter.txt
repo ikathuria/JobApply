@@ -1,0 +1,5 @@
+With a strong foundation in building and deploying LLM-based systems and automating complex workflows, I am eager to apply my expertise in AI and cloud platforms to develop innovative solutions for Bio-Rad Laboratories, contributing to advancements in life sciences and healthcare. The opportunity to leverage AI and automation to enhance critical processes within your organization is particularly exciting.
+
+My experience includes developing a Python-based NLP system to extract key data from unstructured text, achieving a 90% accuracy rate, and automating data ingestion pipelines using Azure Functions, reducing manual processing time by 40%. I've also built and fine-tuned a custom chatbot using a framework similar to Copilot Studio, addressing hallucination issues through targeted data integration and prompt engineering.
+
+I am enthusiastic about the prospect of contributing to Bio-Rad's mission and am confident my skills align perfectly with your team's needs. I look forward to discussing how I can make an impact.

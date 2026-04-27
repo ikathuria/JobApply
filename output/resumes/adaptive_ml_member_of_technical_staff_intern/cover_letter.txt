@@ -1,0 +1,5 @@
+I'm incredibly excited by the opportunity to contribute to Adaptive ML's RLOps platform and internal LLM stack. My strong foundation in LLM development, RAG systems, and distributed ML optimization, honed through academic research and AWS experience, aligns perfectly with your mission to build foundational technology for enterprises.
+
+During my research, I developed and optimized a distributed RAG system, achieving a 15% improvement in retrieval accuracy and a 20% reduction in latency by leveraging PyTorch and AWS infrastructure. I also contributed to an open-source project focused on fine-tuning large language models, implementing new features and debugging performance bottlenecks in a distributed environment. These experiences have equipped me with practical skills in Python, PyTorch, and debugging complex ML systems.
+
+I'm eager to apply my skills and learn from your team, contributing to cutting-edge AI systems. Thank you for considering my application; I look forward to discussing how I can contribute to Adaptive ML.
