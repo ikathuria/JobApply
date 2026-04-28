@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to contribute to TikTok's Global E-Commerce Content Recommendation team, especially given my background in developing and deploying LLM-based systems and optimizing ML pipelines at AWS. My ongoing research in RAG systems directly aligns with the role's focus on building industry-leading recommendation systems and exploring generative techniques for content discovery, making this a perfect fit.
+
+At AWS, I developed and deployed an LLM-based system for internal knowledge retrieval, improving information access efficiency by 30%. I also optimized ML pipelines, reducing inference latency by 15% for a critical service. My current research involves enhancing RAG systems for improved contextual understanding and response generation, which directly translates to exploring generative recommendation techniques for content discovery.
+
+I am eager to apply my skills and passion for machine learning to develop innovative solutions that enhance user experience and platform growth at TikTok. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

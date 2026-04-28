@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to BillionToOne's mission of optimizing operations through AI and automation, especially in retrieval systems and data pipelines within healthcare. My Master's in Applied AI, coupled with hands-on experience developing and deploying LLM-powered solutions, aligns perfectly with your focus on impactful projects.
+
+At AWS, I developed and deployed an LLM-powered solution for internal knowledge retrieval, improving information access by 30%. During my time at Purdue, I built a data pipeline to automate the extraction and analysis of research papers, reducing manual processing time by 40%. I'm proficient in Python, SQL, LLM APIs, and cloud platforms, and have experience with vector databases and embedding models.
+
+I'm eager to apply my skills and learn from your team, contributing to solutions that directly impact patient lives. I'm available for an interview at your earliest convenience.

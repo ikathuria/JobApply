@@ -1,0 +1,5 @@
+I'm particularly excited about Resolve Tech Solutions' focus on AI innovation, and my experience in designing, developing, and evaluating AI/ML models, especially with LLMs and RAG systems, aligns perfectly with your team's needs. I'm eager to contribute to data preparation, model experimentation, and performance evaluation, leveraging my skills in Python, PyTorch, TensorFlow, and cloud platforms like AWS Bedrock.
+
+In a recent project, I developed a RAG system that improved information retrieval accuracy by 25% for a specific domain, utilizing LangChain and fine-tuning an open-source LLM. I also spearheaded the data cleaning and feature engineering for a sentiment analysis model, achieving an F1-score of 0.88, and have experience deploying models on AWS. My work consistently involves rigorous performance evaluation and documentation.
+
+I am enthusiastic about the opportunity to apply my skills and learn from your experienced team. Thank you for your time and consideration; I look forward to discussing how I can contribute to Resolve Tech Solutions.

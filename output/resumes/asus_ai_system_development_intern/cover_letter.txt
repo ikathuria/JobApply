@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to ASUS's localized LLM solutions, especially in designing and implementing RAG systems, LLM deployment, and agentic workflows for your automated Q&A and IT Knowledge Base. My background in optimizing retrieval, reducing hallucinations, and integrating LLM APIs aligns perfectly with the responsibilities of this AI System Development Intern role.
+
+In a recent project, I developed a RAG system that improved answer accuracy by 25% by strategically processing unstructured data into a vector database and fine-tuning retrieval mechanisms. I also designed and implemented an LLM-powered web agent for data extraction, reducing manual data entry time by 40%, and have experience integrating LLM APIs with existing systems, ensuring robust and reliable performance.
+
+I'm eager to apply my skills at ASUS and contribute to developing innovative AI solutions. Thank you for considering my application; I look forward to discussing how I can support your team.

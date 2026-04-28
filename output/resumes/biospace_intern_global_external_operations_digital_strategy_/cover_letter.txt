@@ -1,0 +1,5 @@
+I'm particularly excited by BioSpace's initiative to transform contract manufacturing operations through AI, and my Master's in Applied AI, coupled with hands-on experience in LLM development and prompt engineering, aligns perfectly with this goal. My background in building Python prototypes and evaluating AI tools, especially for regulated industries like biotech, makes this internship a compelling fit.
+
+In my academic projects, I've developed Python prototypes for natural language processing tasks, including building custom LLM applications and optimizing prompts for specific outcomes. I also have experience integrating diverse data sources using SQL and other methods, and presenting complex technical findings to non-technical audiences. My work has consistently focused on translating ambiguous business problems into clear, actionable technical solutions.
+
+I am eager to apply my skills to BioSpace's innovative projects and contribute to shaping the future of AI in biotech. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

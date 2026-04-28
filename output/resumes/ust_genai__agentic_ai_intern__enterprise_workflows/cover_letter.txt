@@ -1,0 +1,5 @@
+With a strong background in developing and evaluating LLM-based systems and agentic frameworks, I am well-prepared to contribute to UST's mission of transforming enterprise workflows through innovative AI solutions. My experience aligns perfectly with designing agent workflows, integrating with cloud APIs, and building robust evaluation pipelines, making the GenAI / Agentic AI Intern role particularly exciting.
+
+In previous projects, I designed and implemented a multi-agent system for data extraction, achieving a 90% accuracy rate by integrating various open-source LLM frameworks and external APIs. I also developed comprehensive evaluation pipelines to benchmark model performance, focusing on metrics like latency and reliability, and significantly improved system efficiency through iterative refinement. My Python expertise extends to building scalable and maintainable AI solutions.
+
+I am eager to apply my skills to UST's enterprise challenges and contribute to impactful AI solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

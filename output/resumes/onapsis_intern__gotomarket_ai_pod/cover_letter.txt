@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Onapsis's Go-to-Market AI Pod. My background in building and deploying LLM-based solutions, coupled with a deep understanding of prompt engineering and AI tooling, uniquely positions me to rapidly develop and iterate on impactful AI workflows for your team.
+
+At AWS, I gained hands-on experience developing and deploying LLM-based solutions, including designing effective prompts and integrating various AI tools. I also have a strong track record of building and testing workflow automations and creating clear documentation, ensuring seamless adoption and impact. My experience aligns well with the need to build, test, and iterate on AI-powered workflows and integrations.
+
+I'm eager to apply my skills to real-world challenges at Onapsis and see the immediate impact of my work. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

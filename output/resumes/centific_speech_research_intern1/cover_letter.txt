@@ -1,0 +1,5 @@
+As a PhD candidate with hands-on experience in LLM development, multimodal systems, and optimizing inference for real-time applications, I am particularly excited by Centific's focus on speech-first models and conversational SLM research. My background in evaluating robustness and latency aligns directly with the responsibilities of this Speech Research Intern role, especially in designing and evaluating speech-aware LLMs.
+
+My research includes developing efficient speech tokenization and temporal compression methods for long-form audio, and I've successfully aligned speech encoders with text backbones using lightweight adapters. I have also built evaluation harnesses for ASR/ST/SLU, incorporating streaming metrics like latency and stability, and have a proven track record of shipping minimal demos with streaming inference and thorough documentation.
+
+I am eager to contribute my skills to Centific's innovative projects and gain further experience in a dynamic research environment. Thank you for considering my application; I look forward to discussing how my expertise can benefit your team.

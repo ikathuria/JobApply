@@ -1,0 +1,5 @@
+I'm excited by the prospect of applying machine learning to critical industrial systems at Mariana Minerals. My background in optimizing real-world applications and analyzing complex datasets, coupled with hands-on experience building and deploying AI systems, aligns perfectly with the Machine Learning Engineering Intern role.
+
+At AWS, I developed and deployed a real-time anomaly detection system that improved operational efficiency by 15%. I also designed and implemented a data pipeline for a large-scale sensor network, reducing data processing time by 20% and enabling more timely insights. My experience includes building models with PyTorch and analyzing complex datasets to identify key optimization opportunities.
+
+I'm eager to contribute my skills to Mariana Minerals and learn from your team. Thank you for considering my application; I look forward to discussing how I can contribute.

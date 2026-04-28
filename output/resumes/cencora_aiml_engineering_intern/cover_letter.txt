@@ -1,0 +1,5 @@
+I'm particularly excited about the AI/ML Engineering Intern role at Cencora, especially the opportunity to contribute to your CenChat and GenIE platforms. My strong background in developing and deploying LLM-based systems at AWS, coupled with my current research in RAG, aligns perfectly with the innovative work you're doing in this space.
+
+During my time at AWS, I was instrumental in optimizing model inference for a large-scale LLM application, reducing latency by 15% through strategic use of quantization and distributed computing. I also designed and implemented a robust MLOps pipeline for a computer vision project, automating model training, versioning, and deployment using Jenkins and Docker, which significantly improved iteration speed. My academic research in RAG systems has further honed my skills in data retrieval and integration for complex AI applications.
+
+I am eager to apply my skills in MLOps, cloud infrastructure, and AI algorithms to Cencora's mission of creating healthier futures. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

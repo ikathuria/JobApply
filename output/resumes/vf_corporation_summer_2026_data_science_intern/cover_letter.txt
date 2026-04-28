@@ -1,0 +1,5 @@
+I'm excited by the opportunity to join VF Corporation's Global Data Science team as a Summer 2026 Data Science Intern. With a strong background in developing and deploying LLM-based systems and a keen interest in generative AI and intelligent automation, I am well-prepared to assist in developing and scaling Machine Learning workflows and driving intelligent automation initiatives.
+
+In previous projects, I developed and fine-tuned a custom LLM for a specific domain, achieving a 15% improvement in response accuracy over baseline models. I also built an automated data preprocessing pipeline in Python, reducing manual data cleaning time by 30%, and created interactive dashboards to visualize key performance metrics for ML models. My experience extends to prompt engineering and evaluating agent behavior, directly aligning with your team's needs.
+
+I'm eager to apply my skills and passion for AI to VF Corporation's innovative projects. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
