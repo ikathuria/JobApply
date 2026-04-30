@@ -1,0 +1,5 @@
+I'm excited by Right Skale's mission to turn AI aspirations into measurable impact, and my background in developing and deploying LLM-based solutions at AWS, coupled with my current research in RAG systems, aligns perfectly with the AIML Internship's focus on machine learning, generative AI, and cloud technologies.
+
+During my time at AWS, I contributed to a project involving the deployment of a conversational AI agent, where I specifically focused on prompt engineering and fine-tuning an LLM for domain-specific queries, achieving a 15% improvement in response accuracy. My current research involves optimizing RAG systems for real-time data retrieval, which has given me hands-on experience with various vector databases and embedding models. I'm also proficient in Python, SQL, and Git, and have experience with PyTorch.
+
+I'm eager to apply my skills and learn from the team at Right Skale, contributing to impactful AI solutions. Thank you for considering my application; I look forward to discussing how I can contribute.

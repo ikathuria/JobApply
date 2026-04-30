@@ -1,0 +1,5 @@
+I'm genuinely excited by the opportunity to contribute to UST HealthProof's mission of transforming healthcare through technology, especially as an AI/ML Engineering Intern. My experience in designing and implementing production-grade RAG pipelines and multi-agent systems, coupled with strong Python and AWS skills, directly aligns with your need for an intern to build scalable AI solutions.
+
+In previous projects, I developed a multi-agent system for automated research, significantly improving information synthesis efficiency. I also engineered a robust RAG pipeline for a knowledge base, achieving a 90% accuracy rate in retrieval and response generation. My backend development skills were honed by building FastAPI services for data ingestion and processing, deployed on AWS, demonstrating my ability to create scalable and reliable systems.
+
+I'm eager to apply my skills and learn from your team, contributing to the development of impactful AI solutions. Thank you for considering my application; I look forward to discussing how I can contribute to UST HealthProof.

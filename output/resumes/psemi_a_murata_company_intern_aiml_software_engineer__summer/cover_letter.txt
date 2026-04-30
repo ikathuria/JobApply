@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to pSemi's intelligent systems and RFIC design automation as an AI/ML Software Engineer Intern. My experience in developing and deploying LLM-based solutions, coupled with hands-on work in RAG systems and multi-agent frameworks, directly aligns with your needs.
+
+In a recent project, I developed a multi-agent system for data analysis, integrating LLMs with external tools and achieving a 20% reduction in processing time for complex queries. I also implemented a RAG system using a vector database to enhance the accuracy of an internal knowledge base, significantly improving response relevance. My backend development skills, including Flask and database management, have been crucial in bringing these solutions to life.
+
+I'm eager to apply my skills to real-world challenges at pSemi and learn from your innovative team. Thank you for considering my application; I look forward to discussing how I can contribute.

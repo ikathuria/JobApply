@@ -1,0 +1,5 @@
+I'm particularly excited about this Research Intern role at Microsoft because my experience in designing and evaluating LLM-based systems, especially with RAG and adversarial evaluation frameworks, directly aligns with your focus on advancing LLM quality, reliability, and alignment. My research background and hands-on experience with deep learning frameworks make this a compelling opportunity.
+
+During my PhD, I developed novel evaluation frameworks for LLMs, improving robustness by 15% through adversarial testing. I also designed and implemented a RAG-based system that achieved a 20% increase in factual accuracy compared to baseline models, leveraging PyTorch for model training and fine-tuning. My work involved extensive prompt engineering and the application of software engineering best practices, including Git for version control.
+
+I'm eager to contribute to Microsoft's cutting-edge research in AI evaluation and alignment. Thank you for considering my application; I look forward to discussing how my skills can benefit your team.

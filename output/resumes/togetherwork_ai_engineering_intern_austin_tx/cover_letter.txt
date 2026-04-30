@@ -1,0 +1,5 @@
+I'm particularly excited by Togetherwork's focus on enhancing operational efficiency through AI, especially leveraging Claude and ChatGPT Enterprise for customer support and internal tooling. My background in deploying LLM-based solutions and automating operational workflows aligns perfectly with your mission to build and deploy AI across member-based organizations.
+
+In previous projects, I developed a Python-based script to automate data extraction and report generation, reducing manual effort by 40%. I also designed and implemented a custom GPT solution for internal knowledge retrieval, significantly improving response times for common queries. My experience extends to integrating APIs for seamless data flow and optimizing prompts for various LLM applications.
+
+I am eager to apply my skills in prompt engineering, workflow automation, and LLM deployment to contribute to Togetherwork's innovative projects. I am confident I can make a tangible impact and would welcome the opportunity to discuss how my experience can benefit your team.

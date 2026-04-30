@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Salesforce's mission of leveraging AI to solve critical business challenges. My strong background in developing and deploying LLM-based solutions at AWS and conducting RAG research at Purdue aligns perfectly with this role's focus on building and testing AI tools, comparing models, and preparing data for accurate AI performance.
+
+At AWS, I developed and deployed an LLM-based solution, gaining hands-on experience in the full lifecycle of AI tool creation. My research at Purdue focused on Retrieval-Augmented Generation (RAG), which directly relates to optimizing AI model performance and data preparation. I also have a strong command of Python and relevant AI/ML libraries, essential for turning ideas into working AI solutions.
+
+I am eager to apply my skills and passion for AI to high-impact projects at Salesforce. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

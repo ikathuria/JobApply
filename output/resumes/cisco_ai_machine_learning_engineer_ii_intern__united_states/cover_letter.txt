@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Cisco's mission of revolutionizing data and infrastructure with high-impact generative AI solutions. My background in developing and optimizing LLM-based applications and distributed systems at AWS, coupled with ongoing research in RAG systems, aligns perfectly with the responsibilities of this role, especially my practical experience with LLM infrastructure, optimization strategies, and Python/Golang.
+
+At AWS, I developed and deployed a distributed system for real-time data processing, improving throughput by 30% and reducing latency by 20% using Golang and Kafka. I also designed and implemented an LLM-powered conversational agent, achieving a 15% increase in user engagement through fine-tuning and prompt engineering. My research into RAG systems involved optimizing retrieval mechanisms, leading to a 10% improvement in answer relevance for domain-specific queries.
+
+I'm eager to apply my skills in generative AI and distributed systems to develop cutting-edge solutions at Cisco. I'm confident I can make a significant impact and would welcome the chance to discuss how my experience aligns with your team's goals.

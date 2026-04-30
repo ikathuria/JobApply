@@ -1,0 +1,5 @@
+I'm particularly excited about HealthStream's mission to transform healthcare through data-driven solutions, and my experience developing and deploying LLM-based solutions at AWS, coupled with my ongoing research in RAG systems at Purdue, directly aligns with your need for a Data Science Intern passionate about turning complex data into scalable solutions within a HealthTech context.
+
+At AWS, I developed and deployed an LLM-based solution that improved customer support efficiency by 15%, demonstrating my ability to build and implement robust ML models. My current research at Purdue focuses on optimizing RAG systems for domain-specific knowledge retrieval, which has led to a 20% improvement in answer accuracy in preliminary tests. I also have a strong foundation in Python, SQL, and ML libraries like PyTorch and scikit-learn, which I've applied to various projects involving time-series forecasting and data analysis.
+
+I am eager to contribute my skills to HealthStream and learn from your innovative team. Thank you for considering my application; I look forward to discussing how I can contribute to your data science initiatives.

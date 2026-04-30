@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to contribute to generative AI and world modeling at Futurewei Technologies. My strong background in generative AI research, including RAG systems and LLM fine-tuning, coupled with a track record of publications, aligns perfectly with your goal of developing novel algorithms and advancing the field.
+
+During my Ph.D., I developed a novel RAG system that improved factual accuracy in LLM outputs by 15% and fine-tuned a large language model for domain-specific tasks, achieving a 10% increase in performance metrics. My work has resulted in two peer-reviewed publications at leading conferences, demonstrating my ability to conduct rigorous research and disseminate findings effectively. I am also proficient in PyTorch and Python, with hands-on experience across the full ML algorithm development lifecycle.
+
+I am eager to apply my research skills and passion for generative AI to Futurewei's innovative projects. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

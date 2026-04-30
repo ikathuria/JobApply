@@ -1,0 +1,5 @@
+I'm particularly excited about the Wireless Network Lab Intern role at VIAVI Solutions, as my strong research background in RAG systems and practical experience deploying LLM-based solutions at AWS directly aligns with designing and developing AI/ML models for telecom operational use cases. My proficiency in PyTorch, TensorFlow, and GPU-accelerated workflows, combined with a track record of research publications, makes this a perfect fit.
+
+During my research, I developed and optimized a RAG system for complex data retrieval, achieving a 15% improvement in answer relevance and recall. I also built and managed data pipelines for large-scale LLM training, curating and structuring diverse datasets, and successfully ran training experiments on GPU infrastructure, iterating on model performance to meet specific benchmarks. My work has resulted in multiple research publications, demonstrating my ability to contribute to cutting-edge research.
+
+I am eager to apply my skills to VIAVI's innovative work in network test and assurance. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

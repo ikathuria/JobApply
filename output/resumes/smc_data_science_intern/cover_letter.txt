@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to SMC³'s data science team, particularly with my background in developing and deploying LLM-based solutions and optimizing machine learning models. My expertise in Python, PyTorch, and cloud platforms, coupled with experience in RAG systems and anomaly detection, aligns perfectly with the responsibilities of this Data Science Intern role and your data-driven initiatives.
+
+During my academic projects, I developed a RAG system for domain-specific information retrieval, achieving a 15% improvement in answer relevance by fine-tuning embedding models. I also optimized a neural network for anomaly detection in time-series data, reducing false positives by 20% through advanced feature engineering and hyperparameter tuning. Furthermore, I have experience deploying machine learning models on cloud platforms, ensuring scalability and efficient retraining.
+
+I am eager to apply my skills and learn from your experienced team. Thank you for considering my application; I look forward to discussing how I can contribute to SMC³'s success.

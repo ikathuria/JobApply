@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Lenovo's mission of delivering smarter technology, especially given my strong foundation in developing and deploying LLM-based solutions and hands-on experience with RAG systems. My expertise in Python, PyTorch, and cloud platforms aligns perfectly with designing and implementing machine learning and AI solutions for consumer electronics.
+
+During a recent project, I developed a sentiment analysis model using PyTorch, achieving 92% accuracy on a novel dataset after implementing custom data augmentation and hyperparameter tuning. I also built a prototype RAG system for a knowledge base, significantly improving answer relevance by integrating vector databases and fine-tuning embedding models. My experience extends to deploying these solutions, including developing APIs for seamless integration.
+
+I am eager to apply my skills to real-world challenges at Lenovo and learn from your innovative team. Thank you for considering my application; I look forward to discussing how I can contribute.

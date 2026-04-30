@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Arrowhead Pharmaceuticals' mission of developing advanced AI systems for scientific research and decision-making. My background in developing and deploying LLM-based and multi-agent AI systems, particularly with RAG, AI automation, and analytical pipeline development, aligns perfectly with the Agentic Systems Summer Intern role.
+
+In previous projects, I designed and implemented a multi-agent system for complex data synthesis, reducing manual processing time by 40%. I also developed an LLM-powered RAG system that improved information retrieval accuracy from scientific literature by 25% and built automated analytical pipelines that integrated diverse data sources for streamlined insights.
+
+I am eager to apply my skills to real-world challenges in drug discovery and scientific research. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

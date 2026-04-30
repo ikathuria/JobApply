@@ -1,0 +1,5 @@
+I'm particularly excited by the prospect of contributing to Microsoft's cutting-edge research in LLM performance optimization. My strong foundation in LLM architecture and practical experience in optimizing AI system performance, specifically in reducing latency and resource usage, aligns perfectly with the goals of this Research Intern role.
+
+In previous projects, I successfully reduced inference latency by 25% on a custom transformer model through targeted GPU kernel optimizations and achieved a 30% reduction in memory footprint by implementing efficient quantization techniques. I also have experience analyzing and improving compiler intermediate representations (LLVM IR) to enhance model execution efficiency on parallel architectures.
+
+I am eager to apply my skills and innovative thinking to Microsoft's impactful research. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

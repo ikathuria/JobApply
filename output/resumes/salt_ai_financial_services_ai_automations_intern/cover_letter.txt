@@ -1,0 +1,5 @@
+I'm excited by the opportunity to design and build AI workflows for Salt AI's financial services clients, especially given my proven experience in creating multi-agent AI workflows and RAG systems. My strong Python proficiency directly aligns with your need for an intern to automate document-heavy financial processes for investment banking and asset management.
+
+In a recent project, I developed a multi-agent system using LangChain to automate data extraction and summarization from unstructured financial reports, reducing manual processing time by 40%. I also built a RAG pipeline for a financial news aggregator, improving the accuracy of relevant information retrieval by 25% by integrating LLMs with a proprietary knowledge base. My coursework and projects have also provided me with a solid grasp of financial fundamentals, including valuation and credit analysis.
+
+I'm eager to apply my skills to prototype end-to-end client solutions at Salt AI and contribute to developing reusable workflow templates. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
