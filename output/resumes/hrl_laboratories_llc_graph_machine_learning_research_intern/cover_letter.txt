@@ -1,0 +1,5 @@
+I'm particularly excited by HRL Laboratories' pioneering research in graph computing and machine learning, and the opportunity to contribute to your work in graph-augmented retrieval, knowledge graphs, and LLM integration. My experience in translating complex AI research into deployable prototypes aligns perfectly with the role's emphasis on practical application and innovation.
+
+My background includes developing graph neural networks for anomaly detection in large-scale financial networks, where I improved detection accuracy by 15% over traditional methods. I also designed and implemented a knowledge graph-based recommendation system, integrating LLMs for enhanced contextual understanding and achieving a 20% increase in recommendation relevance. Furthermore, I have experience with distributed graph processing using Spark and PyTorch Geometric, enabling efficient analysis of dynamic, heterogeneous datasets.
+
+I am eager to apply my skills and passion for graph machine learning to HRL's impactful projects. Thank you for considering my application; I look forward to discussing how I can contribute.

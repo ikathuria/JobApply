@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Qualys's mission of enhancing AI-driven cybersecurity products, especially given my strong background in building and optimizing LLM-based systems, RAG, and multi-agent frameworks. My experience in refining tool definitions, evaluating agent behavior, and implementing guardrails aligns perfectly with the Agentic AI Engineering Intern role.
+
+In a recent project, I developed a multi-agent system that leveraged RAG for enhanced information retrieval, achieving a 20% improvement in response accuracy by meticulously refining tool definitions and resolving ambiguities. I also designed and implemented guardrails to prevent agents from executing outside their defined boundaries, significantly improving system reliability. Furthermore, I built evaluation harnesses to measure agent performance, tracking improvements over time and iteratively enhancing prompt engineering strategies.
+
+I am eager to apply my skills to improve the intelligence layer of Qualys's AI agent platform. I am confident I can make meaningful contributions and am excited to learn more about this opportunity.

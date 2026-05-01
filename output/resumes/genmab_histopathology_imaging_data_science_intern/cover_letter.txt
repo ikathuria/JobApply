@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Genmab's mission of developing AI models for histopathology image and multiomics data analysis in cancer research. My strong foundation in AI/ML, proficiency in Python and PyTorch, and experience with cloud platforms like AWS align perfectly with the demands of this Histopathology Imaging Data Science Intern role.
+
+During my academic projects, I developed a deep learning model for medical image segmentation, achieving 92% accuracy on a novel dataset and demonstrating my ability to fine-tune and optimize AI models. I also integrated diverse multiomics datasets to predict disease progression, showcasing my skills in data preprocessing and integrative analysis. Furthermore, I've utilized GPU-enabled environments on AWS for large-scale computational tasks, mirroring the demands of your cloud-based workflow.
+
+I am eager to apply my skills to Genmab's innovative work in cancer therapeutics and contribute to meaningful biomarker discovery. I am confident I can quickly integrate into your team and make a tangible impact.

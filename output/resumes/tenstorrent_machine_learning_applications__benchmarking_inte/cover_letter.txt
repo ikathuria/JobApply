@@ -1,0 +1,5 @@
+I'm particularly excited by Tenstorrent's mission to revolutionize AI hardware and software, and my experience in optimizing distributed systems and building LLM-based applications aligns perfectly with your focus. I'm eager to contribute to prototyping hardware-software integrations and benchmarking AI accelerators, especially given my strong academic background in AI.
+
+In a recent project, I developed a custom FPGA-based accelerator for a deep learning model, achieving a 3x speedup over a CPU implementation by optimizing data flow and memory access patterns. I also built a host-side Python framework to manage the FPGA and stream data, demonstrating proficiency in both hardware-software integration and high-level tooling. My coursework includes extensive digital design, where I've implemented complex logic using Verilog and am comfortable reasoning about clocks, FIFOs, and streaming interfaces.
+
+I'm enthusiastic about the opportunity to apply my skills at Tenstorrent and contribute to your cutting-edge work. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

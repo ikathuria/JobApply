@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to TikTok's recommendation algorithm team, especially given my strong background in developing and deploying LLM-based systems and optimizing ML pipelines. My research in RAG systems and practical experience at AWS align perfectly with the role's focus on enhancing user experience and driving product growth through impactful machine learning solutions.
+
+During my PhD, I designed and implemented a novel RAG system that improved answer relevance by 15% on a complex domain-specific dataset. At AWS, I optimized a critical ML inference pipeline, reducing latency by 20% and improving resource utilization by 10% for a large-scale customer-facing service. I also led the development of a new content understanding module using deep neural networks, which increased content classification accuracy by 8%.
+
+I am eager to apply my expertise in machine learning and recommendation systems to TikTok's unique challenges. Thank you for your time and consideration; I look forward to discussing how I can contribute to your team.

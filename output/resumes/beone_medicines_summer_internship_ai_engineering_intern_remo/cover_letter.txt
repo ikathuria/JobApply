@@ -1,0 +1,5 @@
+I'm incredibly excited by the opportunity to contribute to BeOne Medicines' mission of fighting cancer through innovative AI solutions. My strong foundation in LLM development, RAG systems, and multi-agent frameworks, combined with my experience building and deploying production-grade AI systems, directly aligns with the responsibilities of this AI Engineering Intern role.
+
+At AWS, I developed and deployed a real-time fraud detection system, processing over 10,000 transactions per second with 99.9% accuracy, demonstrating my ability to build robust, scalable AI applications. Additionally, my academic research focused on optimizing RAG systems, achieving a 15% improvement in retrieval accuracy for complex queries, which directly relates to enhancing the performance of AI agents. I also have hands-on experience with prompt engineering, tool use, and orchestrating multi-agent workflows.
+
+I'm eager to apply my skills and learn from BeOne Medicines' experts, supporting the design and deployment of cutting-edge AI solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

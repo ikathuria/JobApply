@@ -1,0 +1,5 @@
+I'm excited by the prospect of applying my AI/ML development and deployment experience, particularly with LLM-based systems and optimization, to support rapid experimentation within General Motors' simulation environments. The role's focus on ML/RL model development and integration within autonomous systems aligns perfectly with my background and passion for advancing intelligent systems.
+
+In previous projects, I designed and optimized training loops for deep learning models, achieving a 15% improvement in inference speed. I also developed robust data pipelines and contributed to ML infrastructure, streamlining the integration of new models into existing systems. My experience extends to applying software engineering principles to accelerate project timelines in robotics and autonomous systems, including GPU programming for performance-critical applications.
+
+I am eager to contribute my skills to General Motors and learn how simulation technologies are applied to real-world AI/ML systems in the automotive industry. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

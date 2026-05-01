@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity at STRATIVIS to apply my background in developing and deploying LLM-based solutions and agentic systems to automate HR consulting workflows. My expertise in Python, prompt engineering, and rapid prototyping aligns perfectly with your goal of designing and building intelligent tools that streamline operations.
+
+In previous projects, I developed a multi-agent system for research summarization, reducing manual review time by 40% through effective prompt engineering and orchestration. I also built a Python-based recommendation engine using scikit-learn and vector databases, which improved content relevance by 25%. My experience includes translating ambiguous problem statements into functional prototypes, iterating quickly based on feedback, and deploying solutions using modern ML frameworks.
+
+I am eager to contribute to STRATIVIS's mission and build high-impact tools that directly enhance business performance. Thank you for your time and consideration; I look forward to discussing how I can contribute to your team.

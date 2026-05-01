@@ -1,0 +1,5 @@
+My strong background in optimizing LLM training and inference frameworks, coupled with hands-on experience in GPU performance optimization and distributed systems, makes me incredibly excited about the Research Scientist Intern (ML System) role at ByteDance. My research in RAG systems and practical experience in deploying LLM-based solutions directly aligns with your mission to scale LLM capabilities.
+
+During my PhD, I developed novel techniques for memory access optimization in large-scale distributed training, achieving a 15% reduction in communication overhead for transformer models. At AWS, I contributed to a team that deployed an LLM-based solution, where I specifically optimized CUDA kernels for inference, resulting in a 20% latency improvement. I am proficient in PyTorch and have hands-on experience with frameworks like DeepSpeed and Megatron-LM.
+
+I am eager to apply my expertise to ByteDance's cutting-edge projects and contribute to developing industry-leading high-performance LLM engines. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
