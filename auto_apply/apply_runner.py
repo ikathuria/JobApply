@@ -2,13 +2,13 @@
 Phase 4: Auto-apply orchestrator.
 
 Modes:
-  Local (default)  — headed browser, human confirms before each submit
+  Local (default)  — headed browser, uses approved jobs and human confirms before each submit
   Dry-run          — fills form, screenshots result, never submits
   GHA / headless   — headless, auto-submits approved jobs, no human prompt
 
 Run via:
-  python main.py --apply [--limit N]           # local, human confirms
-  python main.py --apply --dry-run [--limit N] # fill + screenshot, no submit
+  python main.py --apply [--limit N]           # local, approved jobs only; human confirms
+  python main.py --apply --dry-run [--limit N] # approved jobs only; fill + screenshot, no submit
   python main.py --apply --headless [--limit N] # GHA mode, auto-submit
 """
 
@@ -17,6 +17,7 @@ import logging
 import os
 import sys
 import time
+from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -24,7 +25,7 @@ from playwright.sync_api import sync_playwright, Page
 
 from tracker.tracker import (
     init_db, get_jobs, update_status,
-    STATUS_QUEUED, STATUS_APPROVED, STATUS_APPLIED, STATUS_SKIPPED,
+    STATUS_APPROVED, STATUS_APPLIED, STATUS_SKIPPED,
 )
 
 load_dotenv()
@@ -92,10 +93,10 @@ def _find_resume(job: dict) -> Path | None:
 
 
 def _load_cover_letter(job: dict) -> str:
-    path = job.get("resume_path")
-    if not path:
+    resume_path = _find_resume(job)
+    if not resume_path:
         return ""
-    cl = Path(path).parent / "cover_letter.txt"
+    cl = resume_path.parent / "cover_letter.txt"
     return cl.read_text(encoding="utf-8").strip() if cl.exists() else ""
 
 
@@ -161,24 +162,19 @@ def _submit_form(page: Page, ats: str) -> bool:
 def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) -> None:
     """
     Main entry point.
-    - dry_run=True  : fill forms + screenshot, never submit
+    - dry_run=True  : fill approved forms + screenshot, never submit
     - headless=True : headless browser, auto-submit approved jobs (GHA mode)
-    - default       : headed browser, human confirms each submit
+    - default       : headed browser, approved jobs only; human confirms each submit
     """
     profile = _load_profile()
     conn    = _get_db()
 
-    # Headless GHA mode picks up 'approved' jobs; local modes use 'queued'
-    target_status = STATUS_APPROVED if headless else STATUS_QUEUED
-    jobs = get_jobs(conn, status=target_status, limit=limit)
+    # Approved is the explicit handoff from dashboard review to submission.
+    jobs = get_jobs(conn, status=STATUS_APPROVED, limit=limit)
 
     if not jobs:
-        label = "approved" if headless else "queued"
-        print(f"No {label} jobs to apply to.")
-        if headless:
-            print("  Approve jobs via the web dashboard first.")
-        else:
-            print("  Run --tailor first.")
+        print("No approved jobs to apply to.")
+        print("  Review Ready jobs in the dashboard and approve the ones you want submitted.")
         conn.close()
         return
 
@@ -281,7 +277,7 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
                     continue
                 submitted = _submit_form(page, ats)
                 if submitted:
-                    update_status(conn, job["id"], STATUS_APPLIED)
+                    update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
                     print(f"     ✓ Submitted.")
                     applied += 1
                 else:
@@ -306,14 +302,14 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
 
             submitted = _submit_form(page, ats)
             if submitted:
-                update_status(conn, job["id"], STATUS_APPLIED)
+                update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
                 print(f"     ✓ Applied.")
                 applied += 1
             else:
                 print(f"     [!] Submit button not found.")
                 ans = input("     Mark as applied anyway? [y/n] > ").strip().lower()
                 if ans == "y":
-                    update_status(conn, job["id"], STATUS_APPLIED)
+                    update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
                     applied += 1
 
         browser.close()

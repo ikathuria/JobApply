@@ -1,13 +1,106 @@
-import { useState, useEffect, useContext } from 'react'
-import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT } from '../theme.js'
+import { useState, useEffect } from 'react'
+import { DARK, LIGHT, STATUS_META } from '../theme.js'
 import { Btn, StatusBadge, ScoreBar, Tag, Textarea, Divider, Spinner } from './ui/index.jsx'
 import { api } from '../api.js'
 
-// ── Manual Apply Confirmation Modal ──────────────────────────────────────────
-// Shown when user clicks "✓ Applied Manually" on an approved job.
-// The auto-apply bot handles Greenhouse/Lever/LinkedIn automatically;
-// this modal is the fallback for unsupported ATS or manual submissions.
+const STATUS_OPTS = ['new', 'queued', 'approved', 'applied', 'oa', 'interview', 'offer', 'rejected', 'skipped']
+const PIPELINE_STATUSES = ['new', 'queued', 'approved', 'applied', 'oa', 'interview', 'offer']
+
+const STATUS_HELP = {
+  new: 'Found, not tailored yet',
+  queued: 'Tailored and ready to review',
+  approved: 'Approved for the apply bot',
+  applied: 'Submitted',
+  oa: 'Online assessment received',
+  interview: 'Interview scheduled',
+  offer: 'Offer received',
+  rejected: 'Closed out',
+  skipped: 'Not pursuing',
+}
+
+function fieldBase(T, dark) {
+  return {
+    width: '100%',
+    padding: '8px 10px',
+    borderRadius: 7,
+    border: `1px solid ${T.border}`,
+    background: dark ? '#1A1A28' : '#FAFAFA',
+    color: T.text,
+    fontSize: 12,
+    fontFamily: 'DM Sans, sans-serif',
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+}
+
+function Label({ children, T }) {
+  return (
+    <div style={{
+      fontSize: 10,
+      fontWeight: 800,
+      color: T.muted,
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em',
+      marginBottom: 5,
+    }}>
+      {children}
+    </div>
+  )
+}
+
+function Field({ label, children, T, style = {} }) {
+  return (
+    <div style={{ marginBottom: 12, ...style }}>
+      <Label T={T}>{label}</Label>
+      {children}
+    </div>
+  )
+}
+
+function TextField({ label, value, onChange, T, dark, type = 'text', placeholder = '', style = {} }) {
+  return (
+    <Field label={label} T={T} style={style}>
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={e => onChange(e.target.value)}
+        style={fieldBase(T, dark)}
+      />
+    </Field>
+  )
+}
+
+function SelectField({ label, value, onChange, T, dark, options, style = {} }) {
+  return (
+    <Field label={label} T={T} style={style}>
+      <select value={value} onChange={e => onChange(e.target.value)} style={fieldBase(T, dark)}>
+        {options.map(s => (
+          <option key={s} value={s}>{STATUS_META[s]?.label || s}</option>
+        ))}
+      </select>
+    </Field>
+  )
+}
+
+function FormSection({ title, sub, children, T, dark }) {
+  return (
+    <div style={{
+      background: dark ? '#171724' : '#FFFFFF',
+      border: `1px solid ${T.border}`,
+      borderRadius: 10,
+      padding: '14px 14px 2px',
+      marginBottom: 14,
+    }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: T.text, marginBottom: sub ? 3 : 12 }}>
+        {title}
+      </div>
+      {sub && <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5, marginBottom: 12 }}>{sub}</div>}
+      {children}
+    </div>
+  )
+}
+
 function ConfirmModal({ job, onConfirm, onCancel, dark }) {
   const T = dark ? DARK : LIGHT
   const [checked, setChecked] = useState(false)
@@ -15,39 +108,37 @@ function ConfirmModal({ job, onConfirm, onCancel, dark }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
-      <div style={{ background: T.surface, borderRadius: 16, width: 480, border: `1px solid ${T.border}`, boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
-        {/* Header */}
+      <div style={{ background: T.surface, borderRadius: 14, width: 480, border: `1px solid ${T.border}`, boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#22C55E20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✓</div>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#22C55E20', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E', fontWeight: 900 }}>✓</div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Mark as Manually Applied</div>
-            <div style={{ fontSize: 12, color: T.muted }}>Use this if you applied outside the auto-apply bot</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Mark as manually applied</div>
+            <div style={{ fontSize: 12, color: T.muted }}>Use this after submitting outside the apply bot.</div>
           </div>
-          <button onClick={onCancel} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18 }}>✕</button>
+          <button onClick={onCancel} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18 }}>x</button>
         </div>
 
         <div style={{ padding: '20px 24px' }}>
-          {/* Job summary */}
           <div style={{ background: dark ? '#1A1A28' : '#F8F8FF', border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>{job.title}</div>
             <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <span>🏢 {job.company}</span>
-              {job.location && <span>📍 {job.location}</span>}
-              <span style={{ color: '#22C55E', fontWeight: 700 }}>✦ {Math.round(score * 100)}% match</span>
+              <span>{job.company}</span>
+              {job.location && <span>{job.location}</span>}
+              <span style={{ color: '#22C55E', fontWeight: 700 }}>{Math.round(score * 100)}% match</span>
             </div>
           </div>
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: T.text, marginBottom: 24 }}>
             <input type="checkbox" onChange={e => setChecked(e.target.checked)}
               style={{ width: 16, height: 16, accentColor: '#22C55E' }} />
-            I have submitted my application to <strong style={{ marginLeft: 4 }}>{job.company}</strong>
+            I submitted this application to <strong>{job.company}</strong>
           </label>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <Btn variant="secondary" onClick={onCancel} style={{ flex: 1 }}>Cancel</Btn>
             <Btn variant="primary" disabled={!checked} onClick={onConfirm}
               style={{ flex: 2, background: checked ? '#22C55E' : undefined }}>
-              ✓ Confirm Applied
+              Confirm applied
             </Btn>
           </div>
         </div>
@@ -56,20 +147,72 @@ function ConfirmModal({ job, onConfirm, onCancel, dark }) {
   )
 }
 
-// ── Job Drawer ────────────────────────────────────────────────────────────────
+function StatusRail({ job, T, dark, disabled, onChange }) {
+  const currentIndex = PIPELINE_STATUSES.indexOf(job.status)
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        {PIPELINE_STATUSES.map((status, index) => {
+          const meta = STATUS_META[status]
+          const active = status === job.status
+          const passed = currentIndex >= 0 && index < currentIndex
+          return (
+            <button
+              key={status}
+              type="button"
+              disabled={disabled}
+              title={STATUS_HELP[status]}
+              onClick={() => onChange(status)}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                height: 30,
+                border: `1px solid ${active ? meta.color : T.border}`,
+                borderRadius: 7,
+                background: active ? meta.bg : passed ? `${meta.color}18` : dark ? '#171724' : '#F8F8FC',
+                color: active || passed ? meta.color : T.muted,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                fontSize: 10,
+                fontWeight: active ? 800 : 700,
+                fontFamily: 'DM Sans, sans-serif',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                padding: '0 5px',
+              }}
+            >
+              {meta.label}
+            </button>
+          )
+        })}
+      </div>
+      {['rejected', 'skipped'].includes(job.status) && (
+        <div style={{ marginTop: 6 }}>
+          <StatusBadge status={job.status} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh }) {
   const T = dark ? DARK : LIGHT
-  const [job, setJob]           = useState(initialJob)
+  const [job, setJob] = useState(initialJob)
   const [activeTab, setActiveTab] = useState('overview')
-  const [notes, setNotes]       = useState('')
+  const [notes, setNotes] = useState('')
   const [coverLetter, setCoverLetter] = useState('')
-  const [jdExpanded, setJdExpanded]   = useState(false)
+  const [jdExpanded, setJdExpanded] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [tailoring, setTailoring]     = useState(false)
-  const [tailorMsg, setTailorMsg]     = useState('')
-  const [updating, setUpdating]       = useState(false)
+  const [tailoring, setTailoring] = useState(false)
+  const [tailorMsg, setTailorMsg] = useState('')
+  const [updating, setUpdating] = useState(false)
+  const [trackingForm, setTrackingForm] = useState(null)
+  const [trackingMsg, setTrackingMsg] = useState('')
+  const [editForm, setEditForm] = useState(null)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editMsg, setEditMsg] = useState('')
 
-  // Fetch full job data (focus items only have id)
   useEffect(() => {
     if (!initialJob) return
     if (initialJob._needsFetch) {
@@ -83,44 +226,78 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
     }
     setActiveTab('overview')
     setTailorMsg('')
+    setTrackingMsg('')
   }, [initialJob?.id])
 
-  // Fetch cover letter text when switching to that tab
+  useEffect(() => {
+    if (!job) return
+    setTrackingForm({
+      status: job.status || 'new',
+      date_applied: job.date_applied ? job.date_applied.slice(0, 10) : '',
+      interview_date: job.interview_date ? job.interview_date.slice(0, 10) : '',
+      follow_up_date: job.follow_up_date ? job.follow_up_date.slice(0, 10) : '',
+      recruiter: job.recruiter || '',
+      rejection_stage: job.rejection_stage || '',
+    })
+  }, [job?.id, job?.status])
+
   useEffect(() => {
     if (activeTab === 'cover letter' && job?.resume_path) {
       api.coverLetter(job.id).then(setCoverLetter).catch(() => setCoverLetter(''))
     }
+  }, [activeTab, job?.id, job?.resume_path])
+
+  useEffect(() => {
+    if (activeTab === 'edit' && job) {
+      setEditForm({
+        title: job.title || '',
+        company: job.company || '',
+        location: job.location || '',
+        url: job.url || '',
+        status: job.status || 'new',
+        score: job.score ?? '',
+        date_applied: job.date_applied ? job.date_applied.slice(0, 10) : '',
+        recruiter: job.recruiter || '',
+        salary_range: job.salary_range || '',
+        interview_date: job.interview_date ? job.interview_date.slice(0, 10) : '',
+        follow_up_date: job.follow_up_date ? job.follow_up_date.slice(0, 10) : '',
+        rejection_stage: job.rejection_stage || '',
+        starred: !!job.starred,
+      })
+      setEditMsg('')
+    }
   }, [activeTab, job?.id])
 
   if (!job) return (
-    <div style={{ width: 440, flexShrink: 0, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.surface, borderLeft: `1px solid ${T.border}` }}>
+    <div style={{ width: 480, flexShrink: 0, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.surface, borderLeft: `1px solid ${T.border}` }}>
       <Spinner size={28} />
     </div>
   )
 
   const score = job.score ?? 0
-  const pct   = Math.round(score * 100)
-  const scoreColor = score >= 0.75 ? T.success : score >= 0.55 ? T.warning : T.danger
-
   const primaryAction = {
-    new:       { label: '✦ Tailor with AI',       color: T.accent,    action: handleTailor },
-    // Step 1: just approve (no modal) — job moves to Approved tab
-    queued:    { label: '✓ Approve',               color: '#8B5CF6',   action: () => patchStatus('approved') },
-    // Step 2: auto-apply bot picks this up; button is manual fallback
-    approved:  { label: '✓ Applied Manually',       color: '#22C55E',   action: () => setShowConfirm(true) },
-    applied:   { label: '📝 Got OA?',              color: '#F59E0B',   action: () => patchStatus('oa') },
-    oa:        { label: '🎤 Got Interview?',        color: '#EC4899',   action: () => patchStatus('interview') },
-    interview: { label: '🎉 Got Offer?',           color: '#10B981',   action: () => patchStatus('offer') },
-    offer:     { label: '🎊 Celebrate!',            color: '#10B981',   action: null },
-    rejected:  null,
-    skipped:   null,
+    new: { label: 'Tailor with AI', color: T.accent, action: handleTailor },
+    queued: { label: 'Approve for apply bot', color: '#8B5CF6', action: () => patchStatus('approved') },
+    approved: { label: 'Mark manually applied', color: '#22C55E', action: () => setShowConfirm(true) },
+    applied: { label: 'Move to OA', color: '#F59E0B', action: () => patchStatus('oa') },
+    oa: { label: 'Move to interview', color: '#EC4899', action: () => patchStatus('interview') },
+    interview: { label: 'Move to offer', color: '#10B981', action: () => patchStatus('offer') },
+    offer: { label: 'Offer received', color: '#10B981', action: null },
+    rejected: null,
+    skipped: null,
   }[job.status]
 
   async function patchStatus(newStatus, extra = {}) {
     setUpdating(true)
     try {
-      const updated = await api.patch(job.id, { status: newStatus, ...extra })
+      const payload = { status: newStatus, ...extra }
+      if (newStatus === 'applied' && !payload.date_applied && !job.date_applied) {
+        payload.date_applied = new Date().toISOString().slice(0, 10)
+      }
+      const updated = await api.patch(job.id, payload)
       setJob(updated)
+      setTrackingMsg('Saved')
+      setTimeout(() => setTrackingMsg(''), 1600)
       onRefresh?.()
     } catch (e) {
       alert('Error: ' + e.message)
@@ -134,90 +311,88 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
     setTailorMsg('')
     try {
       const res = await api.tailor(job.id)
-      setTailorMsg('✨ ' + res.message)
+      setTailorMsg(res.message)
       const updated = await api.job(job.id)
       setJob(updated)
       onRefresh?.()
     } catch (e) {
-      setTailorMsg('❌ ' + e.message)
+      setTailorMsg(e.message)
     } finally {
       setTailoring(false)
     }
   }
 
   async function saveNotes() {
-    await api.patch(job.id, { notes })
+    const updated = await api.patch(job.id, { notes })
+    setJob(updated)
     onRefresh?.()
+  }
+
+  async function saveTracking() {
+    if (!trackingForm) return
+    setUpdating(true)
+    setTrackingMsg('')
+    try {
+      const payload = {
+        status: trackingForm.status,
+        date_applied: trackingForm.date_applied || null,
+        interview_date: trackingForm.interview_date || null,
+        follow_up_date: trackingForm.follow_up_date || null,
+        recruiter: trackingForm.recruiter.trim() || null,
+        rejection_stage: trackingForm.rejection_stage.trim() || null,
+      }
+      const updated = await api.patch(job.id, payload)
+      setJob(updated)
+      setTrackingMsg('Saved')
+      setTimeout(() => setTrackingMsg(''), 1600)
+      onRefresh?.()
+    } catch (e) {
+      setTrackingMsg(e.message || 'Save failed')
+    } finally {
+      setUpdating(false)
+    }
   }
 
   async function saveCoverLetter() {
     await api.saveCL(job.id, coverLetter)
   }
 
-  // ── Edit tab ──
-  const [editForm, setEditForm]   = useState(null)   // null = not open yet
-  const [editSaving, setEditSaving] = useState(false)
-  const [editMsg, setEditMsg]       = useState('')
-
-  // Populate edit form when switching to edit tab
-  useEffect(() => {
-    if (activeTab === 'edit') {
-      setEditForm({
-        title:          job.title         || '',
-        company:        job.company       || '',
-        location:       job.location      || '',
-        url:            job.url           || '',
-        status:         job.status        || 'new',
-        score:          job.score         ?? '',
-        date_applied:   job.date_applied  ? job.date_applied.slice(0,10) : '',
-        recruiter:      job.recruiter     || '',
-        salary_range:   job.salary_range  || '',
-        interview_date: job.interview_date ? job.interview_date.slice(0,10) : '',
-        follow_up_date: job.follow_up_date ? job.follow_up_date.slice(0,10) : '',
-        rejection_stage:job.rejection_stage || '',
-        starred:        job.starred       ? true : false,
-      })
-      setEditMsg('')
-    }
-  }, [activeTab, job?.id])
-
-  const setEF = (k, v) => setEditForm(f => ({ ...f, [k]: v }))
-
   async function saveEdit() {
-    setEditSaving(true); setEditMsg('')
+    setEditSaving(true)
+    setEditMsg('')
     try {
       const payload = {
-        title:           editForm.title.trim()          || undefined,
-        company:         editForm.company.trim()         || undefined,
-        location:        editForm.location.trim()        || undefined,
-        url:             editForm.url.trim()             || undefined,
-        status:          editForm.status                 || undefined,
-        score:           editForm.score !== '' ? parseFloat(editForm.score) : undefined,
-        date_applied:    editForm.date_applied           || undefined,
-        recruiter:       editForm.recruiter.trim()       || undefined,
-        salary_range:    editForm.salary_range.trim()    || undefined,
-        interview_date:  editForm.interview_date         || undefined,
-        follow_up_date:  editForm.follow_up_date         || undefined,
-        rejection_stage: editForm.rejection_stage.trim() || undefined,
-        starred:         editForm.starred ? 1 : 0,
+        title: editForm.title.trim() || undefined,
+        company: editForm.company.trim() || undefined,
+        location: editForm.location.trim() || undefined,
+        url: editForm.url.trim() || undefined,
+        status: editForm.status || undefined,
+        score: editForm.score !== '' ? parseFloat(editForm.score) : undefined,
+        date_applied: editForm.date_applied || null,
+        recruiter: editForm.recruiter.trim() || null,
+        salary_range: editForm.salary_range.trim() || null,
+        interview_date: editForm.interview_date || null,
+        follow_up_date: editForm.follow_up_date || null,
+        rejection_stage: editForm.rejection_stage.trim() || null,
+        starred: editForm.starred ? 1 : 0,
       }
-      // strip undefineds
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k])
       const updated = await api.patch(job.id, payload)
       setJob(updated)
       setNotes(updated.notes || '')
       onRefresh?.()
-      setEditMsg('✓ Saved')
+      setEditMsg('Saved')
       setTimeout(() => setEditMsg(''), 2000)
     } catch (e) {
-      setEditMsg('❌ ' + (e.message || 'Save failed'))
+      setEditMsg(e.message || 'Save failed')
     } finally {
       setEditSaving(false)
     }
   }
 
-  const STATUS_OPTS = ['new','queued','approved','applied','oa','interview','offer','rejected','skipped']
-
+  const setTracking = (k, v) => setTrackingForm(f => ({ ...f, [k]: v }))
+  const setEdit = (k, v) => setEditForm(f => ({ ...f, [k]: v }))
+  const input = fieldBase(T, dark)
   const drawerTabs = ['overview', 'resume', 'cover letter', 'edit']
 
   return (
@@ -234,174 +409,161 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
       )}
 
       <div style={{
-        width: 440, flexShrink: 0, height: '100vh', display: 'flex', flexDirection: 'column',
-        background: T.surface, borderLeft: `1px solid ${T.border}`,
-        position: 'sticky', top: 0,
+        width: 480,
+        flexShrink: 0,
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: T.surface,
+        borderLeft: `1px solid ${T.border}`,
+        position: 'sticky',
+        top: 0,
       }}>
-        {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: T.text, lineHeight: 1.3, marginBottom: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: T.text, lineHeight: 1.3, marginBottom: 5 }}>
                 {job.starred ? <span style={{ color: '#F59E0B', marginRight: 5 }}>★</span> : null}
                 {job.title}
               </div>
               <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600, color: T.text }}>{job.company}</span>
-                <span>·</span><span>{job.location}</span>
-                <span>·</span><Tag>{job.source}</Tag>
+                <span style={{ fontWeight: 700, color: T.text }}>{job.company || 'Unknown company'}</span>
+                {job.location && <><span>·</span><span>{job.location}</span></>}
+                {job.source && <><span>·</span><Tag>{job.source}</Tag></>}
               </div>
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-              {/* Star toggle */}
               <button
                 onClick={() => patchStatus(job.status, { starred: job.starred ? 0 : 1 })}
                 title={job.starred ? 'Unstar' : 'Star'}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: job.starred ? '#F59E0B' : T.muted, fontSize: 16, padding: 4 }}>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: job.starred ? '#F59E0B' : T.muted, fontSize: 17, padding: 4 }}>
                 {job.starred ? '★' : '☆'}
               </button>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18, padding: 4 }}>✕</button>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18, padding: 4 }}>x</button>
             </div>
           </div>
 
-          {/* Score + status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
             <StatusBadge status={job.status} size="md" />
             <div style={{ flex: 1 }}><ScoreBar score={score} height={5} showLabel /></div>
           </div>
 
-          {/* Primary action */}
-          {primaryAction && (
-            <button
-              onClick={tailoring || updating ? undefined : primaryAction.action}
-              disabled={tailoring || updating}
-              style={{
-                width: '100%', padding: '11px 0', borderRadius: 9, border: 'none',
-                cursor: tailoring || updating ? 'not-allowed' : 'pointer',
-                background: primaryAction.color, color: '#fff', fontSize: 13, fontWeight: 700,
-                fontFamily: 'DM Sans, sans-serif', opacity: tailoring || updating ? 0.7 : 1,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}>
-              {tailoring ? <><Spinner size={14} color="#fff" /> Tailoring…</> : primaryAction.label}
-            </button>
-          )}
-          {tailorMsg && <div style={{ fontSize: 11, color: T.muted, marginTop: 6, textAlign: 'center' }}>{tailorMsg}</div>}
+          <StatusRail job={job} T={T} dark={dark} disabled={updating || tailoring} onChange={patchStatus} />
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            {primaryAction && (
+              <button
+                onClick={tailoring || updating ? undefined : primaryAction.action}
+                disabled={tailoring || updating || !primaryAction.action}
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: tailoring || updating ? 'not-allowed' : 'pointer',
+                  background: primaryAction.color,
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'DM Sans, sans-serif',
+                  opacity: tailoring || updating ? 0.7 : 1,
+                }}>
+                {tailoring ? 'Tailoring...' : primaryAction.label}
+              </button>
+            )}
+            {job.url && !job.url.startsWith('manual://') && (
+              <Btn variant="secondary" size="sm" onClick={() => window.open(job.url, '_blank')}>Posting</Btn>
+            )}
+          </div>
+          {tailorMsg && <div style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>{tailorMsg}</div>}
         </div>
 
-        {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
           {drawerTabs.map(t => (
             <button key={t} onClick={() => setActiveTab(t)}
               style={{
-                flex: 1, padding: '9px 4px', border: 'none', cursor: 'pointer', background: 'transparent',
-                fontFamily: 'DM Sans, sans-serif', fontSize: 11, fontWeight: activeTab === t ? 700 : 500,
+                flex: 1,
+                padding: '9px 4px',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'transparent',
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: 11,
+                fontWeight: activeTab === t ? 800 : 600,
                 color: activeTab === t ? T.accent : T.muted,
                 borderBottom: activeTab === t ? `2px solid ${T.accent}` : '2px solid transparent',
-                textTransform: 'capitalize', transition: 'all 0.12s',
+                textTransform: 'capitalize',
               }}>{t}</button>
           ))}
         </div>
 
-        {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-          {/* ── Overview ── */}
-          {activeTab === 'overview' && (
+          {activeTab === 'overview' && trackingForm && (
             <div>
-              {/* Auto-apply queued banner */}
               {job.status === 'approved' && (
-                <div style={{ background: '#8B5CF615', border: '1px solid #8B5CF640', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 18, flexShrink: 0 }}>🤖</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#8B5CF6', marginBottom: 2 }}>Auto-apply queued</div>
-                    <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
-                      The bot will auto-submit this on the next scheduled run (weekdays 10 AM ET).<br />
-                      Supports Greenhouse, Lever, and LinkedIn Easy Apply.{' '}
-                      If the ATS isn't supported, use <strong>✓ Applied Manually</strong> instead.
-                    </div>
+                <div style={{ background: '#8B5CF615', border: '1px solid #8B5CF640', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#8B5CF6', marginBottom: 3 }}>Auto-apply queued</div>
+                  <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
+                    The apply bot will pick this up on the next scheduled run. Use “Mark manually applied” if you submit it yourself.
                   </div>
                 </div>
               )}
 
-              {/* JD */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Job Description</div>
-                <div style={{ fontSize: 12, color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: jdExpanded ? 'none' : 120, overflow: 'hidden' }}>
+              <FormSection title="Update this application" sub="The fields you are most likely to touch after every job-search session." T={T} dark={dark}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                  <SelectField label="Status" value={trackingForm.status} onChange={v => setTracking('status', v)} options={STATUS_OPTS} T={T} dark={dark} />
+                  <TextField label="Date applied" type="date" value={trackingForm.date_applied} onChange={v => setTracking('date_applied', v)} T={T} dark={dark} />
+                  <TextField label="Interview date" type="date" value={trackingForm.interview_date} onChange={v => setTracking('interview_date', v)} T={T} dark={dark} />
+                  <TextField label="Follow-up date" type="date" value={trackingForm.follow_up_date} onChange={v => setTracking('follow_up_date', v)} T={T} dark={dark} />
+                  <TextField label="Recruiter" value={trackingForm.recruiter} onChange={v => setTracking('recruiter', v)} placeholder="Name or email" T={T} dark={dark} style={{ gridColumn: '1/-1' }} />
+                  <TextField label="Rejection stage" value={trackingForm.rejection_stage} onChange={v => setTracking('rejection_stage', v)} placeholder="Resume screen, OA, phone screen..." T={T} dark={dark} style={{ gridColumn: '1/-1' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <Btn variant="primary" size="sm" onClick={saveTracking} disabled={updating}>Save tracking</Btn>
+                  {trackingMsg && <span style={{ fontSize: 12, color: trackingMsg === 'Saved' ? T.success : T.danger }}>{trackingMsg}</span>}
+                </div>
+              </FormSection>
+
+              <FormSection title="Notes" T={T} dark={dark}>
+                <Textarea value={notes} onChange={setNotes} placeholder="Referral notes, next step, application quirks..." rows={4} />
+                {notes !== (job.notes || '') && (
+                  <button onClick={saveNotes} style={{ marginTop: 7, background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 800 }}>
+                    Save notes
+                  </button>
+                )}
+              </FormSection>
+
+              <FormSection title="Job description" T={T} dark={dark}>
+                <div style={{ fontSize: 12, color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: jdExpanded ? 'none' : 140, overflow: 'hidden' }}>
                   {job.description || 'No description available.'}
                 </div>
                 <button onClick={() => setJdExpanded(!jdExpanded)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 700, padding: '4px 0', marginTop: 4 }}>
-                  {jdExpanded ? '↑ Show less' : '↓ Show more'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 800, padding: '5px 0', marginTop: 4 }}>
+                  {jdExpanded ? 'Show less' : 'Show more'}
                 </button>
-              </div>
+              </FormSection>
 
               <Divider />
 
-              {/* Notes */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Notes</div>
-                <Textarea value={notes} onChange={setNotes} placeholder="Add notes about this job…" rows={3} />
-                {notes !== (job.notes || '') && (
-                  <button onClick={saveNotes} style={{ marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 700 }}>
-                    💾 Save notes
-                  </button>
-                )}
-              </div>
-
-              {/* Interview date */}
-              {job.interview_date && (
-                <div style={{ background: '#EC489915', border: '1px solid #EC489940', borderRadius: 8, padding: '10px 14px', marginBottom: 12 }}>
-                  <div style={{ fontSize: 12, color: '#EC4899', fontWeight: 700 }}>🎤 Interview: {job.interview_date?.slice(0, 10)}</div>
-                  <div style={{ fontSize: 11, color: T.muted, marginTop: 3 }}>Prepare your talking points!</div>
-                </div>
-              )}
-
-              {job.date_applied && (
-                <div style={{ fontSize: 12, color: T.muted, marginBottom: 8 }}>📅 Applied: {job.date_applied?.slice(0, 10)}</div>
-              )}
-              {job.recruiter && (
-                <div style={{ fontSize: 12, color: T.muted, marginBottom: 8 }}>👤 Recruiter: {job.recruiter}</div>
-              )}
-              {job.salary_range && (
-                <div style={{ fontSize: 12, color: T.muted, marginBottom: 8 }}>💰 {job.salary_range}</div>
-              )}
-
-              <Divider />
-
-              {/* Secondary actions */}
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Actions</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {job.url && !job.url.startsWith('manual://') && (
-                  <Btn variant="secondary" size="sm" onClick={() => window.open(job.url, '_blank')} style={{ width: '100%' }}>🔗 View Posting</Btn>
-                )}
-                {job.status === 'new' && (
-                  <Btn variant="ghost" size="sm" onClick={() => patchStatus('skipped')} style={{ width: '100%', color: T.muted }}>⏭ Skip</Btn>
-                )}
-                {job.status === 'new' && (
-                  <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>✕ Reject</Btn>
-                )}
-                {job.status === 'queued' && (
-                  <Btn variant="ghost" size="sm" onClick={() => patchStatus('new')} style={{ width: '100%', color: T.muted }}>↩ Undo Tailor</Btn>
-                )}
-                {job.status === 'approved' && (
-                  <Btn variant="ghost" size="sm" onClick={() => patchStatus('queued')} style={{ width: '100%', color: T.muted }}>↩ Back to Ready</Btn>
-                )}
-                {['applied', 'oa', 'interview'].includes(job.status) && (
-                  <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>✕ Got Rejected</Btn>
-                )}
+                {job.status === 'new' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('skipped')} style={{ width: '100%' }}>Skip</Btn>}
+                {job.status === 'new' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>Reject</Btn>}
+                {job.status === 'queued' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('new')} style={{ width: '100%' }}>Back to new</Btn>}
+                {job.status === 'approved' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('queued')} style={{ width: '100%' }}>Back to ready</Btn>}
+                {['applied', 'oa', 'interview'].includes(job.status) && <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>Mark rejected</Btn>}
+                {['rejected', 'skipped'].includes(job.status) && <Btn variant="ghost" size="sm" onClick={() => patchStatus('new')} style={{ width: '100%' }}>Reopen</Btn>}
               </div>
             </div>
           )}
 
-          {/* ── Resume ── */}
           {activeTab === 'resume' && (
             <div>
               {job.status === 'new' || !job.resume_path ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: T.muted }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>◌</div>
-                  <div style={{ fontWeight: 600, marginBottom: 6, color: T.text }}>No resume yet</div>
-                  <div style={{ fontSize: 12, marginBottom: 20 }}>Tailor this job to generate a customized resume</div>
+                  <div style={{ fontWeight: 700, marginBottom: 6, color: T.text }}>No resume yet</div>
+                  <div style={{ fontSize: 12, marginBottom: 20 }}>Tailor this job to generate a customized resume.</div>
                   <Btn variant="primary" onClick={handleTailor} disabled={tailoring}>
-                    {tailoring ? 'Tailoring…' : '✦ Tailor Now'}
+                    {tailoring ? 'Tailoring...' : 'Tailor now'}
                   </Btn>
                 </div>
               ) : (
@@ -413,30 +575,28 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                   />
                   <a href={api.resumeUrl(job.id)} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: T.accent }}>
-                    ⬇️ Download PDF
+                    Download PDF
                   </a>
                 </div>
               )}
             </div>
           )}
 
-          {/* ── Cover Letter ── */}
           {activeTab === 'cover letter' && (
             <div>
               {!job.resume_path ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: T.muted }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>✉</div>
-                  <div style={{ fontWeight: 600, marginBottom: 6, color: T.text }}>No cover letter yet</div>
-                  <div style={{ fontSize: 12, marginBottom: 20 }}>Generated automatically when you tailor this job</div>
-                  <Btn variant="primary" onClick={handleTailor} disabled={tailoring}>✦ Tailor Now</Btn>
+                  <div style={{ fontWeight: 700, marginBottom: 6, color: T.text }}>No cover letter yet</div>
+                  <div style={{ fontSize: 12, marginBottom: 20 }}>Generated automatically when you tailor this job.</div>
+                  <Btn variant="primary" onClick={handleTailor} disabled={tailoring}>Tailor now</Btn>
                 </div>
               ) : (
                 <>
                   <Textarea value={coverLetter} onChange={setCoverLetter} rows={18} style={{ fontSize: 12, lineHeight: 1.7 }} />
                   <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                    <Btn variant="secondary" size="sm" onClick={saveCoverLetter}>💾 Save edits</Btn>
-                    <a href={api.resumeUrl(job.id).replace('/resume', '/cover_letter')} target="_blank" rel="noopener noreferrer">
-                      <Btn variant="ghost" size="sm">⬇ Download</Btn>
+                    <Btn variant="secondary" size="sm" onClick={saveCoverLetter}>Save edits</Btn>
+                    <a href={api.coverLetterPdfUrl(job.id)} target="_blank" rel="noopener noreferrer">
+                      <Btn variant="ghost" size="sm">Download PDF</Btn>
                     </a>
                   </div>
                 </>
@@ -444,88 +604,55 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
             </div>
           )}
 
-          {/* ── Edit ── */}
-          {activeTab === 'edit' && editForm && (() => {
-            const lbl = { fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }
-            const inp = { width: '100%', padding: '7px 10px', borderRadius: 7, border: `1px solid ${T.border}`, background: dark ? '#1A1A28' : '#FAFAFA', color: T.text, fontSize: 12, fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box' }
-            const row = { marginBottom: 12 }
-            return (
-              <div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
-                  <div style={{ ...row, gridColumn: '1/-1' }}>
-                    <div style={lbl}>Title</div>
-                    <input style={inp} value={editForm.title} onChange={e => setEF('title', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Company</div>
-                    <input style={inp} value={editForm.company} onChange={e => setEF('company', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Location</div>
-                    <input style={inp} value={editForm.location} onChange={e => setEF('location', e.target.value)} />
-                  </div>
-                  <div style={{ ...row, gridColumn: '1/-1' }}>
-                    <div style={lbl}>Job URL</div>
-                    <input style={inp} value={editForm.url} onChange={e => setEF('url', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Status</div>
-                    <select style={inp} value={editForm.status} onChange={e => setEF('status', e.target.value)}>
-                      {STATUS_OPTS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-                    </select>
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Score (0–1)</div>
-                    <input style={inp} type="number" min={0} max={1} step={0.01} value={editForm.score} onChange={e => setEF('score', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Date Applied</div>
-                    <input style={inp} type="date" value={editForm.date_applied} onChange={e => setEF('date_applied', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Interview Date</div>
-                    <input style={inp} type="date" value={editForm.interview_date} onChange={e => setEF('interview_date', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Follow-up Date</div>
-                    <input style={inp} type="date" value={editForm.follow_up_date} onChange={e => setEF('follow_up_date', e.target.value)} />
-                  </div>
-                  <div style={row}>
-                    <div style={lbl}>Recruiter</div>
-                    <input style={inp} value={editForm.recruiter} onChange={e => setEF('recruiter', e.target.value)} placeholder="Name / email" />
-                  </div>
-                  <div style={{ ...row, gridColumn: '1/-1' }}>
-                    <div style={lbl}>Salary Range</div>
-                    <input style={inp} value={editForm.salary_range} onChange={e => setEF('salary_range', e.target.value)} placeholder="$40–50/hr" />
-                  </div>
-                  <div style={{ ...row, gridColumn: '1/-1' }}>
-                    <div style={lbl}>Rejection Stage</div>
-                    <input style={inp} value={editForm.rejection_stage} onChange={e => setEF('rejection_stage', e.target.value)} placeholder="e.g. OA, Phone screen" />
-                  </div>
-                  <div style={{ ...row, gridColumn: '1/-1' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12, color: T.text }}>
-                      <input type="checkbox" checked={editForm.starred} onChange={e => setEF('starred', e.target.checked)}
-                        style={{ width: 15, height: 15, accentColor: '#F59E0B' }} />
-                      ★ Starred
+          {activeTab === 'edit' && editForm && (
+            <div>
+              <FormSection title="Role details" sub="Use this for corrections after import or scraping." T={T} dark={dark}>
+                <TextField label="Title" value={editForm.title} onChange={v => setEdit('title', v)} T={T} dark={dark} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                  <TextField label="Company" value={editForm.company} onChange={v => setEdit('company', v)} T={T} dark={dark} />
+                  <TextField label="Location" value={editForm.location} onChange={v => setEdit('location', v)} T={T} dark={dark} />
+                </div>
+                <TextField label="Job URL" value={editForm.url} onChange={v => setEdit('url', v)} T={T} dark={dark} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                  <TextField label="Score" type="number" value={editForm.score} onChange={v => setEdit('score', v)} T={T} dark={dark} />
+                  <Field label="Starred" T={T}>
+                    <label style={{ ...input, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={editForm.starred} onChange={e => setEdit('starred', e.target.checked)} style={{ accentColor: '#F59E0B' }} />
+                      Keep near the top
                     </label>
-                  </div>
+                  </Field>
                 </div>
+              </FormSection>
 
-                <Divider />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Btn variant="primary" onClick={saveEdit} disabled={editSaving}>
-                    {editSaving ? 'Saving…' : '💾 Save Changes'}
-                  </Btn>
-                  {editMsg && (
-                    <span style={{ fontSize: 12, color: editMsg.startsWith('✓') ? '#22C55E' : '#EF4444' }}>
-                      {editMsg}
-                    </span>
-                  )}
+              <FormSection title="Application tracking" sub="The same data as the overview quick-update panel, available here for full edits." T={T} dark={dark}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                  <SelectField label="Status" value={editForm.status} onChange={v => setEdit('status', v)} options={STATUS_OPTS} T={T} dark={dark} />
+                  <TextField label="Date applied" type="date" value={editForm.date_applied} onChange={v => setEdit('date_applied', v)} T={T} dark={dark} />
+                  <TextField label="Interview date" type="date" value={editForm.interview_date} onChange={v => setEdit('interview_date', v)} T={T} dark={dark} />
+                  <TextField label="Follow-up date" type="date" value={editForm.follow_up_date} onChange={v => setEdit('follow_up_date', v)} T={T} dark={dark} />
                 </div>
+                <TextField label="Recruiter" value={editForm.recruiter} onChange={v => setEdit('recruiter', v)} placeholder="Name or email" T={T} dark={dark} />
+                <TextField label="Salary range" value={editForm.salary_range} onChange={v => setEdit('salary_range', v)} placeholder="$40-50/hr" T={T} dark={dark} />
+                <TextField label="Rejection stage" value={editForm.rejection_stage} onChange={v => setEdit('rejection_stage', v)} placeholder="Resume screen, OA, phone screen..." T={T} dark={dark} />
+              </FormSection>
+
+              <div style={{
+                position: 'sticky',
+                bottom: -16,
+                background: T.surface,
+                borderTop: `1px solid ${T.border}`,
+                padding: '12px 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}>
+                <Btn variant="primary" onClick={saveEdit} disabled={editSaving}>
+                  {editSaving ? 'Saving...' : 'Save changes'}
+                </Btn>
+                {editMsg && <span style={{ fontSize: 12, color: editMsg === 'Saved' ? T.success : T.danger }}>{editMsg}</span>}
               </div>
-            )
-          })()}
+            </div>
+          )}
         </div>
       </div>
     </>

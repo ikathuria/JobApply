@@ -18,6 +18,20 @@ async function req(method, path, body) {
   return res.json()
 }
 
+async function textReq(method, path, body) {
+  const opts = {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  }
+  const res = await fetch(BASE + path, opts)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(err.detail || res.statusText)
+  }
+  return res.text()
+}
+
 export const api = {
   stats:      ()          => req('GET',   '/stats'),
   focus:      ()          => req('GET',   '/focus'),
@@ -25,9 +39,10 @@ export const api = {
   job:        (id)        => req('GET',   `/jobs/${id}`),
   patch:      (id, data)  => req('PATCH', `/jobs/${id}`, data),
   tailor:     (id)        => req('POST',  `/jobs/${id}/tailor`),
-  coverLetter:(id)        => req('GET',   `/jobs/${id}/cover_letter`).then(r => r),
+  coverLetter:(id)        => textReq('GET', `/jobs/${id}/cover_letter`),
   saveCL:     (id, text)  => req('PATCH', `/jobs/${id}/cover_letter`, { text }),
   import:     (job)       => req('POST',  '/jobs/import', job),
   bulk:       (ids, status) => req('POST', '/jobs/bulk', { ids, status }),
   resumeUrl:  (id)        => `${BASE}/jobs/${id}/resume`,
+  coverLetterPdfUrl: (id) => `${BASE}/jobs/${id}/cover_letter.pdf`,
 }
