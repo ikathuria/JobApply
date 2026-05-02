@@ -28,41 +28,41 @@ from pathlib import Path
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import yaml
-from dotenv import load_dotenv
-
-from scrapers.intern_list_scraper import scrape_intern_list
-from scrapers.linkedin_scraper import scrape_linkedin_sync
-from scrapers.handshake_scraper import scrape_handshake_sync
-from pipeline.job_filter import filter_jobs, deduplicate
-from pipeline.jd_fetcher import fetch_jd
-from pipeline.resume_tailor import tailor_resume
-from pipeline.cover_letter import generate_cover_letter
-from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
 from tracker.tracker import (
     init_db, upsert_jobs, get_jobs, get_stats, update_status,
     STATUS_NEW, STATUS_QUEUED,
 )
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    load_dotenv = None
+
+if load_dotenv:
+    load_dotenv()
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR = Path("output/resumes")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+_log_handlers = [logging.StreamHandler(sys.stdout)]
+try:
+    _log_handlers.append(logging.FileHandler(LOG_DIR / "jobapply.log", encoding="utf-8"))
+except OSError:
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_DIR / "jobapply.log", encoding="utf-8"),
-    ],
+    handlers=_log_handlers,
 )
 logger = logging.getLogger("main")
 
 
 def load_config() -> dict:
+    import yaml
+
     with open("config/settings.yaml") as f:
         return yaml.safe_load(f)
 
@@ -78,12 +78,16 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
     sources = config.get("sources", {})
 
     if source in (None, "intern_list") and sources.get("intern_list", {}).get("enabled"):
+        from scrapers.intern_list_scraper import scrape_intern_list
+
         logger.info("=== Scraping intern-list.com ===")
         jobs = scrape_intern_list(max_rows=300)
         logger.info(f"intern-list.com: {len(jobs)} raw listings")
         all_jobs.extend(jobs)
 
     if source in (None, "linkedin") and sources.get("linkedin", {}).get("enabled"):
+        from scrapers.linkedin_scraper import scrape_linkedin_sync
+
         logger.info("=== Scraping LinkedIn ===")
         li_cfg = sources["linkedin"]
         jobs = scrape_linkedin_sync(
@@ -97,6 +101,8 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
         all_jobs.extend(jobs)
 
     if source in (None, "handshake") and sources.get("handshake", {}).get("enabled"):
+        from scrapers.handshake_scraper import scrape_handshake_sync
+
         logger.info("=== Scraping Handshake ===")
         hs_cfg = sources["handshake"]
         jobs = scrape_handshake_sync(
@@ -111,6 +117,8 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
 
 
 def run_pipeline(config: dict, source: str | None = None) -> None:
+    from pipeline.job_filter import filter_jobs, deduplicate
+
     conn = init_db()
     min_score = config.get("scoring", {}).get("min_score", 0.3)
 
@@ -155,6 +163,11 @@ def run_tailor(limit: int = 10) -> None:
       4. Render both to PDF
       5. Mark job as 'queued' in tracker
     """
+    from pipeline.jd_fetcher import fetch_jd
+    from pipeline.resume_tailor import tailor_resume
+    from pipeline.cover_letter import generate_cover_letter
+    from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
+
     conn = init_db()
     jobs = get_jobs(conn, status=STATUS_NEW, limit=limit)
 
