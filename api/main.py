@@ -257,6 +257,7 @@ class JobPatch(BaseModel):
     title: str | None = None
     company: str | None = None
     location: str | None = None
+    url: str | None = None
 
 
 @app.patch("/api/jobs/{job_id}")
@@ -269,7 +270,7 @@ def api_patch_job(job_id: int, patch: JobPatch) -> dict:
     current = dict(row)
     new_status = patch.status or current["status"]
 
-    kwargs = {k: v for k, v in patch.model_dump(exclude={"status"}).items() if v is not None}
+    kwargs = patch.model_dump(exclude={"status"}, exclude_unset=True)
     update_status(conn, job_id, new_status, **kwargs)
 
     updated = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
@@ -412,13 +413,35 @@ def api_get_cover_letter(job_id: int) -> PlainTextResponse:
     return PlainTextResponse(cl_txt.read_text(encoding="utf-8"))
 
 
+@app.get("/api/jobs/{job_id}/cover_letter.pdf")
+def api_get_cover_letter_pdf(job_id: int):
+    row = db().execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row or not row["resume_path"]:
+        raise HTTPException(404, "No resume path")
+    resume_p = _resolve_resume_path(str(row["resume_path"]))
+    if not resume_p:
+        raise HTTPException(404, "Resume directory not found")
+    cl_pdf = resume_p.parent / "cover_letter.pdf"
+    if not cl_pdf.exists():
+        cl_txt = resume_p.parent / "cover_letter.txt"
+        if not cl_txt.exists():
+            raise HTTPException(404, "Cover letter PDF not found")
+        try:
+            from pipeline.pdf_generator import generate_cover_letter_pdf
+            generate_cover_letter_pdf(cl_txt.read_text(encoding="utf-8"), dict(row), cl_pdf)
+        except Exception as e:
+            raise HTTPException(500, f"Could not render cover letter PDF: {e}")
+    return FileResponse(str(cl_pdf), media_type="application/pdf",
+                        headers={"Content-Disposition": "inline; filename=cover_letter.pdf"})
+
+
 class CoverLetterPatch(BaseModel):
     text: str
 
 
 @app.patch("/api/jobs/{job_id}/cover_letter")
 def api_patch_cover_letter(job_id: int, body: CoverLetterPatch) -> dict:
-    row = db().execute("SELECT resume_path FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    row = db().execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
     if not row or not row["resume_path"]:
         raise HTTPException(404, "No resume path")
     resume_p = _resolve_resume_path(str(row["resume_path"]))
@@ -430,7 +453,15 @@ def api_patch_cover_letter(job_id: int, body: CoverLetterPatch) -> dict:
         cl_txt = ROOT / "output" / "resumes" / Path(*stored.parts[-2:]).parent / "cover_letter.txt"
     cl_txt.parent.mkdir(parents=True, exist_ok=True)
     cl_txt.write_text(body.text, encoding="utf-8")
-    return {"status": "ok"}
+    pdf_updated = False
+    try:
+        from pipeline.pdf_generator import generate_cover_letter_pdf
+        generate_cover_letter_pdf(body.text, dict(row), cl_txt.parent / "cover_letter.pdf")
+        pdf_updated = True
+    except Exception:
+        # Keep the text edit even if PDF rendering is unavailable.
+        pass
+    return {"status": "ok", "pdf_updated": pdf_updated}
 
 
 # ── Import ────────────────────────────────────────────────────────────────────
