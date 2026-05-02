@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Seaboard Corporation's AI-assisted application development. My background in developing and deploying LLM-based solutions at AWS, coupled with my RAG research at Purdue, aligns perfectly with your need for Python proficiency and experience with frontier LLMs and cloud services.
+
+At AWS, I developed and deployed LLM-based solutions, gaining hands-on experience with cloud services and modern AI development tools. My research at Purdue focused on Retrieval-Augmented Generation (RAG), where I designed and implemented pipelines to enhance LLM accuracy and relevance. I'm proficient in Python, Git, and VS Code, and have experience with prompt engineering and integrating with various data sources.
+
+I'm eager to apply my skills to a real-world business problem at Seaboard and contribute to innovative AI solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

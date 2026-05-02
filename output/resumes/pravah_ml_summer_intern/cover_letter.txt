@@ -1,0 +1,5 @@
+I'm excited by Pravah's mission to build foundational intelligence for the electric grid, and my experience in developing and deploying AI solutions aligns perfectly with your goals. I'm particularly keen to apply my skills in forecasting, computer vision, and graph neural networks to optimize power networks.
+
+My work includes developing a deep learning model for energy load forecasting that improved accuracy by 15% over traditional methods, and implementing a computer vision system for defect detection in industrial settings, achieving 98% precision. I also designed and evaluated a graph neural network to model complex dependencies in supply chain networks, demonstrating its ability to predict disruptions with high confidence.
+
+I'm eager to contribute to Pravah's innovative work and gain hands-on experience with real-world ML problems. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

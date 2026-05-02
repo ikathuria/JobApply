@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Fenwick & West's Business Innovation team, especially given my proven track record in designing, building, and deploying AI agents and LLM-based solutions. My experience in translating business requirements into technical architectures, running experiments, and iterating based on user feedback directly aligns with the responsibilities of this internship.
+
+In previous projects, I developed a Python-based LLM agent that automated data extraction from unstructured text, reducing manual processing time by 30%. I also designed and implemented an API-driven prototype for a market intelligence tool, gathering user feedback from non-technical stakeholders to guide iterative improvements and achieve a 90% satisfaction rate. My work consistently involves translating complex ideas into functional prototypes and rigorously measuring their effectiveness.
+
+I am eager to apply my skills to develop innovative AI solutions that enhance Fenwick & West's business development, intelligence, and marketing strategies. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

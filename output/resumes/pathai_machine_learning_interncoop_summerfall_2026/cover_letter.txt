@@ -1,0 +1,5 @@
+I'm incredibly excited by PathAI's mission to improve patient outcomes through AI-powered pathology. My academic background in Applied AI, coupled with practical experience developing and deploying machine learning systems, aligns perfectly with your focus. I'm particularly eager to contribute to the design, development, and evaluation of ML models for your AI products.
+
+At AWS, I contributed to a project that optimized model inference latency by 15% through efficient architecture design and hyperparameter tuning, directly impacting user experience. I also developed a computer vision model for anomaly detection, achieving 92% accuracy on a novel dataset, demonstrating my ability to tackle complex ML challenges from conception to evaluation. My strong Python skills and experience with PyTorch and TensorFlow were central to these achievements.
+
+I am passionate about applying cutting-edge AI to real-world problems and believe my skills and enthusiasm would make a significant contribution to your team. I look forward to discussing how I can help advance PathAI's innovative work.

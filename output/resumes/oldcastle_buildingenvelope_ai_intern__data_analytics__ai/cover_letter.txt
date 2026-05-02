@@ -1,0 +1,5 @@
+I'm excited by the opportunity to design, build, and iterate on AI-powered workflows and automation pipelines for Oldcastle BuildingEnvelope. My background in developing and deploying LLM-based solutions at AWS, coupled with my current research in RAG systems, directly aligns with the core responsibilities of this AI Intern role.
+
+At AWS, I developed and deployed an LLM-based solution for internal knowledge management, which involved extensive prompt engineering, output evaluation, and integrating with existing systems. My current research focuses on optimizing RAG systems for domain-specific applications, including building data pipelines to aggregate and normalize inputs, and rigorously testing AI outputs against defined accuracy thresholds. I'm proficient in Python and SQL, regularly building projects beyond coursework, and comfortable transforming messy data into usable formats.
+
+I'm eager to apply my skills to real-world business challenges at Oldcastle BuildingEnvelope and contribute to meaningful AI-driven solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

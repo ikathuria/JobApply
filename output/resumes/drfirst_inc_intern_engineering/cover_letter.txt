@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to DrFirst's mission of leveraging AI for marketing enablement and content creation within the healthcare IT domain. My strong foundation in LLM API integration, prompt engineering, and building knowledge base workflows aligns perfectly with your focus on optimizing AI-assisted content development.
+
+At AWS, I developed a robust prompt engineering framework for an internal LLM, significantly improving output relevance and reducing manual refinement by 20%. During my time at Purdue, I designed and implemented a document corpus workflow for a research project, enabling efficient information retrieval and content generation from a large dataset. I also have hands-on experience integrating LLM APIs to automate content creation, directly relevant to generating marketing assets like one-pagers and product slicks.
+
+I'm eager to apply my skills to DrFirst's Provider Solutions team and learn from experienced professionals in the healthcare IT space. Thank you for considering my application; I look forward to discussing how I can contribute.

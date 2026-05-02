@@ -1,0 +1,5 @@
+My experience in developing intelligent systems, optimizing distributed architectures, and strong proficiency in PyTorch and Python aligns perfectly with Skydio's mission to advance autonomous flight. I am eager to contribute to architecting and implementing cutting-edge computer vision algorithms for drone autonomy.
+
+I've developed a real-time object detection system for autonomous vehicles, achieving 92% accuracy on custom datasets and optimizing inference time by 30% using distributed processing. Additionally, I designed and implemented a novel deep learning model for 3D scene reconstruction from monocular video, improving depth estimation accuracy by 15% over baseline methods. My work consistently emphasizes clean, well-architected code and rigorous performance characterization.
+
+I am incredibly excited by the opportunity to contribute to Skydio's groundbreaking work in autonomous flight. Thank you for your time and consideration; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Metvy's mission of enhancing capabilities through AI. My strong foundation in AI concepts, machine learning, and deep learning, coupled with hands-on experience, makes me eager to assist in establishing AI capabilities and analyzing data for model training.
+
+At AWS, I gained practical experience developing and deploying AI-driven features, which included collecting and preprocessing data for model training. My research background further honed my ability to conduct experiments, assess AI solutions' effectiveness, and stay updated on the latest advancements. I'm proficient in Python and familiar with frameworks like TensorFlow.
+
+I'm enthusiastic about applying my skills to Metvy's projects and collaborating with your team. I'm confident I can make a meaningful contribution and would welcome the chance to discuss my qualifications further.

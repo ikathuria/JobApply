@@ -1,0 +1,5 @@
+I'm particularly excited by Itron's mission to leverage AI for HR functions, and the opportunity to contribute to building LLM-based solutions. My experience developing RAG systems and multi-agent frameworks aligns perfectly with the role's focus on AI agent training and generating data-driven HR insights.
+
+At AWS, I built and deployed LLM-based solutions, gaining hands-on experience with the full AI development lifecycle. I've also designed and implemented data pipelines for complex datasets, ensuring data quality and preparing it for model training. My work involved prototyping and experimenting with various AI models, consistently delivering actionable insights from data.
+
+I'm eager to apply my skills to Itron's innovative approach to HR and contribute to developing impactful AI solutions. I'm confident I can quickly integrate into your agile environment and make meaningful contributions.

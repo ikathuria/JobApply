@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to ByteDance's foundational model and system advancements as a Student Researcher. My strong background in LLM research, including RAG systems and multi-agent frameworks, combined with practical experience deploying AI solutions, aligns perfectly with your team's goals.
+
+At AWS, I developed and deployed an AI-driven recommendation engine, improving user engagement by 15%. My research on multi-agent LLM systems resulted in a publication at a top-tier AI conference, demonstrating my ability to innovate and contribute to the field. I also have extensive experience implementing and evaluating model improvements, leveraging strong Python and C++ skills for efficient algorithm development.
+
+I am eager to apply my expertise in LLMs and foundational AI to ByteDance's cutting-edge projects. Thank you for considering my application; I look forward to discussing how I can contribute.

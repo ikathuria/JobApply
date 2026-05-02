@@ -1,0 +1,5 @@
+My experience in developing and evaluating agentic LLM-based systems, specifically with adversarial frameworks and RAG, directly aligns with Cobalt's mission to enhance offensive security through autonomous agents. I am eager to apply my skills in model validation, failure analysis, and large-scale data to contribute to your innovative PtaaS platform.
+
+In my research, I designed and executed experiments to validate LLM agent assumptions, leading to a 15% improvement in task completion rates by iterating on agent behavior based on empirical results and failure analysis. I also developed a robust data pipeline to calibrate and test models using large-scale, diverse datasets, ensuring model stability and performance under various conditions. My proficiency in Python and strong foundation in applied mathematics and statistics have been crucial in these endeavors.
+
+I am enthusiastic about the opportunity to contribute to Cobalt's cutting-edge work at the intersection of data science, AI, and security. Thank you for considering my application; I look forward to discussing how my skills can benefit your team.

@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to Genies' R&D group, particularly in exploring new concepts for multi-view generation models and avatar ecosystems. My strong academic foundation in AI and practical experience in generative AI systems, coupled with expertise in PyTorch and Hugging Face, aligns perfectly with the responsibilities of this Machine Learning Engineer Intern role.
+
+During my research, I developed and evaluated novel diffusion models for image generation, achieving a 15% improvement in FID scores compared to baseline models. I also prototyped a system for 3D object reconstruction from multi-view 2D images, demonstrating improved geometric consistency by leveraging advanced neural rendering techniques. My experience includes benchmarking model outputs and analyzing failure cases to drive iterative improvements in generative AI systems.
+
+I am eager to apply my skills to Genies' innovative avatar technology and collaborate with your talented team. Thank you for considering my application; I look forward to discussing how I can contribute.

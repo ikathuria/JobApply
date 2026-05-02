@@ -1,0 +1,5 @@
+I'm particularly excited about this PhD Fall Machine Learning Intern role at Pinterest because my strong foundation in generative AI, multimodal systems, and production ML directly aligns with your focus on visual understanding and recommender systems. My experience in AI-native engineering and autonomous project ownership makes me eager to contribute to innovative user features and cutting-edge research.
+
+In my research, I developed a novel multimodal generative model for content creation, achieving a 15% improvement in relevance scores compared to baseline methods. I also designed and implemented a production-ready recommender system, optimizing inference latency by 20% through efficient model compression techniques. Furthermore, I've actively leveraged frontier AI tools for accelerated prototyping and rigorous validation of AI-generated outputs, ensuring robust and maintainable solutions.
+
+I am enthusiastic about the opportunity to apply my skills to Pinterest's unique datasets and contribute to your Advanced Technology Group. I look forward to discussing how my background can benefit your team.

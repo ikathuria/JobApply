@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Seaboard Foods' AI-assisted application development, leveraging my strong academic foundation in AI and practical experience with LLM-based solutions. My background in Python, prompt engineering, and RAG pipelines, honed through developing and deploying solutions at AWS, aligns perfectly with your focus on translating business problems into working AI applications and integrating with internal data sources.
+
+At AWS, I successfully developed and deployed an LLM-powered internal tool, which involved designing effective prompt engineering strategies and integrating with various data sources to enhance accuracy. I also built and optimized RAG pipelines, significantly improving the relevance and reliability of information retrieval for specific use cases. My experience extends to translating complex technical concepts for non-technical stakeholders, ensuring project alignment and successful adoption.
+
+I am eager to apply my skills to co-develop an impactful AI-assisted application at Seaboard Foods. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
