@@ -1,0 +1,5 @@
+I'm incredibly excited by GenBio AI's mission to transform biology and medicine through generative AI, and my background in LLM optimization and deep learning frameworks aligns perfectly with the Research Engineer Intern role. I'm eager to contribute to your cutting-edge research and help improve model performance.
+
+During my research, I optimized a large language model's inference speed by 25% using low-precision formats and custom CUDA kernels, and I designed and executed large-scale experiments to validate the robustness of novel AI architectures. I also have extensive experience with PyTorch, JAX, and Hugging Face, and a solid understanding of GPU architectures and distributed training.
+
+I'm passionate about driving performance improvements in AI systems and would love to discuss how my skills can contribute to GenBio AI's innovative work. Thank you for your time and consideration.

@@ -1,0 +1,5 @@
+I'm excited by the opportunity to design and implement AI agents that streamline business processes at Mundoro Capital Inc. My background in developing and deploying LLM-based solutions and automating workflows, coupled with experience in multi-agent systems and cloud AI services, aligns perfectly with your goal of integrating AI into workflows.
+
+In previous projects, I developed a multi-agent system using CrewAI to automate data extraction and analysis from unstructured text, reducing manual processing time by 40%. I also built and deployed a Python-based application on Google Cloud Platform that integrated with third-party APIs to automate report generation, improving efficiency for a small business. My experience extends to rigorous testing and iteration, ensuring high accuracy and reliability in AI solutions.
+
+I am eager to apply my skills to Mundoro Capital Inc.'s unique challenges and contribute to your mission of integrating AI into every division. I look forward to discussing how my expertise can benefit your team.

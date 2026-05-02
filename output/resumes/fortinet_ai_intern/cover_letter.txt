@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Fortinet's AI workflow development and operational projects. My background in developing and deploying AI-powered automations and anomaly detection systems, particularly at AWS, aligns perfectly with your team's needs. My experience with LLMs, prompt engineering, and various cloud platforms makes me eager to dive into creating, testing, and iterating on AI-powered agents within a cybersecurity context.
+
+At AWS, I successfully implemented an anomaly detection system that reduced alert fatigue by 30% and developed AI-powered automations for infrastructure monitoring. I've also gained hands-on experience in analyzing large operational datasets, preparing them for model training, and rigorously testing AI prototypes for accuracy. My proficiency in Python, coupled with a strong understanding of prompt engineering and foundational machine learning concepts, has been instrumental in these projects.
+
+I'm keen to apply my "builder" mindset and problem-solving skills to Fortinet's innovative AI initiatives. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

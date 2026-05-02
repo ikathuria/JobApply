@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Tesla's NVH team, leveraging my deep learning, audio processing, and Python skills to develop advanced audio algorithms for vehicle diagnostics and automated data generation pipelines. My experience in building and deploying AI solutions, coupled with an 'under the hood' understanding of neural networks, aligns perfectly with the responsibilities of this role.
+
+In previous projects, I designed and implemented a real-time sound event detection system using PyTorch, achieving 92% accuracy on a custom dataset of vehicle sounds. I also developed automated data pipelines in Python, generating synthetic audio data to augment training sets for machine learning models, significantly improving model robustness. Furthermore, I have experience deploying models to production environments, ensuring scalability and efficient resource utilization.
+
+I am eager to apply my skills to Tesla's innovative environment and contribute to the future of vehicle engineering. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

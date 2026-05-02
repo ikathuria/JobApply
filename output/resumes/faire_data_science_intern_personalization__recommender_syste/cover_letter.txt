@@ -1,0 +1,5 @@
+My experience developing and deploying AI solutions, coupled with a strong foundation in machine learning and evaluation metrics like nDCG, aligns perfectly with Faire's focus on building state-of-the-art personalization and recommender systems. I am eager to contribute to improving user engagement and marketplace outcomes through data-driven algorithmic solutions.
+
+In my previous projects, I designed a deep learning-based recommender system that improved click-through rates by 15% in offline evaluations, leveraging sequential user behavior for dynamic personalization. I also developed novel item embeddings using graph neural networks, which significantly enhanced recommendation diversity and novelty. I have extensive experience setting up and analyzing A/B tests to validate model performance in production environments.
+
+I am excited by the opportunity to apply my skills in a fast-paced, impact-driven environment like Faire. I am confident I can make meaningful contributions to your personalization efforts and would welcome the chance to discuss my qualifications further.

@@ -1,0 +1,5 @@
+I'm particularly excited about the Cloud Engineer Intern role at Pindrop because my background in developing and evaluating machine learning systems, including deepfake detection and LLM-based applications, directly aligns with your focus on identity trust and security. My experience in prototyping new research ideas and working with multimodal data seems like a perfect fit for the responsibilities outlined.
+
+During my PhD, I developed a novel deepfake detection system for audio, achieving a 92% accuracy rate on a challenging public dataset, and prototyped several LLM-based applications for secure information retrieval. I also have extensive experience with Python and PyTorch, using them to build and benchmark models against industry standards, and have a proven track record of delivering projects on time.
+
+I am eager to contribute my skills to Pindrop's innovative work in AI/ML security. Thank you for considering my application; I look forward to the opportunity to discuss how I can contribute to your team.

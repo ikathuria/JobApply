@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to HealthStream's data intelligence solutions as a Data Science Intern. My experience developing and testing LLM-based systems at AWS, combined with my research in RAG and multi-agent frameworks, directly aligns with your need for robust machine learning model development and documentation.
+
+During my work at AWS, I developed and tested LLM-based systems, focusing on performance and reliability, and gained hands-on experience with Python and relevant ML libraries. My academic research further involved designing and evaluating RAG and multi-agent frameworks, honing my analytical and problem-solving skills in complex AI systems. I also have a solid understanding of software development and testing concepts, including identifying and tracking defects.
+
+I am eager to apply my skills to HealthStream's mission and learn from your team. I am confident I can make a meaningful contribution and would welcome the chance to discuss my qualifications further.

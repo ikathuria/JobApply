@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to apply my extensive experience in developing and deploying AI/ML solutions, especially with LLMs and RAG systems, to solve complex problems in healthcare at Mayo Clinic Rochester. My background in diagnostic analytics, NLP, and algorithm optimization aligns perfectly with your innovative work in radiation oncology.
+
+During my research, I developed a novel RAG system for medical literature, achieving a 15% improvement in diagnostic accuracy compared to baseline models. I also optimized a deep learning model for image analysis in a clinical setting, reducing processing time by 20% while maintaining high precision. Furthermore, I led a project involving NLP for patient sentiment analysis, extracting key insights from unstructured clinical notes to inform personalized care strategies.
+
+I am eager to contribute my skills and learn from your experts, helping to advance patient care through cutting-edge AI/ML applications. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

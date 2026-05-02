@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Bright Machines' innovative projects in AI-powered code generation, intelligent query agents, and robotics simulation. My strong background in LLM development, AI agent design, and automated testing frameworks aligns perfectly with your goals.
+
+In a recent project, I developed a custom LLM-powered agent for automated data analysis, significantly reducing report generation time by 40%. I also designed and implemented a robust CI/CD pipeline with AI-driven testing, increasing code coverage by 25% through intelligent mock testing and automated test case generation. Furthermore, I have experience creating physics-based simulations for robotic arm control using ROS and Gazebo, optimizing path planning and collision avoidance.
+
+I am eager to apply my skills to Bright Machines' mission of transforming manufacturing through AI. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

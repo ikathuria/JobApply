@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Mariana Minerals' mission of supplying critical minerals by building and experimenting with impactful machine learning models. My strong foundation in ML, Python, and PyTorch/TensorFlow from my academic background, coupled with hands-on experience deploying AI solutions, aligns perfectly with your team's needs.
+
+During my time at AWS, I developed and deployed a real-time anomaly detection system, reducing false positives by 15% through meticulous feature engineering and model optimization. I also built a predictive maintenance model using TensorFlow for industrial sensors, improving prediction accuracy by 10% and demonstrating my ability to analyze real-world datasets and iterate on findings. My coursework further solidified my understanding of ML fundamentals and statistical analysis.
+
+I'm eager to apply my skills to a defined ML project at Mariana Minerals and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute.

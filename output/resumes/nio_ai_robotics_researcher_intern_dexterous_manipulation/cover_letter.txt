@@ -1,0 +1,5 @@
+I'm particularly excited by NIO's mission to empower robots with physical world intelligence through human data-based learning. My background in generative AI, multi-agent systems, and deploying LLM-based solutions, especially my research in RAG systems and multi-modal data processing, directly aligns with the challenges of dexterous manipulation and sim-to-real transfer you're tackling.
+
+During my research, I developed a novel RAG system that processed multi-modal data, achieving a 15% improvement in contextual understanding for complex queries. I also led a project to deploy an LLM-based solution for autonomous task segmentation, reducing manual annotation time by 30%. Furthermore, my experience with generative models includes synthesizing high-fidelity trajectories for virtual agents, which I believe is highly transferable to creating physically grounded motions for robots.
+
+I am eager to apply my skills and contribute to developing robust pipelines for converting human multi-modal data into actionable robot motor skills at NIO. I'm confident I can make a significant impact and would welcome the opportunity to discuss my qualifications further.

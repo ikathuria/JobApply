@@ -1,0 +1,5 @@
+I'm excited by the opportunity to integrate AI capabilities into RJ Lee Group's workflows. My experience building and deploying LLM-based systems at AWS, combined with my research in RAG systems at Purdue, directly aligns with your need for an intern to identify and scope AI/ML integration opportunities within your business and laboratory software systems.
+
+At AWS, I developed and deployed an LLM-powered internal tool that reduced data processing time by 30%. My research at Purdue focused on optimizing RAG systems for domain-specific knowledge retrieval, leading to a 15% improvement in answer accuracy. I've also built several automation scripts using Python and various AI APIs to streamline data analysis, demonstrating my ability to support the development of AI-assisted tools.
+
+I'm eager to apply my foundational understanding of machine learning and AI tools to enhance your business processes. I look forward to discussing how my skills can contribute to RJ Lee Group.

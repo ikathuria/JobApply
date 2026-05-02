@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Align Technology as an SAP Prompt Engineer Intern. My experience developing LLM-based solutions and designing AI chatbots, coupled with a strong understanding of prompt engineering and enterprise systems, directly aligns with your need to enhance automation within SAP environments using AI-driven strategies.
+
+In a recent project, I designed and implemented an AI chatbot that reduced customer service response times by 30% by leveraging prompt engineering to optimize responses for specific user queries. I also developed an LLM-based solution for data extraction from unstructured text, achieving 90% accuracy, demonstrating my ability to apply AI tools to complex data challenges. My coursework has provided me with a foundational understanding of SAP systems and ABAP programming, which I'm eager to apply.
+
+I am enthusiastic about the prospect of applying my skills to real-world SAP and AI integration challenges at Align Technology. I am confident I can make a meaningful contribution to your team and would welcome the chance to discuss my qualifications further.

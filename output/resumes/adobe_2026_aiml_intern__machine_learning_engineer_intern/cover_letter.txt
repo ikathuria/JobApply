@@ -1,0 +1,5 @@
+I'm particularly excited by the prospect of contributing to Adobe's generative AI platform by designing and optimizing backend services. My background in developing and deploying generative AI solutions at AWS, coupled with my RAG research at Purdue, aligns perfectly with the responsibilities of this Machine Learning Engineer Intern role, especially in distributed systems, Python, and ML frameworks.
+
+At AWS, I developed and deployed a generative AI solution that processed large datasets, improving efficiency by 25% and demonstrating my ability to deliver production-ready systems. My research at Purdue focused on RAG models, where I optimized data processing pipelines and contributed to system architecture discussions, leading to a 15% improvement in model inference speed. I also implemented robust backend services using Python, ensuring high reliability and maintainability.
+
+I'm eager to apply my skills and learn from Adobe's innovative team. Thank you for considering my application; I look forward to discussing how I can contribute to your generative AI initiatives.

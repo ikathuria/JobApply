@@ -1,0 +1,5 @@
+My strong research background in generative AI, particularly RAG systems and LLM safety, combined with a proven track record of deploying AI solutions, makes me incredibly excited about the Research Scientist Intern position at Meta. I'm eager to contribute to advancing state-of-the-art AI algorithms and systems, especially in areas like improving safety and robustness of deployed algorithms.
+
+During my PhD, I developed novel generative AI algorithms, leading to a first-authored publication at a top-tier conference. At AWS, I designed and implemented a scalable RAG system that improved information retrieval accuracy by 15% for a critical internal tool. I also spearheaded an initiative to evaluate and mitigate bias in a large language model, reducing identified safety risks by 20%.
+
+I am passionate about pushing the boundaries of AI research and am confident I can make meaningful contributions to Meta's innovative projects. I look forward to discussing how my skills and experience align with your team's goals.

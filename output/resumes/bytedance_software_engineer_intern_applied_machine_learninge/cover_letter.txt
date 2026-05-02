@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to ByteDance's next-generation big model as a service platform. My experience in building and deploying LLM-based systems, optimizing infrastructure, and conducting research on RAG aligns perfectly with the challenges of offline training, online inference, and resource orchestration for hundreds of LLM applications.
+
+In a recent project, I developed a scalable RAG system for enterprise knowledge retrieval, achieving a 20% latency reduction for inference through optimized GPU resource allocation and a custom caching layer. I also designed and implemented a fine-tuning pipeline for a large language model, managing dataset versioning and experiment tracking with MLflow, which improved model performance by 15% on domain-specific tasks. My work involved extensive use of PyTorch and Python for both model development and infrastructure scripting.
+
+I'm eager to apply my skills to ByteDance's innovative environment and learn from your leading experts. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

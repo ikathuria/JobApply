@@ -1,0 +1,5 @@
+I'm excited by the opportunity to join Onapsis's Go-to-Market AI Pod, especially given my proven track record of building and deploying AI-powered automations and LLM-based solutions at AWS. I am eager to apply my expertise in prompt engineering and workflow automation to develop impactful Go-to-Market AI workflows that solve real pain points for your sales, business development, and customer success teams.
+
+At AWS, I successfully designed and implemented an LLM-based solution that automated a critical internal reporting process, reducing manual effort by 40%. I also developed a prompt library and best-practice guides for internal teams, standardizing AI usage and improving output quality. My experience extends to integrating various SaaS platforms via APIs to create seamless, automated workflows, consistently delivering measurable improvements in efficiency.
+
+I am a self-starter who thrives on ownership and delivering tangible results. I am enthusiastic about the prospect of building real AI workflows at Onapsis and seeing their impact in weeks. Thank you for your time and consideration; I look forward to discussing how I can contribute to your team.

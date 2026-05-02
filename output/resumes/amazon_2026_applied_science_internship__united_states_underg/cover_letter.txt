@@ -1,0 +1,5 @@
+I'm incredibly excited by Amazon's frontier AI and robotics initiatives, especially given my background. My experience at AWS building and deploying LLM-based systems, combined with my research in RAG and multi-agent adversarial frameworks, directly aligns with your focus. I'm eager to apply my skills in deep learning and generative AI to develop novel algorithms for production-scale challenges in this space.
+
+During my research, I developed a novel RAG framework that improved retrieval accuracy by 15% on complex datasets and designed multi-agent adversarial networks for robust model training. At AWS, I contributed to a team that deployed an LLM-based customer service solution, reducing response times by 20% and gaining hands-on experience with production-scale systems. I'm proficient in Python, PyTorch, and JAX, and have experience with experiment design and statistical analysis.
+
+I'm passionate about pushing the boundaries of AI and robotics and believe my skills and enthusiasm would make a significant contribution to your team. I'm keen to learn more about this opportunity and discuss how I can contribute.

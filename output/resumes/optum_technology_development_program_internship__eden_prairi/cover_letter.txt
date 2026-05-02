@@ -1,0 +1,5 @@
+I'm particularly excited about the Optum Technology Development Program Internship because my strong foundation in AI/ML, including practical experience with LLMs and cloud technologies from AWS, aligns perfectly with your focus on leveraging AI to enhance healthcare solutions. I'm eager to contribute to impactful projects that drive innovation in such a critical field.
+
+During my academic projects, I developed a sentiment analysis model using Python and TensorFlow, achieving 90% accuracy on a novel dataset, and deployed it on AWS Lambda. I also contributed to a team project where we built a recommendation engine, utilizing Agile methodologies and Git for version control, demonstrating proficiency in both technical and collaborative environments. My experience extends to working with LLMs to automate text summarization, significantly reducing manual effort.
+
+I'm enthusiastic about the opportunity to apply my skills and learn from Optum's technology leaders. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+My research in RAG systems and multi-agent adversarial evaluation, combined with practical experience deploying LLM-based solutions at AWS, directly aligns with TikTok's focus on advanced generative AI for content understanding and AI safety. I am eager to contribute to the Ads Business Integrity team by transitioning cutting-edge research into robust, production-grade AI services.
+
+During my PhD, I developed novel adversarial evaluation frameworks for multi-agent systems, improving robustness against emergent behaviors. At AWS, I engineered and deployed LLM-based solutions for customer support, optimizing inference efficiency and ensuring reliable performance in a production environment. My work included fine-tuning models with RLHF and implementing techniques for scalable deployment.
+
+I am excited by the prospect of applying my expertise to TikTok's unique challenges in ads integrity and content understanding. I look forward to discussing how my skills can contribute to your team.

@@ -1,0 +1,5 @@
+My experience in building and deploying LLM-based systems, coupled with research in RAG and multi-agent frameworks, directly aligns with Altera's need for a GenAI/ML Intern to develop AI agents for design automation. I am eager to apply my skills in Python, PyTorch, and LangChain to streamline engineering workflows and enhance productivity.
+
+In a recent project, I developed an LLM-powered assistant that automated report generation, reducing manual effort by 40%. I also designed and implemented an ETL pipeline to integrate diverse data sources for a machine learning model, improving data accessibility and model performance. My research into multi-agent systems included building a prototype that leveraged tool-use patterns for complex problem-solving, demonstrating a clear understanding of agent orchestration and guardrails.
+
+I am enthusiastic about the opportunity to contribute to Altera's innovative work in AI and design automation. I am confident my skills and passion for GenAI will make a significant impact, and I look forward to discussing how I can contribute to your team.

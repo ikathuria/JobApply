@@ -1,0 +1,5 @@
+As an MS in Applied AI candidate with hands-on experience in LLM development, RAG systems, and data analysis, I am eager to apply my skills in developing predictive models and leveraging AI/LLMs for accelerated drug development at BeOne Medicines. My background in transforming raw datasets and building robust AI solutions aligns perfectly with the responsibilities of the Clinical Pharmacology AI ML Intern role.
+
+In my academic projects, I've successfully developed a RAG system for medical literature, significantly improving information retrieval efficiency, and built predictive models using Python for complex datasets, achieving high accuracy in forecasting. I also have experience transforming raw, unstructured data into valuable formats for downstream analysis, a skill directly applicable to preparing clinical datasets.
+
+I am enthusiastic about the opportunity to contribute to BeOne Medicines' mission of combating cancer through innovative solutions. I am confident my skills and passion for AI in drug development make me a strong candidate and I look forward to discussing how I can contribute to your team.

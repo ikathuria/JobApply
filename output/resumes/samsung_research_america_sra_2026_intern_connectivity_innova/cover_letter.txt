@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to Samsung Research America's advanced AI-based wireless connectivity solutions. My research in LLM-based RAG systems and hands-on experience deploying AI solutions at AWS align perfectly with your focus. I'm particularly keen to apply my knowledge of generative AI, multi-agent systems, and on-device AI to innovative semantic-aware communication technologies.
+
+During my research, I developed and optimized a multi-agent RAG system, achieving a 15% improvement in retrieval accuracy for complex queries. I also designed and deployed a real-time anomaly detection system on AWS, processing over 10,000 data points per second with sub-50ms latency, demonstrating my ability to convert conceptual ideas into robust, performant solutions. My experience extends to fine-tuning large language models and implementing on-device AI for resource-constrained environments.
+
+I am eager to bring my passion for AI and wireless communication to SRA and contribute to groundbreaking innovations. Thank you for your consideration; I look forward to discussing how my skills can benefit your team.

@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Thermo Fisher Scientific's scientific workflow automation and knowledge retrieval initiatives. My hands-on experience developing and deploying LLM-based RAG systems, combined with strong Java/Spring skills, aligns perfectly with your team's goals.
+
+In previous projects, I designed and implemented a RAG pipeline for a domain-specific chatbot, achieving a 25% improvement in answer relevance using vector search and AWS data lakes. I also developed a RESTful API with Spring Boot for a data analytics platform, handling over 1000 requests per second, and established CI/CD pipelines using GitHub Actions for automated testing and deployment.
+
+I am eager to apply my skills to develop innovative solutions and learn from your expert team. Thank you for considering my application; I look forward to discussing how I can contribute.

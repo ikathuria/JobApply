@@ -1,0 +1,5 @@
+I am particularly excited by the prospect of contributing to EnerSys's intelligent workflow automation projects, leveraging my strong background in designing and evaluating LLM-based applications, including RAG systems and multi-agent frameworks. My experience in optimizing AI solutions and working with complex datasets aligns perfectly with the responsibilities of this Applied AI Graduate Intern role.
+
+In a recent project, I developed a multi-agent framework for complex task automation, achieving a 20% improvement in task completion efficiency compared to traditional scripting. I also designed and evaluated a RAG pipeline for domain-specific information retrieval, significantly enhancing answer relevance and reducing hallucination rates. Furthermore, I have extensive experience in prompt engineering and constructing evaluation datasets to rigorously assess LLM performance and identify failure modes.
+
+I am eager to apply my skills in a practical, impactful setting at EnerSys and contribute to cutting-edge AI solutions in the energy sector. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

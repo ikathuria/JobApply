@@ -1,0 +1,5 @@
+I'm particularly excited about the Research Scientist Intern role at Pindrop because my background in AI/ML research, including LLM safety, synthetic media detection, and multimodal data, directly aligns with your mission to enhance trust and security. My ability to prototype and validate new research ideas, especially in fraud detection, authentication, and speech processing, feels like a perfect fit.
+
+In my previous research, I developed a novel deep learning architecture for detecting AI-generated synthetic media, achieving a 92% accuracy rate on a challenging multimodal dataset. I also designed and implemented a real-time fraud detection system using anomaly detection techniques on transactional data, reducing false positives by 15% compared to baseline models. Furthermore, I have extensive experience working with speech and audio data, including developing speaker verification models and exploring anti-spoofing techniques.
+
+I am eager to apply my research skills and passion for security to Pindrop's innovative work. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

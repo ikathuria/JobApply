@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to apply my background in deep learning and LLMs to optimize complex systems within ByteDance's E-commerce Global Supply Chain and Logistics team. My research in RAG systems and practical experience at AWS in large-scale data processing align perfectly with the role's focus on predicting logistics events and enhancing user experience through advanced ML models.
+
+During my PhD, I developed novel RAG systems for knowledge-intensive tasks, achieving a 15% improvement in retrieval accuracy on complex datasets. At AWS, I engineered a scalable data pipeline that processed terabytes of sensor data daily, reducing processing latency by 25% and enabling real-time anomaly detection. I also designed and implemented a predictive model using time series forecasting to optimize resource allocation, leading to a 10% reduction in operational costs.
+
+I am eager to contribute my skills to ByteDance's innovative environment and help build intelligent solutions for global e-commerce. Thank you for your consideration; I look forward to discussing how I can contribute to your team.

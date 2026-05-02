@@ -1,0 +1,5 @@
+I'm particularly excited about the Research Scientist Intern role at ByteDance because my experience at AWS building and deploying LLM-based systems, coupled with my research in RAG and multi-agent adversarial frameworks, directly aligns with your need for developing and maintaining a big model as a service platform, including offline training/finetuning and online inference.
+
+At AWS, I contributed to the full lifecycle of LLM-based applications, from initial design to deployment, gaining practical experience in managing large-scale inference and training pipelines. My research has focused on optimizing LLM performance through advanced RAG techniques and exploring multi-agent adversarial frameworks, which has given me a deep understanding of model alignment and robust system design. I'm proficient in PyTorch and Python, and have a strong foundation in software development best practices.
+
+I am eager to contribute my skills to ByteDance's innovative environment and help build the next generation of big model as a service platforms. Thank you for your time and consideration; I look forward to discussing this opportunity further.

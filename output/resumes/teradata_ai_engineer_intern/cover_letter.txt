@@ -1,0 +1,5 @@
+I'm particularly excited about the AI Engineer Intern role at Teradata, especially the opportunity to contribute to intelligent agents and advanced data platforms. My background in fine-tuning large language models, developing scalable AI systems, and optimizing model performance aligns perfectly with designing high-performing software for model training and improving training cycle results.
+
+During my research, I developed a novel fine-tuning pipeline for LLMs that reduced training time by 20% while improving downstream task accuracy by 5%. I also designed and implemented a distributed training framework using PyTorch, enabling the efficient training of models with billions of parameters. Furthermore, I have experience in post-training optimization techniques, achieving state-of-the-art performance on various benchmarks.
+
+I am eager to apply my skills and passion for AI to Teradata's innovative projects. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

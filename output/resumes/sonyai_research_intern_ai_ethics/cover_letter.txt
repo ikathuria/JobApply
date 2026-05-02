@@ -1,0 +1,5 @@
+My experience in developing and evaluating generative AI models, coupled with my project work on adversarial evaluation frameworks and multi-modal knowledge graphs, directly aligns with Sony AI's focus on AI ethics and mitigating risks in generative AI. I am particularly interested in contributing to research on ethical challenges within a global entertainment context, and the opportunity to unleash human imagination and creativity with AI.
+
+I have developed and fine-tuned generative AI models using PyTorch and HuggingFace Transformers, and designed red-teaming experiments to identify and mitigate biases. My work includes creating evaluation benchmarks for large language models and contributing to a research project on guardrail development for multi-modal AI systems, which resulted in a publication. I also have experience setting up technical experiments to evaluate open models for potential harms.
+
+I am eager to apply my research and technical skills to Sony AI's mission. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

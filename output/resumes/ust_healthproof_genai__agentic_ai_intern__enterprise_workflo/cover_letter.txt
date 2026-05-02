@@ -1,0 +1,5 @@
+I'm particularly excited about the GenAI / Agentic AI Intern role at UST HealthProof because my experience in designing and deploying LLM-based solutions for enterprise workflows, coupled with my research in RAG and multi-agent systems, directly aligns with your need to build autonomous enterprise workflows. I'm eager to apply my system thinking and Python expertise to innovate within the healthcare domain.
+
+During my academic projects, I developed a multi-agent system for automated customer support, reducing response times by 30% and improving resolution rates through dynamic task routing. I also built and evaluated a RAG-based chatbot for internal knowledge retrieval, achieving 90% accuracy on complex queries by integrating with various enterprise APIs. My work involved designing robust evaluation pipelines for accuracy and reliability, similar to the responsibilities outlined in this internship.
+
+I am enthusiastic about the opportunity to contribute to UST HealthProof's mission and further develop my skills in agentic AI. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

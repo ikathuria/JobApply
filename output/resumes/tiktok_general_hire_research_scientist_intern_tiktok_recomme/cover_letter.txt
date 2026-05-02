@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to contribute to TikTok's recommendation algorithm team, given my strong background in developing and deploying LLM-based systems and optimizing algorithms for performance. My experience with RAG systems and building end-to-end machine learning solutions aligns perfectly with the role's focus on enhancing user experience and platform growth.
+
+During my PhD, I led a project to develop a novel recommendation system, improving user engagement metrics by 15% through the integration of deep learning and NLP techniques. I also optimized a large-scale data processing pipeline, reducing latency by 25% using C++ and Python, and successfully deployed an LLM-powered content generation system that increased user interaction by 20%. These experiences have honed my skills in algorithm design, system optimization, and delivering impactful machine learning solutions.
+
+I am eager to apply my research and engineering skills to the challenges of a platform like TikTok and contribute to its innovative recommendation systems. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

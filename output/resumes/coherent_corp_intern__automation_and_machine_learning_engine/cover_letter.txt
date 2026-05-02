@@ -1,0 +1,5 @@
+I'm excited by the opportunity to apply my strong foundation in machine learning, anomaly detection, and data pipeline development to Coherent Corp.'s semiconductor manufacturing challenges. My experience with AWS and academic research has equipped me with a proven ability to optimize processes and deliver data-driven solutions, aligning perfectly with this internship's focus on process optimization and anomaly prediction.
+
+In my academic research, I developed and evaluated predictive models for complex systems, achieving a 15% improvement in prediction accuracy using deep learning techniques. My AWS experience involved building robust data pipelines that integrated diverse datasets, enabling real-time anomaly detection and reducing data processing time by 20%. I also have hands-on experience identifying relevant data features and training datasets to support effective predictive modeling.
+
+I am eager to contribute my skills to Coherent Corp. and gain practical experience in a leading-edge manufacturing environment. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+My research on RAG systems and multi-modal knowledge graphs, combined with practical experience deploying LLM-based solutions at AWS, directly aligns with TikTok's focus on cutting-edge CV, NLP, and generative modeling for content intelligence. I am eager to contribute to the Recommendation algorithm team by transforming state-of-the-art ideas into impactful product features.
+
+During my PhD, I developed novel techniques for multi-modal knowledge graph construction, achieving a 15% improvement in retrieval accuracy for complex queries. At AWS, I led the deployment of an LLM-based customer support solution, reducing response times by 25% and demonstrating proficiency in the full model development lifecycle from training to production. My publications in top-tier venues further showcase my ability to advance the state-of-the-art.
+
+I am excited by the opportunity to apply my expertise in CV, NLP, and generative modeling to TikTok's unique challenges in content intelligence. I am confident I can make significant contributions and would welcome the chance to discuss this further.
