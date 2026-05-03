@@ -1,0 +1,5 @@
+With a strong foundation in developing and optimizing LLM-based systems and a passion for recommendation algorithms, I am eager to apply my expertise to enhance TikTok's user experience and drive product innovation. My experience at AWS in building scalable AI solutions aligns perfectly with the demands of a large-scale recommendation system at TikTok.
+
+During my internship at AWS, I developed and deployed a real-time anomaly detection system for cloud resource utilization, reducing false positives by 15% and improving system efficiency. I also contributed to an LLM-based conversational AI project, optimizing model inference time by 20% through efficient data pipeline design and leveraging PyTorch. My academic projects include building a personalized movie recommendation engine using collaborative filtering and deep learning, achieving a 90% accuracy in predicting user preferences.
+
+I am incredibly excited about the opportunity to contribute to TikTok's innovative video recommendation systems. Thank you for considering my application; I look forward to discussing how my skills can benefit your team.

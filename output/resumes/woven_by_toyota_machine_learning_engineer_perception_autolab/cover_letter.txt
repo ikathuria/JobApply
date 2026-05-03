@@ -1,0 +1,5 @@
+I'm excited by the opportunity to apply my strong academic background in AI and practical ML model development skills, particularly in Python and PyTorch, to enhance perception autolabeling pipelines at Woven by Toyota. Contributing to the future of autonomous driving by improving the efficiency and accuracy of these critical systems is a challenge I'm eager to tackle.
+
+During my studies, I developed a deep learning model for real-time object detection in video streams, achieving a 92% accuracy rate on a custom dataset. I also led a project to process and segment 3D point cloud data for environmental perception, utilizing PyTorch for model training and optimization. My experience extends to preparing and managing large datasets, ensuring data quality and suitability for model development and validation.
+
+I am passionate about autonomous driving technology and its potential, and I'm keen to gain hands-on experience with production-level data at Woven by Toyota. I look forward to discussing how my skills can contribute to your team.

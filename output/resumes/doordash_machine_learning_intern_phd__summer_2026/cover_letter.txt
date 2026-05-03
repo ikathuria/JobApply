@@ -1,0 +1,5 @@
+I'm excited by the prospect of applying my research background in RAG systems and practical experience deploying LLM-based solutions to DoorDash's unique challenges in discovery, forecasting, and search experiences. My passion for applied ML aligns perfectly with your mission to build the world's most reliable on-demand logistics engine.
+
+During my PhD, I developed novel RAG architectures, achieving a 15% improvement in retrieval accuracy on complex datasets. At AWS, I led the deployment of an LLM-powered customer service bot, reducing resolution times by 20% and handling over 10,000 queries daily. I also designed and implemented a real-time recommendation engine using PyTorch, which increased user engagement by 10% in A/B tests.
+
+I am eager to contribute to DoorDash's innovative ML initiatives and further develop my skills in a dynamic, impact-driven environment. Thank you for your consideration; I look forward to discussing how my expertise can benefit your team.

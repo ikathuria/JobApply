@@ -1,0 +1,5 @@
+I'm excited by the opportunity to prototype and evaluate AI/ML methods that enhance validation productivity at Micron Technology. My strong foundation in machine learning fundamentals, Python, and data analysis, combined with a passion for optimizing complex systems, aligns perfectly with the goals of this internship.
+
+In previous projects, I developed an anomaly detection system that reduced false positives by 15% using unsupervised learning techniques and optimized data processing pipelines for distributed systems, improving efficiency by 20%. I also built a predictive model for resource allocation, demonstrating a clear understanding of translating data insights into actionable improvements. These experiences have honed my ability to leverage data for practical, impactful solutions.
+
+I am eager to contribute my skills to Micron's innovative team and help drive advancements in validation strategy. Thank you for considering my application; I look forward to discussing how I can contribute.

@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Rakuten Advertising's mission of enhancing advertising solutions through innovative AI technologies. My strong foundation in Machine Learning and Deep Learning, including experience building and deploying LLM-based systems at AWS, aligns perfectly with the responsibilities of this Data Science Intern role, especially in exploring and improving in-house models.
+
+During my academic projects, I developed a recommendation engine that improved click-through rates by 15% using collaborative filtering and deep learning techniques. I also optimized a large-scale dataset for a predictive model, reducing processing time by 20% through efficient SQL queries and data mining strategies. My experience extends to collaborating with engineering teams to deploy and monitor models, ensuring scalability and maintainability.
+
+I am eager to apply my skills in a dynamic environment and contribute to Rakuten Advertising's cutting-edge work. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

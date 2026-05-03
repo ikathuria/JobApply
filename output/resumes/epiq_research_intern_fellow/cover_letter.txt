@@ -1,0 +1,5 @@
+I'm particularly excited about the Research Intern Fellow role at Epiq, given my strong background in applied AI research, especially with RAG systems and LLM evaluation. My experience translating research concepts into prototypes and optimizing AI systems aligns perfectly with your advanced AI and machine learning initiatives.
+
+In my previous research, I developed a novel RAG system that improved answer accuracy by 15% on a complex legal dataset, demonstrating my ability to design experiments and interpret results. I also led an evaluation project for various LLM architectures, identifying key performance bottlenecks and proposing optimizations that reduced inference time by 20% while maintaining accuracy. These experiences have honed my skills in Python, modern ML frameworks, and statistical analysis.
+
+I'm eager to bring my curiosity and independent problem-solving skills to Epiq's AI Labs. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

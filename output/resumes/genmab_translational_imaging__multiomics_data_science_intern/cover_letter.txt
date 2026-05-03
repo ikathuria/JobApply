@@ -1,0 +1,5 @@
+My experience in building multimodal knowledge graphs, integrating diverse data, and applying deep learning to complex problems aligns perfectly with Genmab's focus on integrating digital imaging with multi-omics data. I am eager to leverage my skills in Python, PyTorch, and AWS to contribute to uncovering therapeutic opportunities in translational medicine.
+
+In previous projects, I developed deep learning models for whole-slide image analysis, extracting quantitative features that I then integrated with genomic data to identify disease subtypes. I also designed and implemented graph neural networks to explore complex relationships within patient data, leading to the discovery of novel biomarkers. My work consistently involved utilizing cloud computing platforms for scalable data processing and analysis.
+
+I am enthusiastic about the opportunity to apply my skills to Genmab's innovative research in antibody therapeutics. I am confident I can make meaningful contributions to your team and would welcome the chance to discuss my qualifications further.

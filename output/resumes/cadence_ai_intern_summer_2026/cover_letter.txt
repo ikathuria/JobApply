@@ -1,0 +1,5 @@
+I'm particularly excited about Cadence's innovative work in advancing neural networks for speech and audio applications. My strong academic foundation in AI and practical experience in developing and deploying neural network models align perfectly with this AI Intern role, especially my proficiency in Python, PyTorch, and TensorFlow.
+
+During a recent project, I developed a custom CNN for real-time audio classification, achieving 92% accuracy on a novel dataset and reducing inference time by 15% through model optimization. I also automated experiment tracking and hyperparameter tuning using Python scripts, significantly streamlining the development cycle and enabling thorough documentation for knowledge sharing. My research involved reviewing cutting-edge academic papers to integrate the latest advancements into my model designs.
+
+I'm eager to contribute my skills and passion for AI research to Cadence's team. Thank you for considering my application; I look forward to the possibility of discussing how I can contribute to your innovative projects.

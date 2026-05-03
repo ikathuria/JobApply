@@ -1,0 +1,5 @@
+I'm particularly excited about the AI/ML Engineering Intern role at UST because my hands-on experience in building production-grade RAG pipelines, developing multi-agent systems, and leveraging cloud platforms like AWS directly aligns with your focus on designing scalable Generative AI systems and accelerating software development through AI-assisted tools. This opportunity to contribute to transforming lives through technology deeply resonates with my career aspirations.
+
+In previous projects, I designed and implemented a RAG pipeline for a knowledge base, achieving a 90% accuracy rate in information retrieval by optimizing chunking and embedding strategies. I also developed a multi-agent system using LangChain to automate customer support inquiries, reducing response times by 30%. Furthermore, I built robust backend services with Python and FastAPI, deploying them on AWS, and implemented evaluation frameworks for LLMs, focusing on metrics like faithfulness and relevancy.
+
+I am eager to apply my skills and learn from UST's innovative team. Thank you for considering my application; I look forward to discussing how I can contribute to your mission.
