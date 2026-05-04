@@ -1,0 +1,5 @@
+I'm particularly excited about Avathon's mission to deploy AI across critical sectors like supply chains and energy systems. My strong foundation in developing and deploying machine learning models, including anomaly detection and LLM-based solutions, aligns perfectly with the technical requirements for a Data Scientist Intern and your focus on analyzing complex datasets to drive real-world impact.
+
+In a recent project, I developed an anomaly detection system using Python and scikit-learn, achieving a 92% detection rate on a simulated industrial dataset. I also built and fine-tuned an LLM-based solution for text summarization, demonstrating proficiency with modern AI frameworks and cloud deployment. My experience extends to comprehensive data preprocessing, feature engineering, and model optimization using Pandas and NumPy, ensuring robust and scalable solutions.
+
+I'm eager to apply my skills and contribute to Avathon's innovative projects. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

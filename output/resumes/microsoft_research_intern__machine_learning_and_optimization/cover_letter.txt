@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to contribute to Microsoft's Machine Learning and Optimization group, designing and prototyping innovative algorithms and models. My background in applied AI research, LLM development, and distributed systems optimization aligns perfectly with the role's focus on combining machine learning with optimization techniques to advance cutting-edge research.
+
+During my PhD, I developed novel optimization algorithms for large-scale machine learning models, achieving a 15% improvement in training efficiency on distributed systems. I also led a project to fine-tune a custom LLM for scientific text generation, demonstrating strong performance in generating coherent and contextually relevant content. My experience extends to designing and conducting simulations to validate algorithmic performance and analyzing complex datasets to extract actionable insights.
+
+I am eager to apply my skills and passion for machine learning and optimization to Microsoft's impactful research initiatives. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

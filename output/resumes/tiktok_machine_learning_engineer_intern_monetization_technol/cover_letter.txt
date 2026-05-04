@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to TikTok's Ads Creative AI team. My strong academic foundation in AI, coupled with practical experience in LLM-based system development and multimodal knowledge graphs, aligns perfectly with the opportunity to leverage generative AI and deep learning to enhance ad performance and creative quality.
+
+In a recent project, I developed a multimodal knowledge graph for content recommendation, improving retrieval accuracy by 15% through integrating visual and textual embeddings. I also fine-tuned a diffusion model for style transfer, achieving realistic image generation with a 20% reduction in computational cost compared to baseline models. My experience extends to data preprocessing and model optimization, ensuring robust and high-quality datasets for training.
+
+I am eager to apply my skills and passion for AI and content creation to such an impactful role at TikTok. Thank you for your consideration; I look forward to discussing how I can contribute.

@@ -1,0 +1,5 @@
+I'm excited by Scowtt's innovative approach to AI/ML marketing optimization, and the opportunity to contribute to training, evaluating, and deploying ML models. My strong foundation in ML model deployment, pipeline automation, and AI agent integration from my AWS experience and current research makes me well-prepared to assist your team.
+
+In my recent project, I developed and deployed a real-time sentiment analysis model using AWS Lambda and SQS, handling structured and behavioral data similar to what Scowtt utilizes. I also automated data ingestion and ML pipelines, reducing processing time by 30%. Furthermore, my research into integrating ML models into AI agents has given me practical experience in debugging and optimizing model performance within complex systems.
+
+I'm eager to apply my skills and learn how ML systems operate in a real production environment at Scowtt. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

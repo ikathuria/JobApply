@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Marvell Technology's data analytics team, especially given my strong foundation in applied AI research and hands-on experience deploying LLM-based systems. My proficiency in Python for data analysis and ML aligns perfectly with your goals of developing predictive models and extracting valuable insights from large datasets.
+
+During my time at AWS, I successfully deployed LLM-based systems, demonstrating my ability to move from research to production. I also have extensive experience with data preprocessing, exploratory data analysis, and building machine learning models, including using Python libraries like pandas, NumPy, and scikit-learn to uncover patterns and trends in complex datasets. My work has consistently focused on translating data into actionable insights and robust solutions.
+
+I am eager to apply my skills and passion for machine learning to Marvell's innovative environment. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

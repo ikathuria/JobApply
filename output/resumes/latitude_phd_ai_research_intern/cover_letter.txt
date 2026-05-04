@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to Latitude's fundamental LLM research, especially in creating robust benchmarks for evaluating LLM behavior within your story engine. My background in LLM research, including developing multi-agent evaluation frameworks and optimizing RAG systems, aligns perfectly with the challenges of ensuring reliable and engaging AI-native gaming experiences.
+
+My experience includes designing and implementing a novel multi-agent evaluation framework for conversational AI, which involved defining task-specific success criteria and auxiliary metrics to assess nuanced model behaviors. I also led a project to optimize RAG systems, significantly improving response coherence and relevance through iterative benchmarking and fine-tuning. These projects honed my skills in both rigorous experimental design and practical software engineering, culminating in several research publications.
+
+I am eager to apply my research and engineering skills to Latitude's innovative platform. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

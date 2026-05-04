@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to apply my strong academic foundation in AI and practical experience deploying LLM-based solutions to Labcorp's mission of improving lab operations. My background in optimizing workflows and analyzing data aligns perfectly with the need to translate lab challenges into AI opportunities and develop data-driven decision-support tools.
+
+In previous projects, I developed a machine learning model that reduced data processing time by 30% and deployed an LLM-based solution to automate report generation, improving efficiency by 25%. I also have experience analyzing complex datasets to surface actionable insights, which directly translates to identifying improvement opportunities within laboratory operations. My coursework has provided a solid understanding of AI principles, and I am adept at framing technical solutions for non-technical stakeholders.
+
+I am eager to contribute to Labcorp's innovative approach to lab science and further develop my skills in a real-world laboratory setting. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

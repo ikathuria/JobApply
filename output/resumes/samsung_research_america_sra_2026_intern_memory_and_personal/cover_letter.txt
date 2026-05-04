@@ -1,0 +1,5 @@
+My experience designing and optimizing RAG systems, coupled with hands-on development of LLM-based production applications at AWS, directly aligns with Samsung Research America's focus on hybrid memory retrieval and personalization for Bixby. I am particularly excited to apply my knowledge of knowledge graphs and model optimization to enhance user experience across Samsung devices.
+
+At AWS, I developed and deployed LLM-based applications, focusing on efficient retrieval and personalization, which involved optimizing embedding-based retrieval and integrating with structured knowledge graphs. I also built robust evaluation pipelines to measure relevance and latency, ensuring production-ready performance. My work included model optimization techniques for low-latency inference, directly relevant to on-device deployment.
+
+I am eager to contribute my skills to SRA's innovative work in long-term memory and personalization. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

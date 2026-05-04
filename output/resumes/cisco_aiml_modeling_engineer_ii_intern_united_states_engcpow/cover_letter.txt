@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Cisco's innovative AI/ML projects as an AI/ML Modeling Engineer Intern. My strong foundation in machine learning model design, implementation, and optimization, coupled with practical experience building and deploying AI solutions at AWS, aligns perfectly with this role. My expertise in RAG systems and adversarial evaluation frameworks further prepares me to make an immediate impact.
+
+During my time at AWS, I developed and deployed a scalable RAG system that improved information retrieval accuracy by 15% for internal tools, demonstrating my ability to build and optimize AI solutions. I also designed and implemented an adversarial evaluation framework for a critical ML model, identifying key vulnerabilities and improving model robustness by 10%. These experiences have honed my skills in Python, ML frameworks, and data preprocessing pipelines.
+
+I am eager to apply my skills to real-world challenges at Cisco and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute.

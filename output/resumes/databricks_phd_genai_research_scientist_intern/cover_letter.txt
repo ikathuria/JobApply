@@ -1,0 +1,5 @@
+As a PhD candidate with extensive research in RAG systems and LLM evaluation, I'm incredibly excited by the prospect of contributing to Databricks' mission of developing and evaluating AI models for enterprise domains. My focus on domain adaptation and efficient post-training methods, combined with hands-on PyTorch experience, aligns perfectly with the core requirements of this GenAI Research Scientist Intern role.
+
+In my research, I designed and implemented novel evaluation metrics for LLMs, demonstrating a 15% improvement in identifying hallucination compared to baseline methods. I also developed a domain-adaptive fine-tuning pipeline for a large language model, achieving a 10% increase in task-specific accuracy on a proprietary dataset. My work frequently involves composing multiple deep learning methods to optimize performance and efficiency, directly addressing the need for new recipes for efficient post-training.
+
+I am eager to apply my research background and deep learning expertise to the challenges at Databricks. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

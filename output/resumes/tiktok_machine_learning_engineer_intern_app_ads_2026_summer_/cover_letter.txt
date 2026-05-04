@@ -1,0 +1,5 @@
+I'm incredibly excited by the opportunity to contribute to TikTok's App Ads and Gaming team. My strong background in developing and deploying large-scale AI/ML systems at AWS, coupled with my ongoing research in RAG, positions me well to enhance personalized online advertising efforts through state-of-the-art machine learning projects.
+
+At AWS, I was instrumental in optimizing a critical data pipeline, reducing processing time by 30% and improving data quality for downstream ML models. I also designed and implemented a novel recommendation system feature, which led to a 15% increase in user engagement during A/B testing. My current research focuses on fine-tuning large language models for retrieval-augmented generation, directly applicable to improving ad relevance and targeting.
+
+I am eager to apply my skills in machine learning and system development to TikTok's dynamic environment. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

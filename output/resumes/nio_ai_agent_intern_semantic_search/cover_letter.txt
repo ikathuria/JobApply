@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to NIO's AI Platform team, particularly in building intelligent agents for semantic search and internal knowledge access. My strong foundation in RAG systems, LLM-based application development, and Python aligns perfectly with developing document intelligence, structured data querying, and metadata-aware reasoning capabilities.
+
+In previous projects, I developed a RAG pipeline for a complex document set, achieving a 90% accuracy in retrieving relevant information and significantly reducing manual search time. I also built a text-to-SQL agent that successfully queried a multi-schema database, improving data access efficiency by 40%. Furthermore, I integrated metadata awareness into a knowledge graph system, enabling more nuanced and context-aware information retrieval.
+
+I'm eager to apply my skills to a real-world problem at NIO and contribute to shipping production-ready features. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
