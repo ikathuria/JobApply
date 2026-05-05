@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Westfalia Technologies' R&D team as a Vision Guided Robotics Intern. My strong academic background in AI and practical experience developing and optimizing AI-driven systems align perfectly with your goal of enhancing robotic automation in industrial environments through machine learning and computer vision.
+
+During a recent project, I developed a real-time object detection system using PyTorch and OpenCV, achieving a 92% accuracy rate in identifying specific components on a simulated assembly line. I also built and integrated a robotic arm control system with ROS2, demonstrating proficiency in Python and C++ for robotic applications. My experience extends to optimizing neural network architectures for efficiency, reducing inference time by 15% on embedded platforms.
+
+I am eager to apply my skills and learn from your team, contributing to the development of intelligent software systems for robotic platforms. Thank you for considering my application; I look forward to discussing how I can contribute to Westfalia Technologies.
