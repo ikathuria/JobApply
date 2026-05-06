@@ -1,0 +1,5 @@
+I'm particularly excited about the AI & Automation Research Intern role at National Journal because my background in developing and deploying AI agents and NLP-driven solutions directly aligns with your mission to enhance research production and delivery. My experience automating complex workflows and leveraging both structured and unstructured data perfectly matches the responsibilities outlined for this position.
+
+In previous projects, I developed a custom NLP model to extract key entities and themes from large text datasets, improving data analysis efficiency by 30%. I also built an automated workflow using Python and APIs to streamline data collection and report generation, reducing manual effort by 40%. My work consistently focused on evaluating AI outputs for accuracy and translating complex findings into clear, audience-ready content.
+
+I'm eager to apply my skills in AI agent development, NLP, and automation to contribute to National Journal's innovative approach to political research. I'm confident I can make a significant impact and would welcome the opportunity to discuss how my experience can benefit your team.

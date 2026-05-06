@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to design and iterate on task-specific AI agents and develop reusable skill templates at Uniti Group Inc., leveraging my background in LLM-based system development, RAG optimization, and multi-agent frameworks. The prospect of contributing to your mission by enhancing mission-critical connectivity through intelligent automation is incredibly appealing.
+
+In previous projects, I developed a multi-agent system for research assistance, significantly improving information retrieval accuracy by 25% through optimized RAG techniques. I also designed and implemented a Python-based LLM application that automated data extraction from unstructured text, reducing manual processing time by 40%. My experience extends to building robust API integrations and contributing to shared codebases, ensuring reusability and maintainability.
+
+I'm eager to apply my skills in Python, LLMs, and prompt engineering to develop impactful AI solutions for Uniti. I'm confident I can quickly contribute to building production-ready agent skills and an onboarding guide, and I look forward to discussing how I can support your team.

@@ -1,0 +1,5 @@
+I'm excited by the opportunity to apply my expertise in AI and internal tool development to enhance operational efficiency at CycloKinetics. My background in developing and deploying LLM-based solutions and automating workflows, particularly within locally hosted AI environments, aligns perfectly with your needs for this Computer Science Intern role, especially given the commitment to safety in your environment.
+
+At AWS, I gained hands-on experience automating workflows and building internal tools, which included integrating solutions with existing systems and handling both structured and unstructured data. I've also developed and deployed LLM-based applications, focusing on practical, impactful solutions. My projects have consistently emphasized robust testing and documentation, ensuring reliability and maintainability.
+
+I'm eager to contribute to CycloKinetics' mission and apply my skills to develop innovative solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.
