@@ -6,3 +6,6 @@ __pycache__/
 logs/
 output/resumes/_test/
 web/node_modules/
+tracker/applications.db
+tracker/*.db-shm
+tracker/*.db-wal
