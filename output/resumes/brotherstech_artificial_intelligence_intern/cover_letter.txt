@@ -1,0 +1,5 @@
+I'm excited by BrothersTech's mission to build intelligent solutions, and my strong background in designing, developing, and deploying AI models, including LLM-based systems and data processing pipelines, aligns perfectly with the hands-on requirements of this AI/ML Engineer internship, particularly in NLP and model optimization.
+
+During my academic projects, I developed a sentiment analysis model using TensorFlow and Keras, achieving 92% accuracy on a novel dataset after extensive data preprocessing with Pandas and NumPy. I also built a recommendation system using collaborative filtering, demonstrating proficiency in model evaluation and optimization techniques. My experience extends to building data pipelines for large datasets and implementing solutions in production-like environments.
+
+I am eager to apply my skills and contribute to BrothersTech's innovative projects. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

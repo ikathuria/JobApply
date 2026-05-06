@@ -1,0 +1,5 @@
+My academic background in Applied AI and practical experience developing and optimizing ML models, particularly with PyTorch and Python, align perfectly with Woven by Toyota's focus on vehicle perception for autonomous driving. I am passionate about self-driving car technology and eager to contribute to the Perception team's mission.
+
+During my research, I developed a novel deep learning architecture for real-time object detection in adverse weather conditions, achieving a 15% improvement in accuracy over baseline models. I also optimized a PyTorch-based semantic segmentation model, reducing inference time by 20% while maintaining high precision, and have experience taking models from initial prototyping through to validation and fine-tuning based on performance metrics.
+
+I am excited by the prospect of contributing to cutting-edge autonomous driving technology and am confident my skills and enthusiasm would make me a valuable asset to your team. Thank you for your time and consideration; I look forward to discussing this opportunity further.

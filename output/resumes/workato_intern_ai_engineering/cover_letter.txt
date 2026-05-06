@@ -1,0 +1,5 @@
+I'm particularly excited about the opportunity to contribute to Workato's AI Lab, especially given my strong foundation in LLM agent architectures, RAG systems, and efficient AI infrastructure from my Master's research and AWS experience. My proven track record in developing and optimizing LLM-based solutions aligns perfectly with your focus on impactful research and production feasibility for agentic systems.
+
+During my Master's, I led a project on optimizing LLM inference, achieving a 30% reduction in latency through custom kernel development and fine-tuning. My experience at AWS involved deploying and monitoring large-scale RAG systems, ensuring robust performance and scalability. I also have a publication at a top-tier venue (ACL) on novel algorithms for multi-agent LLM coordination.
+
+I am eager to apply my research and engineering skills to Workato's innovative projects and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute.

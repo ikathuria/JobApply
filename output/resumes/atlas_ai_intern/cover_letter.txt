@@ -1,0 +1,5 @@
+My experience in developing and deploying AI-driven automation solutions, particularly with LLMs and data processing, directly aligns with Atlas's need for an AI Intern to improve engineering workflows and data analysis. I am eager to apply my skills in Python, AI/ML, and automation to real-world challenges in transportation, infrastructure, and environmental projects at Atlas.
+
+In a recent project, I developed a Python-based tool that automated the extraction and summarization of key information from unstructured text documents, reducing manual processing time by 40%. I also designed and implemented a machine learning model to predict optimal resource allocation in a simulated logistics environment, improving efficiency by 15%. My work involved extensive use of Python, Jupyter Notebooks, and Git for version control, ensuring robust and reproducible solutions.
+
+I am enthusiastic about the opportunity to contribute to Atlas's innovative projects and further develop my skills in a practical setting. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

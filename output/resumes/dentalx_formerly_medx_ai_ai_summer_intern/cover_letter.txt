@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Dental-X's innovative AI solutions for dental technology, especially given my strong academic foundation in AI and practical experience deploying LLM-based solutions at AWS. The chance to apply machine learning, computer vision, and cloud infrastructure skills to revolutionize patient diagnostics and treatment planning truly resonates with my passion for healthcare technology.
+
+During my time at AWS, I developed and deployed an LLM-based solution that improved customer query resolution by 25%, demonstrating my ability to build and iterate on robust AI features. I also led a project to segment medical images using PyTorch and OpenCV, achieving 92% accuracy, which directly aligns with your focus on computer vision and medical imaging. My experience extends to cleaning and augmenting large datasets, ensuring model accuracy and robustness.
+
+I am eager to bring my problem-solving skills and enthusiasm for cutting-edge AI to Dental-X. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

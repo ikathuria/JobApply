@@ -1,0 +1,5 @@
+My strong academic background in Applied AI and practical experience designing and deploying generative AI solutions at AWS make me incredibly excited about UWM's innovative AI projects. My research in RAG systems and experience with LLM-based applications directly aligns with the internship's focus on enhancing generative AI capabilities, and I'm eager to contribute to your team.
+
+At AWS, I developed and deployed a generative AI solution that improved content creation efficiency by 30%, utilizing advanced LLM fine-tuning techniques. My academic research focused on optimizing RAG systems for domain-specific knowledge retrieval, achieving a 15% increase in answer accuracy. I also have experience analyzing large datasets to train and validate models, ensuring robust performance.
+
+I am enthusiastic about the opportunity to apply my skills to real-world challenges at UWM and contribute to cutting-edge generative AI initiatives. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

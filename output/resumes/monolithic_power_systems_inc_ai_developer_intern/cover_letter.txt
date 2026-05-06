@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Monolithic Power Systems' productivity goals as an AI Developer Intern. My background in RAG model implementation, open-source model fine-tuning, and AI agent development, honed through academic research and industry experience at AWS, directly aligns with your need to enhance operations across various departments. My experience deploying LLM-based systems and designing AI chatbots makes this role a perfect fit.
+
+At AWS, I was instrumental in deploying LLM-based systems, significantly improving internal knowledge retrieval. I also designed and implemented an AI chatbot that reduced customer support response times by 20%. My academic research involved fine-tuning open-source models like Meta Llama 2 for specific domain tasks, achieving a 15% increase in accuracy compared to baseline models, and developing a novel RAG system that improved content relevance by 25%.
+
+I am eager to apply my skills in Python, TensorFlow, and PyTorch to design and implement impactful AI agents at MPS. Thank you for considering my application; I look forward to discussing how I can contribute to your innovative team.

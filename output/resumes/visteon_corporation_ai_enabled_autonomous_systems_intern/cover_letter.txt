@@ -1,0 +1,5 @@
+My experience in developing and deploying AI/ML models, coupled with a strong academic foundation in AI, aligns perfectly with Visteon's focus on AI-enabled autonomous systems. I am eager to contribute to prototyping Edge-AI models and optimizing their performance for next-generation cockpit platforms, particularly in areas like driver readiness and situational awareness.
+
+During a recent project, I developed a real-time object detection model for embedded systems, achieving a 20% reduction in inference latency by optimizing the architecture and leveraging TensorRT. I also have experience in multimodal data analysis, having processed camera and LiDAR data to improve perception accuracy for an autonomous navigation system. My coursework has provided a solid understanding of ADAS/AV systems and sensor fusion techniques.
+
+I am enthusiastic about the opportunity to apply my skills at Visteon and contribute to cutting-edge autonomous cockpit intelligence. I am confident I can make an immediate impact and would welcome the chance to discuss my qualifications further.

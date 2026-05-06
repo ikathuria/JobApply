@@ -1,0 +1,5 @@
+My strong background in developing scalable ML solutions at AWS, coupled with my current research in RAG systems, makes me incredibly eager to apply my expertise in large language models, optimization, and deep learning to Amazon Science's Reinforcement Learning & Optimization internship. I'm excited by the prospect of contributing to innovative solutions for complex business challenges.
+
+During my PhD, I've designed and implemented novel deep reinforcement learning algorithms for resource allocation, achieving a 15% improvement in efficiency over baseline methods. My experience extends to developing and deploying production-grade machine learning models in Python and C++ at AWS, where I optimized data pipelines and reduced inference latency by 20% for a critical service. I also have a publication in a top-tier conference on graph neural networks for predictive modeling.
+
+I am enthusiastic about the opportunity to leverage my skills in a dynamic environment like Amazon Science and contribute to cutting-edge research. I look forward to discussing how my background aligns with your team's goals.

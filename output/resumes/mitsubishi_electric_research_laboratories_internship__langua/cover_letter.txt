@@ -1,0 +1,5 @@
+I'm particularly excited about MERL's research into language-guided dynamic human-robot interaction. My strong foundation in generative AI, multi-agent systems, and natural language interaction, combined with my experience in developing LLM-based applications and evaluating retrieval strategies, aligns perfectly with the internship's focus on developing algorithms and preparing scientific publications.
+
+My research has involved modeling agentic pipelines for complex tasks, integrating multimodal data and natural language interaction within realistic simulators like AI Habitat. I've also developed and trained large vision-language models, contributing to a strong track record of publications in top-tier computer vision and machine learning venues. These experiences have honed my ability to translate theoretical concepts into practical, publishable research.
+
+I am eager to contribute to MERL's innovative work and collaborate with your computer vision team. Thank you for considering my application; I look forward to discussing how my skills can benefit your research.

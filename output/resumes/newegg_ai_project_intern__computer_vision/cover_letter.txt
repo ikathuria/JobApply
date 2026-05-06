@@ -1,0 +1,5 @@
+I'm particularly excited about Newegg's AI Project Intern role, as my background in AI, especially in developing anomaly detection systems and data processing pipelines, directly aligns with your need for computer vision expertise in warehouse and logistics automation. I'm eager to apply my skills in object detection, tracking, and OCR to enhance supply chain efficiency.
+
+In a recent project, I developed a real-time object detection system using YOLOv5 and PyTorch to monitor inventory levels, achieving 92% accuracy in identifying specific items on shelves. I also built an OCR pipeline using Tesseract and OpenCV to extract key data from scanned invoices, reducing manual data entry time by 40%. Furthermore, I contributed to a system for anomaly detection in video streams, identifying unusual activity in a simulated logistics environment with a precision of 88%.
+
+I am enthusiastic about the opportunity to contribute to Newegg's innovative logistics solutions and apply my computer vision skills in a practical, impactful setting. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

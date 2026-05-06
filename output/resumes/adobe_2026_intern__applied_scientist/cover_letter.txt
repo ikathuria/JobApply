@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to Adobe's mission of understanding and optimizing customer experiences, especially given my background in developing predictive models and scalable AI solutions for large-scale datasets. My experience at AWS, coupled with my expertise in deep learning, statistical modeling, and Python, aligns perfectly with the Applied Scientist Intern role.
+
+At AWS, I developed a novel deep learning model that improved prediction accuracy by 15% for a critical internal service, processing terabytes of data daily. I also engineered a scalable data pipeline in Python, reducing processing time by 30% and enabling real-time analytics for a new feature. My academic projects include building a robust recommendation system using collaborative filtering and implementing a computer vision model for image classification with 92% accuracy.
+
+I'm eager to apply my skills to Adobe's innovative challenges and collaborate with your teams. Thank you for considering my application; I look forward to discussing how I can contribute.

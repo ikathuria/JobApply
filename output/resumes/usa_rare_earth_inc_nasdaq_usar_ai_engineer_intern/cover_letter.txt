@@ -1,0 +1,5 @@
+I'm genuinely excited by the prospect of applying my expertise in developing and deploying LLM-powered agents and RAG systems to USA Rare Earth, Inc.'s mission of improving operational efficiency in the mining and processing business unit. My experience in building conversational interfaces and integrating diverse data sources aligns perfectly with the role's requirements, especially in automating workflows and enabling non-technical users to query complex data.
+
+In a recent project, I designed and implemented an LLM-powered agent that automated document handling and stakeholder communication, reducing processing time by 30%. I also developed a RAG system that allowed users to query unstructured internal documents using natural language, significantly improving data retrieval efficiency. My proficiency in Python, LangChain, and working with both structured and unstructured data has been central to these achievements.
+
+I am eager to contribute to your team and help design and ship impactful AI-powered tools. Thank you for considering my application; I look forward to discussing how my skills can benefit USA Rare Earth, Inc.

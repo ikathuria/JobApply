@@ -1,0 +1,5 @@
+My experience deploying LLM-based systems at AWS and designing agentic frameworks aligns perfectly with Tabhi's mission to revolutionize travel through AI. I'm eager to translate strategic AI visions into tangible business outcomes for the CEO's office, accelerating your innovative AI-first travel platform.
+
+At AWS, I successfully deployed an LLM-based system, managing the full lifecycle from design to production. I also designed and implemented agentic frameworks for internal tools, significantly improving workflow efficiency and user experience. Beyond technical execution, I've consistently coordinated across teams to keep complex projects on track and presented technical concepts to senior stakeholders.
+
+I am enthusiastic about the opportunity to contribute to Tabhi's groundbreaking work. I'm confident my skills in AI system design, deployment, and project coordination will be an immediate asset. I look forward to discussing how I can help drive Tabhi's AI initiatives forward.

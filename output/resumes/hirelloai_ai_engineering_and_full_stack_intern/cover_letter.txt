@@ -1,0 +1,5 @@
+I'm excited by Hirello.ai's mission to leverage AI for meaningful employment, and the AI Engineering and Full Stack Intern role aligns perfectly with my background. With a Master's in Applied AI and hands-on experience in RAG architecture, LLM development, and full-stack integration, I'm eager to contribute to optimizing models and building scalable solutions.
+
+During my Master's, I developed a RAG-based chatbot that achieved 90% accuracy in information retrieval, demonstrating my proficiency in Python, NLP, and model optimization. I also built a full-stack application using Node.js and MySQL, integrating a machine learning model for real-time predictions, which significantly improved user engagement. My experience extends to refining AI models and enhancing system integrations, directly relevant to your responsibilities.
+
+I'm enthusiastic about the opportunity to apply my skills at Hirello.ai and contribute to your innovative platform. I'm available for an interview at your earliest convenience to discuss how I can make an impact.

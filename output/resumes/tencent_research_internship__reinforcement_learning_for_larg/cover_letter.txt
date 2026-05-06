@@ -1,0 +1,5 @@
+My research experience in LLM-based applications and multi-agent systems, combined with a strong publication record and proficiency in PyTorch, directly aligns with Tencent's focus on Reinforcement Learning for large foundation models. I am eager to contribute to developing impactful algorithms and publishing influential research papers with your team.
+
+During my Ph.D., I developed novel RL algorithms for complex reasoning tasks in multi-agent environments, leading to a publication in NeurIPS. I also designed and executed large-scale experiments using PyTorch to evaluate LLM-based agents, demonstrating significant performance improvements in zero-shot generalization. My work consistently involves tackling core problems in RL optimization and delivering practical solutions.
+
+I am enthusiastic about the opportunity to apply my skills and passion for cutting-edge AI research to Tencent's innovative projects. I am confident I can make a substantial contribution to your team and would welcome the chance to discuss my qualifications further.

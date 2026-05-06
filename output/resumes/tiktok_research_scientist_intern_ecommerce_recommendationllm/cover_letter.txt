@@ -1,0 +1,5 @@
+I'm particularly excited by the opportunity to contribute to TikTok's E-commerce Recommendation team, especially given my strong background in LLM-based systems and multimodal learning. My research on RAG systems and experience building and optimizing machine learning solutions aligns perfectly with the role's focus on developing advanced recommendation algorithms and enhancing user experience.
+
+At AWS, I developed and deployed a generative AI model that improved content discovery by 15%, demonstrating my ability to deliver end-to-end machine learning solutions. My work on multimodal learning involved integrating visual and textual data to enhance recommendation accuracy, directly relevant to building unified recommendation systems across livestreams and short videos. I also optimized a large-scale recommendation system, reducing inference latency by 20% through model compression techniques.
+
+I'm eager to apply my expertise to innovate within TikTok's e-commerce space and contribute to cutting-edge generative recommendation techniques. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+I'm particularly excited about the opportunity to contribute to Accuris's mission of transforming the electronics supply chain through innovative AI-powered prototypes and predictive models. My background in developing and deploying LLM-based solutions and optimizing data pipelines aligns perfectly with your goals, especially in building tools like carbon footprint calculators and supply chain risk models.
+
+In a recent project, I developed a generative AI solution using LangChain and OpenAI API to summarize complex technical documents, achieving a 30% reduction in processing time. I also engineered and deployed a predictive model using PyTorch for time-series forecasting on cloud-based data, improving accuracy by 15% compared to baseline models. My experience extends to building robust data pipelines with SQL and cloud platforms, ensuring data quality for downstream ML applications.
+
+I'm eager to apply my skills in AI application development, LLM techniques, and rapid iteration to build impactful solutions at Accuris. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

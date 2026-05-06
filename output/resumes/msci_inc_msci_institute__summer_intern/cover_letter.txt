@@ -1,0 +1,5 @@
+I'm particularly excited by the MSCI Institute's focus on AI-powered research and automation in investment and ESG contexts. My hands-on experience developing and deploying LLM-based systems, including RAG architectures and multi-agent frameworks, aligns perfectly with the role's emphasis on designing AI agents and conducting original research on emerging AI methodologies.
+
+In a recent project, I designed and implemented a multi-agent system for information extraction, achieving a 15% improvement in data accuracy compared to baseline methods. I also developed a RAG-based chatbot that integrated with several APIs, demonstrating proficiency in both advanced AI architectures and API integration. My experience extends to handling large, complex datasets and applying statistical modeling to validate research findings.
+
+I am eager to contribute my skills to the MSCI Institute and explore how cutting-edge AI can drive innovation in financial and ESG research. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

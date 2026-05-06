@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Wasabi Technologies' cloud storage solutions by developing and maintaining robust ML pipelines and AI services. My strong background in building and deploying production-grade AI/ML systems at AWS, coupled with my current research in RAG, aligns perfectly with the responsibilities of this Co-op role.
+
+At AWS, I gained hands-on experience with Python, PyTorch, TensorFlow, and Docker, specifically in developing and deploying scalable machine learning models. I've also contributed to projects involving data preparation, feature engineering, and performance monitoring, ensuring the reliability and efficiency of AI services. My research in RAG has further honed my skills in designing and implementing advanced AI systems.
+
+I am eager to apply my expertise and learn from the innovative team at Wasabi Technologies. I'm confident I can make an immediate impact and would welcome the chance to discuss how my skills can benefit your team.

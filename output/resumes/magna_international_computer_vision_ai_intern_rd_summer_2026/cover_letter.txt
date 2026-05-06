@@ -1,0 +1,5 @@
+My academic background in Applied AI, coupled with hands-on experience in deep learning, object detection, and 3D scene understanding, directly aligns with Magna International's focus on innovative automotive technologies. I am eager to contribute to your R&D team's projects in computer vision and pose estimation, leveraging my proficiency in PyTorch, TensorFlow, and Python.
+
+In a recent project, I developed a real-time object detection system using YOLOv5, achieving a 92% mAP on a custom dataset, demonstrating my ability to build and improve deep learning models. I also implemented a 6D pose estimation pipeline for robotic grasping, utilizing point cloud data and advanced 3D geometry, which directly relates to your industrialization goals. My experience extends to optimizing vision models for efficiency and working within a Linux environment.
+
+I am enthusiastic about the opportunity to apply my skills to develop cutting-edge automotive technologies at Magna International. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

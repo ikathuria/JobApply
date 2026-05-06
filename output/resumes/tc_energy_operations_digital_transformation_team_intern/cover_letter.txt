@@ -1,0 +1,5 @@
+I'm excited by the opportunity to join TC Energy's Operations Digital Transformation Team. With a strong background in developing and deploying agentic AI solutions, including multi-agent systems and LLM-based applications, I am well-prepared to identify and implement AI tools that enhance software interactions and improve operational efficiency for TC Energy.
+
+My experience includes developing a multi-agent system for optimizing resource allocation, which significantly improved efficiency by 15%. I also designed and implemented an LLM-based application to automate customer support responses, reducing response times by 20%. Furthermore, I've contributed to data architecture refinement efforts, ensuring robust data pipelines for AI model training and deployment.
+
+I am eager to apply my skills in AI development and continuous improvement to TC Energy's digital transformation initiatives. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

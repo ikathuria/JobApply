@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Latitude's mission of building AI-native games, particularly in evaluating LLM behavior within your story engine. My strong background in fundamental LLM research, including developing evaluation frameworks and optimizing LLM-based systems, aligns perfectly with your need for creating benchmarks and my proficiency in TypeScript.
+
+In my research, I've developed novel evaluation frameworks for LLMs, leading to a publication at a major conference. I also designed and implemented a system for optimizing LLM-based agents, demonstrating significant improvements in performance metrics. Furthermore, I've contributed to open-source projects, showcasing my software engineering skills, including experience with TypeScript, which I believe would be valuable for delivering your benchmark library.
+
+I'm eager to apply my research and engineering skills to Latitude's innovative work. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

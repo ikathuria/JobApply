@@ -1,0 +1,5 @@
+My strong background in developing and optimizing large-scale AI systems at AWS, coupled with my current research in RAG, makes me incredibly excited about the opportunity to contribute to TikTok's ads monetization ecosystem and develop state-of-the-art applied machine learning projects. The chance to impact such a massive user base with innovative ML solutions is truly compelling.
+
+At AWS, I optimized a distributed machine learning pipeline, reducing inference latency by 15% and improving model accuracy by 3% through feature engineering and hyperparameter tuning. I also developed a novel anomaly detection algorithm for real-time data streams, which was deployed to production and prevented critical system failures. My experience with Python, TensorFlow, and large-scale data processing aligns well with the technical demands of this role.
+
+I am eager to bring my skills and passion for machine learning to TikTok and contribute to your cutting-edge ad systems. Thank you for considering my application; I look forward to discussing how I can make a significant impact.

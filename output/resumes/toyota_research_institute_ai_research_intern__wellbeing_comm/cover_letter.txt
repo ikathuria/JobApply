@@ -1,0 +1,5 @@
+With a strong background in LLM-based systems, RAG, and multi-agent frameworks, I am eager to contribute to Toyota Research Institute's mission by applying advanced AI/ML to understand and enhance wellbeing within organizations and communities. My experience in developing and deploying AI tools, coupled with a keen interest in human-centered problems, aligns perfectly with the research focus of this internship.
+
+During my PhD, I developed a multi-agent simulation framework to model complex social dynamics, integrating LLMs for nuanced agent behavior and communication. I also designed and implemented a RAG system to extract insights from unstructured text data related to organizational sentiment, demonstrating proficiency in NLP and large language models. My work consistently involves formulating research questions, developing novel AI/ML models, and communicating findings through prototypes and visualizations.
+
+I am enthusiastic about the opportunity to apply my skills to TRI's impactful research. I am confident I can make significant contributions to your team and would welcome the chance to discuss my qualifications further.

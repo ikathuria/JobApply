@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of applying my experience in building and deploying LLM-based systems, particularly my research in RAG, to TikTok's e-commerce content recommendation team. My background in deep learning and multi-modal content generation aligns perfectly with your focus on enhancing user experience and content discovery through innovative ML solutions, especially exploring generative recommendation techniques.
+
+During my PhD, I led a project to develop a novel multi-modal content generation model, achieving a 15% improvement in content relevance metrics compared to baseline models. I also designed and implemented a large-scale recommendation system for a research initiative, processing terabytes of data daily and demonstrating proficiency in PyTorch and C++. My work consistently involves optimizing algorithms and infrastructure for real-world performance.
+
+I am eager to contribute to TikTok's mission of improving content discovery and user engagement. Thank you for considering my application; I look forward to discussing how my skills can benefit your team.

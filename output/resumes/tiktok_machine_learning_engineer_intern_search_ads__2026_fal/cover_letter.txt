@@ -1,0 +1,5 @@
+I'm particularly excited about the opportunity to apply my expertise in relevance modeling, NLP, and optimization to enhance TikTok's Search Ads algorithms and query understanding. My strong background in developing large-scale ML systems at AWS and research in RAG aligns perfectly with your team's focus on semantic matching models, query classification, and overall ad relevance.
+
+During my time at AWS, I contributed to a system that processed terabytes of data daily, improving model inference latency by 15% through optimized data pipelines and C++ implementations. My research into RAG systems involved developing novel methods for information retrieval and generation, leading to a 10% improvement in answer relevance metrics on benchmark datasets. I also have hands-on experience with feature engineering and model evaluation for CTR/CVR estimation, using Python and PyTorch.
+
+I'm eager to contribute my skills to TikTok's innovative environment and learn from your leading experts in large-scale Ads systems. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Cotiviti's initiatives in Agentic AI and neural-symbolic systems within the healthcare domain. My strong background in LLM-based systems, multi-agent frameworks, and knowledge graphs aligns perfectly with your focus on auditability and explainability, which I believe are critical for real-world healthcare applications.
+
+In a recent project, I developed a multi-agent system for information extraction, leveraging LLMs and a custom knowledge graph to enhance accuracy and provide transparent reasoning paths. This involved designing robust evaluation metrics to identify failure modes and iteratively improving agent behavior. I also have experience prototyping new capabilities, integrating LLMs with symbolic reasoning, and building tools to improve developer experience for AI systems.
+
+I'm eager to apply my skills and learn from your team, contributing to the development of next-generation Agentic AI platforms. Thank you for considering my application; I look forward to discussing how I can contribute to Cotiviti.

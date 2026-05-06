@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Rocket Lawyer's cutting-edge AI platform as an AI/ML Intern. My strong foundation in generative AI, RAG systems, and LLM deployment from academic research and AWS experience aligns perfectly with your focus on developing user-facing products and optimizing AI solutions.
+
+During my research, I developed and fine-tuned a custom RAG system for domain-specific knowledge retrieval, achieving a 15% improvement in response accuracy compared to baseline LLMs. I also built and deployed a serverless backend API on AWS using Python and FastAPI, handling over 100 concurrent requests for an ML inference service. My work involved prototyping new AI capabilities and writing clean, maintainable code for production environments.
+
+I am eager to apply my skills to real-world AI/ML projects at Rocket Lawyer and collaborate with your team to integrate innovative AI features. Thank you for considering my application; I look forward to discussing how I can contribute.

@@ -1,0 +1,5 @@
+With a strong foundation in predictive modeling, feature engineering, and optimizing ML systems, I am eager to contribute to AvePoint's mission of enhancing data protection and governance by evolving the opportunity health scoring model. My experience in integrating diverse data sources and driving measurable impact aligns perfectly with the responsibilities of this Customer Data ML Intern role.
+
+In a recent project, I developed a predictive model that improved accuracy by 15% through the integration of novel features from disparate datasets, demonstrating my ability to enhance model performance. I also built and maintained robust feature engineering pipelines using Python and SQL, ensuring data quality and efficient model iteration. My experience extends to evaluating model performance with business-relevant metrics and clearly communicating technical insights to non-technical stakeholders.
+
+I am excited by the prospect of applying my skills to AvePoint's customer data challenges and contributing to a team that values innovation in data protection. Thank you for considering my application; I look forward to discussing how I can contribute.

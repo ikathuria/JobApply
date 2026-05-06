@@ -1,0 +1,5 @@
+I'm particularly excited about the Fall 2026 Co-Op at Cirrus Logic because my background in developing and deploying LLM-based applications, coupled with a deep understanding of RAG systems, directly aligns with your focus on integrating AI/ML to enhance productivity and automation. The opportunity to contribute to AI-enhanced software tools and web applications within your innovative environment is incredibly appealing.
+
+My experience includes building a real-time sentiment analysis tool using TensorFlow and Keras, achieving 92% accuracy on custom datasets, and developing a Flask-based web application that leverages a fine-tuned BERT model for text summarization. I also implemented a RAG system for a knowledge base chatbot, significantly improving response relevance by integrating external data sources. These projects honed my skills in Python, various AI/ML libraries, and full-stack development.
+
+I'm eager to bring my passion for AI/ML and software development to Cirrus Logic and contribute to your cutting-edge solutions. Thank you for considering my application; I look forward to discussing how I can make an impact.

@@ -1,0 +1,5 @@
+With a strong foundation in AI/ML development and optimization, coupled with hands-on experience in embedded AI and data processing, I am eager to contribute to Visteon's innovative AI-enabled in-cabin cockpit solutions. My background in building and evaluating AI models for performance and efficiency aligns perfectly with the responsibilities of this internship.
+
+During a previous project, I developed and optimized a real-time object detection model for embedded systems, achieving a 20% reduction in latency while maintaining accuracy. I also have experience collecting, labeling, and processing sensor data, including RGB and IR, to train and validate computer vision models. My work involved benchmarking models for efficiency and robustness, and documenting findings for technical reviews.
+
+I am excited by the prospect of applying my skills to Visteon's cutting-edge in-cabin technology. I am confident I can make a meaningful contribution and would welcome the opportunity to discuss my qualifications further.

@@ -1,0 +1,5 @@
+I'm excited by the prospect of contributing to Cambium Assessment's work in modeling unconstrained text for educational assessment programs. My strong academic background in AI and practical experience building and deploying LLM-based systems, coupled with expertise in NLP, Python, and deep learning, perfectly aligns with the Machine Learning Intern role and your mission.
+
+In previous projects, I developed a sentiment analysis model for customer feedback, achieving 92% accuracy and improving data processing efficiency by 30%. I also designed and implemented a text summarization tool using transformer models, which reduced manual review time by 25%. My experience extends to data cleaning, model evaluation, and presenting complex findings to multidisciplinary teams.
+
+I'm eager to apply my skills to real-world educational challenges and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute to Cambium Assessment.

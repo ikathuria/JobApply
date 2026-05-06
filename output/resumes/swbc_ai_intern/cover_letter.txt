@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to SWBC's AI initiatives, particularly in developing AI-powered applications and optimizing deployment workflows. My background in building and deploying Generative AI solutions, coupled with hands-on experience in AWS and MLOps, aligns perfectly with the responsibilities of an AI Intern, especially in leveraging RAG and other ML capabilities.
+
+In a recent project, I developed a RAG-based chatbot using Python, integrating with AWS S3 for data storage and deploying the inference service via FastAPI and Docker. This involved setting up CI/CD pipelines for automated testing and deployment, significantly reducing iteration time. I also have experience in prompt engineering and evaluation, ensuring high-quality responses and implementing guardrails for LLM applications.
+
+I am eager to apply my skills at SWBC and collaborate with your team to deliver impactful AI features. Thank you for considering my application; I look forward to discussing how I can contribute.

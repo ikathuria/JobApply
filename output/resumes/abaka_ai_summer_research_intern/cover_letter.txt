@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Abaka AI's mission of building high-quality datasets and evaluation pipelines for advanced AI research. My strong background in LLM evaluation, multimodal systems, and dataset construction from my research at Purdue and experience at AWS aligns perfectly with your focus areas.
+
+At Purdue, I led the development of a novel multimodal dataset for complex reasoning tasks, achieving a 15% improvement in model performance compared to existing benchmarks. During my internship at AWS, I designed and implemented an automated evaluation pipeline for large language models, reducing manual review time by 30% and improving the consistency of evaluation metrics. I also have hands-on experience with PyTorch and developing robust quality-control criteria for data generation.
+
+I am eager to apply my skills to your impactful research artifacts and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute to Abaka AI.

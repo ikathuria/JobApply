@@ -1,0 +1,5 @@
+My research experience in Retrieval-Augmented Generation (RAG) systems and multi-agent frameworks, coupled with practical experience deploying LLM-based solutions at AWS, directly aligns with Microsoft's focus on memory and orchestration for large language models. I am eager to contribute to advancing LLM capabilities and investigating new embedding techniques within your research team.
+
+During my PhD, I developed novel RAG architectures, improving retrieval precision by 15% and reducing hallucination rates by 10% in complex question-answering tasks. At AWS, I engineered and deployed an LLM-powered customer support agent, which processed over 10,000 queries daily and achieved a 20% reduction in resolution time. I also have hands-on experience with various embedding techniques, including graph embeddings, and have explored methods for tracking conceptual drift in embeddings over time.
+
+I am excited by the opportunity to contribute to Microsoft's cutting-edge research in LLM memory and orchestration. I am confident my skills and research drive would make me a valuable asset to your team. I look forward to discussing how I can contribute further.

@@ -1,0 +1,5 @@
+I'm incredibly excited by the prospect of contributing to Immix Biopharma's mission, especially given my direct experience building and deploying production-grade LLM-based systems at AWS and my multi-agent framework project. This background aligns perfectly with your need for an AI Summer Analyst to write and ship production code for autonomous agents and own features end-to-end.
+
+At AWS, I was responsible for the full lifecycle of LLM-powered solutions, from initial design to deployment and monitoring, ensuring robust performance in a production environment. My personal multi-agent framework project further honed my skills in designing agents that operate autonomously, handle edge cases, and require minimal oversight, mirroring the "don't need babysitting" quality you seek. I'm also adept with AI coding tools like OpenClaw and Cursor, making specification-driven development a natural workflow.
+
+I'm eager to bring my hands-on experience and passion for autonomous agents to Immix Biopharma. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

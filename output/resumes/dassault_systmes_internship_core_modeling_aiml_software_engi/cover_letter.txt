@@ -1,0 +1,5 @@
+I'm excited by the prospect of integrating AI/ML into core CAD modeling workflows at Dassault Systèmes, especially within the SOLIDWORKS R&D team. My experience in building and deploying AI/ML systems, coupled with strong Python scripting and data processing skills, aligns perfectly with your need for an intern to develop next-generation CAD capabilities.
+
+During a recent project, I developed a Python-based pipeline to automate data generation and labeling for a computer vision model, significantly reducing manual effort and improving dataset quality. I also built and evaluated a neural network using PyTorch for a predictive modeling task, performing ablation studies to optimize performance and analyze inference. My C++ experience further complements my ability to contribute to core software development.
+
+I am eager to apply my skills to impactful projects at Dassault Systèmes and contribute to advancing 3D design processes. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

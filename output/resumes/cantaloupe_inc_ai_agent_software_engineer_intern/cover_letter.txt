@@ -1,0 +1,5 @@
+I'm excited by the opportunity to contribute to Cantaloupe Inc.'s mission of building AI agent solutions that integrate with cloud platforms and optimize FinTech workflows. My strong background in designing and deploying LLM-based systems at AWS, coupled with my current research in RAG, aligns perfectly with your focus on autonomous planning, reasoning, and action across tools and services.
+
+During my time at AWS, I developed and deployed an LLM-based system for internal knowledge retrieval, significantly improving developer efficiency. I also designed and implemented robust evaluation frameworks to quantify the value of new AI capabilities, ensuring data-driven improvements. My current research involves optimizing RAG pipelines for enhanced accuracy and efficiency, directly relevant to building effective AI agents.
+
+I'm eager to apply my skills in Python, cloud platforms, and AI/ML to design and build impactful agentic AI solutions at Cantaloupe. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

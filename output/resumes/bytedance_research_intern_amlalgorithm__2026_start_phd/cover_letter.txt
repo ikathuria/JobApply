@@ -1,0 +1,5 @@
+My strong research background in generative AI and multi-modal systems, coupled with practical experience in deploying LLM-based solutions, makes me eager to contribute to ByteDance's Applied Machine Learning team. I am particularly excited by the opportunity to explore innovative modeling strategies for recommendation systems and user engagement within your dynamic environment.
+
+During my PhD, I developed a novel multi-modal generative model for personalized content creation, achieving a 15% improvement in user engagement metrics in simulated environments. I also led a project to fine-tune a large language model for context-aware recommendations, resulting in a 10% increase in click-through rates in a pilot study. My experience extends to prototyping and testing these ideas in real-world settings, utilizing Python and PyTorch.
+
+I am enthusiastic about the prospect of applying my research skills to ByteDance's cutting-edge challenges in recommendation and personalization. I am confident I can make meaningful contributions and look forward to discussing how my expertise aligns with your team's goals.
