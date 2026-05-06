@@ -5,8 +5,8 @@ Updates: title, company, location, salary_range, description, employer URL.
 Marks closed jobs as skipped if they haven't been applied to yet.
 
 Usage:
-    python enrich_jobs.py
-    python enrich_jobs.py --delay 2.0   # seconds between requests (default 1.5)
+    python scripts/enrich_jobs.py
+    python scripts/enrich_jobs.py --delay 2.0   # seconds between requests (default 1.5)
 """
 
 import argparse
@@ -15,7 +15,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 from tracker.tracker import init_db, update_status, DB_PATH
