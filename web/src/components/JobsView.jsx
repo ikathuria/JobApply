@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect, useContext } from 'react'
+import { useState, useMemo, useEffect, useContext, useRef } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
-import { Input, Btn, EmptyState, Spinner } from './ui/index.jsx'
+import { Input, Btn, EmptyState, Spinner, StatusBadge, Tag } from './ui/index.jsx'
 import JobRow from './JobRow.jsx'
 import { api } from '../api.js'
 
@@ -274,6 +274,615 @@ function FocusQueue({ focus, onSelectJob, setTab, dark }) {
 }
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
+function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision }) {
+  const T = dark ? DARK : LIGHT
+  const [drag, setDrag] = useState({ active: false, startX: 0, x: 0 })
+  const [busy, setBusy] = useState(false)
+  const pointerId = useRef(null)
+  const topJob = jobs[0]
+  const nextJob = jobs[1]
+  const dx = drag.x
+  const intent = dx > 42 ? 'approve' : dx < -42 ? 'skip' : null
+
+  async function decide(status) {
+    if (!topJob || busy) return
+    setBusy(true)
+    setDrag({ active: false, startX: 0, x: status === 'approved' ? 520 : -520 })
+    try {
+      await onDecision(topJob, status)
+    } finally {
+      setTimeout(() => {
+        setDrag({ active: false, startX: 0, x: 0 })
+        setBusy(false)
+      }, 160)
+    }
+  }
+
+  useEffect(() => {
+    const handler = e => {
+      if (!topJob) return
+      const tag = e.target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        decide('skipped')
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        decide('approved')
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        onOpenJob(topJob)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [topJob?.id, busy])
+
+  const score = topJob?.score ?? 0
+  const pct = Math.round(score * 100)
+  const whyFit = (() => {
+    const raw = (topJob?.notes || '').trim()
+    const match = raw.match(/why[_\s-]?fit\s*:\s*([\s\S]*)/i)
+    const text = (match ? match[1] : raw || topJob?.description || '').trim()
+    return text.replace(/\s+/g, ' ').slice(0, 340)
+  })()
+  const salary = topJob?.salary_range?.trim?.() || topJob?.salary_range || 'Not listed'
+  const skills = (topJob?.matched_skills || topJob?.keywords || '')
+    .toString()
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: '18px 24px 28px' }}>
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+          <Spinner size={28} />
+        </div>
+      ) : !topJob ? (
+        <EmptyState icon="OK" title="Ready queue cleared" sub="Everything here has been approved or removed from the review list." />
+      ) : (
+        <div style={{ maxWidth: 880, margin: '0 auto' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 220px',
+            gap: 22,
+            alignItems: 'start',
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                height: 520,
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                {nextJob && (
+                  <div style={{
+                    position: 'absolute',
+                    inset: '34px 30px 10px',
+                    borderRadius: 18,
+                    border: `1px solid ${T.border}`,
+                    background: dark ? '#151522' : '#FFFFFF',
+                    opacity: 0.55,
+                    transform: 'scale(0.96) translateY(16px)',
+                  }} />
+                )}
+
+                <div
+                  onPointerDown={e => {
+                    if (busy) return
+                    pointerId.current = e.pointerId
+                    e.currentTarget.setPointerCapture(e.pointerId)
+                    setDrag({ active: true, startX: e.clientX, x: 0 })
+                  }}
+                  onPointerMove={e => {
+                    if (!drag.active || pointerId.current !== e.pointerId) return
+                    setDrag(d => ({ ...d, x: e.clientX - d.startX }))
+                  }}
+                  onPointerUp={e => {
+                    if (pointerId.current === e.pointerId) pointerId.current = null
+                    if (dx > 110) decide('approved')
+                    else if (dx < -110) decide('skipped')
+                    else setDrag({ active: false, startX: 0, x: 0 })
+                  }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: 20,
+                    border: `1px solid ${intent === 'approve' ? '#22C55E' : intent === 'skip' ? '#EF4444' : T.border}`,
+                    background: dark ? '#171724' : '#FFFFFF',
+                    boxShadow: dark ? '0 24px 80px rgba(0,0,0,0.35)' : '0 24px 70px rgba(42,42,80,0.15)',
+                    padding: 24,
+                    cursor: busy ? 'wait' : drag.active ? 'grabbing' : 'grab',
+                    touchAction: 'pan-y',
+                    transform: `translateX(${dx}px) rotate(${dx / 22}deg)`,
+                    transition: drag.active ? 'none' : 'transform 0.18s ease, border-color 0.18s ease',
+                    userSelect: 'none',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: 18,
+                    left: 18,
+                    border: '2px solid #EF4444',
+                    color: '#EF4444',
+                    borderRadius: 10,
+                    padding: '7px 12px',
+                    fontSize: 12,
+                    fontWeight: 900,
+                    opacity: intent === 'skip' ? 1 : 0,
+                    transform: 'rotate(-10deg)',
+                    transition: 'opacity 0.12s',
+                  }}>
+                    REMOVE
+                  </div>
+                  <div style={{
+                    position: 'absolute',
+                    top: 18,
+                    right: 18,
+                    border: '2px solid #22C55E',
+                    color: '#22C55E',
+                    borderRadius: 10,
+                    padding: '7px 12px',
+                    fontSize: 12,
+                    fontWeight: 900,
+                    opacity: intent === 'approve' ? 1 : 0,
+                    transform: 'rotate(10deg)',
+                    transition: 'opacity 0.12s',
+                  }}>
+                    APPROVE
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+                    <StatusBadge status={topJob.status} />
+                    <div style={{ flex: 1 }} />
+                    <div style={{
+                      width: 58,
+                      height: 58,
+                      borderRadius: 16,
+                      background: score >= 0.75 ? '#22C55E18' : score >= 0.55 ? '#F59E0B18' : '#EF444418',
+                      border: `1px solid ${score >= 0.75 ? '#22C55E40' : score >= 0.55 ? '#F59E0B40' : '#EF444440'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'column',
+                    }}>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: score >= 0.75 ? T.success : score >= 0.55 ? T.warning : T.danger }}>{pct}</div>
+                      <div style={{ fontSize: 9, fontWeight: 800, color: T.muted, textTransform: 'uppercase' }}>match</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 11, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                    Role
+                  </div>
+                  <div style={{ fontSize: 28, lineHeight: 1.12, fontWeight: 900, color: T.text, marginBottom: 10 }}>
+                    {topJob.title}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', color: T.muted, fontSize: 13, marginBottom: 22 }}>
+                    <span style={{ color: T.text, fontWeight: 800 }}>{topJob.company || 'Unknown company'}</span>
+                    {topJob.location && <span>{topJob.location}</span>}
+                    {topJob.source && <Tag>{topJob.source}</Tag>}
+                  </div>
+
+                  <div style={{
+                    borderTop: `1px solid ${T.border}`,
+                    borderBottom: `1px solid ${T.border}`,
+                    padding: '16px 0 6px',
+                    marginBottom: 18,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 14,
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Job link</div>
+                      {topJob.url && !topJob.url.startsWith('manual://') ? (
+                        <a
+                          href={topJob.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onPointerDown={e => e.stopPropagation()}
+                          onClick={e => e.stopPropagation()}
+                          style={{ fontSize: 13, color: T.accent, fontWeight: 700, textDecoration: 'none' }}
+                        >
+                          Open posting
+                        </a>
+                      ) : (
+                        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.45 }}>Not available</div>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Salary range</div>
+                      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.45 }}>{salary}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7 }}>
+                      Why fit
+                    </div>
+                    <div style={{ minHeight: 96, fontSize: 13, color: T.text, lineHeight: 1.7, overflow: 'hidden' }}>
+                      {whyFit || 'No fit summary yet. Open details to inspect the job and notes before deciding.'}
+                      {whyFit && whyFit.length >= 340 ? '...' : ''}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 18 }}>
+                    {skills.length ? skills.map(skill => <Tag key={skill}>{skill}</Tag>) : (
+                      <span style={{ fontSize: 12, color: T.muted }}>No extracted skill tags yet.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 14 }}>
+                <button onClick={() => decide('skipped')} disabled={busy} style={{
+                  height: 46,
+                  borderRadius: 12,
+                  border: '1px solid #EF444440',
+                  background: dark ? '#251719' : '#FFF4F4',
+                  color: '#EF4444',
+                  fontSize: 13,
+                  fontWeight: 900,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: busy ? 'wait' : 'pointer',
+                }}>Remove</button>
+                <button onClick={() => onOpenJob({ ...topJob, _openTab: 'edit' })} style={{
+                  height: 46,
+                  borderRadius: 12,
+                  border: `1px solid ${T.border}`,
+                  background: dark ? '#1A1A28' : '#FAFAFA',
+                  color: T.text,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                }}>Edit details</button>
+                <button onClick={() => decide('approved')} disabled={busy} style={{
+                  height: 46,
+                  borderRadius: 12,
+                  border: '1px solid #22C55E40',
+                  background: '#22C55E',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 900,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: busy ? 'wait' : 'pointer',
+                }}>Approve</button>
+              </div>
+            </div>
+
+            <aside style={{
+              border: `1px solid ${T.border}`,
+              borderRadius: 14,
+              background: dark ? '#151522' : '#FFFFFF',
+              padding: 16,
+            }}>
+              <div style={{ fontSize: 12, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                Review queue
+              </div>
+              <div style={{ fontSize: 34, fontWeight: 900, color: T.text, lineHeight: 1 }}>{jobs.length}</div>
+              <div style={{ fontSize: 12, color: T.muted, marginTop: 5, marginBottom: 16 }}>ready jobs left</div>
+              <div style={{ display: 'grid', gap: 8, fontSize: 12, color: T.text }}>
+                <div><strong>Swipe left</strong> removes from this list.</div>
+                <div><strong>Swipe right</strong> moves to Approved.</div>
+                <div><strong>Enter</strong> opens details.</div>
+              </div>
+              <div style={{ borderTop: `1px solid ${T.border}`, margin: '16px 0', paddingTop: 14 }}>
+                <button onClick={() => onOpenJob(topJob)} style={{
+                  width: '100%',
+                  padding: '9px 10px',
+                  borderRadius: 10,
+                  border: `1px solid ${T.border}`,
+                  background: 'transparent',
+                  color: T.accent,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                }}>Open full details</button>
+              </div>
+              {nextJob && (
+                <div>
+                  <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7 }}>Up next</div>
+                  <div style={{ fontSize: 13, color: T.text, fontWeight: 800, lineHeight: 1.3 }}>{nextJob.title}</div>
+                  <div style={{ fontSize: 11, color: T.muted, marginTop: 4 }}>{nextJob.company}</div>
+                </div>
+              )}
+            </aside>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function safeFilePart(value) {
+  return (value || 'job').toString().replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'job'
+}
+
+async function downloadFile(url, filename) {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const message = await res.text().catch(() => res.statusText)
+    throw new Error(message || res.statusText)
+  }
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = filename
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+}
+
+function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecision }) {
+  const T = dark ? DARK : LIGHT
+  const [busy, setBusy] = useState(false)
+  const [openedIds, setOpenedIds] = useState(new Set())
+  const topJob = jobs[0]
+  const nextJob = jobs[1]
+
+  async function downloadPacket(job) {
+    const prefix = `${safeFilePart(job.company)}_${job.id}`
+    await Promise.all([
+      downloadFile(api.resumeUrl(job.id), `${prefix}_resume.pdf`),
+      downloadFile(api.coverLetterPdfUrl(job.id), `${prefix}_cover_letter.pdf`),
+    ])
+  }
+
+  async function openPosting(job) {
+    if (!job) return
+    const hasPosting = job.url && !job.url.startsWith('manual://')
+    if (hasPosting) {
+      window.open(job.url, '_blank', 'noopener,noreferrer')
+    }
+    setOpenedIds(prev => new Set(prev).add(job.id))
+    try {
+      await downloadPacket(job)
+    } catch (e) {
+      alert(`Could not download both documents: ${e.message}`)
+    }
+    if (!hasPosting) {
+      onOpenJob(job)
+    }
+  }
+
+  async function decide(status) {
+    if (!topJob || busy) return
+    setBusy(true)
+    try {
+      await onDecision(topJob, status)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    const handler = e => {
+      if (!topJob) return
+      const tag = e.target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        openPosting(topJob)
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        decide('applied')
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        decide('skipped')
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [topJob?.id, busy])
+
+  const score = topJob?.score ?? 0
+  const pct = Math.round(score * 100)
+  const whyFit = (() => {
+    const raw = (topJob?.notes || '').trim()
+    const match = raw.match(/why[_\s-]?fit\s*:\s*([\s\S]*)/i)
+    const text = (match ? match[1] : raw || topJob?.description || '').trim()
+    return text.replace(/\s+/g, ' ').slice(0, 300)
+  })()
+  const skills = (topJob?.matched_skills || topJob?.keywords || '')
+    .toString()
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+  const hasLink = !!(topJob?.url && !topJob.url.startsWith('manual://'))
+  const opened = topJob ? openedIds.has(topJob.id) : false
+
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: '18px 24px 28px' }}>
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+          <Spinner size={28} />
+        </div>
+      ) : !topJob ? (
+        <EmptyState icon="OK" title="Approved queue cleared" sub="No approved jobs are waiting to be opened." />
+      ) : (
+        <div style={{ maxWidth: 880, margin: '0 auto' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 220px',
+            gap: 22,
+            alignItems: 'start',
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                minHeight: 500,
+                borderRadius: 20,
+                border: `1px solid ${opened ? '#22C55E60' : T.border}`,
+                background: dark ? '#171724' : '#FFFFFF',
+                boxShadow: dark ? '0 24px 80px rgba(0,0,0,0.35)' : '0 24px 70px rgba(42,42,80,0.15)',
+                padding: 24,
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+                  <StatusBadge status={topJob.status} />
+                  {opened && <Tag style={{ color: '#22C55E' }}>opened</Tag>}
+                  <div style={{ flex: 1 }} />
+                  <div style={{
+                    width: 58,
+                    height: 58,
+                    borderRadius: 16,
+                    background: score >= 0.75 ? '#22C55E18' : score >= 0.55 ? '#F59E0B18' : '#EF444418',
+                    border: `1px solid ${score >= 0.75 ? '#22C55E40' : score >= 0.55 ? '#F59E0B40' : '#EF444440'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                  }}>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: score >= 0.75 ? T.success : score >= 0.55 ? T.warning : T.danger }}>{pct}</div>
+                    <div style={{ fontSize: 9, fontWeight: 800, color: T.muted, textTransform: 'uppercase' }}>match</div>
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 11, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                  Approved application
+                </div>
+                <div style={{ fontSize: 28, lineHeight: 1.12, fontWeight: 900, color: T.text, marginBottom: 10 }}>
+                  {topJob.title}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', color: T.muted, fontSize: 13, marginBottom: 22 }}>
+                  <span style={{ color: T.text, fontWeight: 800 }}>{topJob.company || 'Unknown company'}</span>
+                  {topJob.location && <span>{topJob.location}</span>}
+                  {topJob.source && <Tag>{topJob.source}</Tag>}
+                </div>
+
+                <div style={{
+                  borderTop: `1px solid ${T.border}`,
+                  borderBottom: `1px solid ${T.border}`,
+                  padding: '16px 0',
+                  marginBottom: 18,
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 14,
+                }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Application link</div>
+                    <div style={{ fontSize: 13, color: T.text, lineHeight: 1.45 }}>
+                      {hasLink ? 'Opening this link downloads the resume and cover letter.' : 'No posting URL is stored for this job.'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Documents</div>
+                    <div style={{ fontSize: 13, color: T.text, lineHeight: 1.45 }}>Resume PDF and cover letter PDF</div>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7 }}>
+                    Fit notes
+                  </div>
+                  <div style={{ minHeight: 84, fontSize: 13, color: T.text, lineHeight: 1.7, overflow: 'hidden' }}>
+                    {whyFit || 'No fit summary yet. Open details if you want to inspect notes before applying.'}
+                    {whyFit && whyFit.length >= 300 ? '...' : ''}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 18 }}>
+                  {skills.length ? skills.map(skill => <Tag key={skill}>{skill}</Tag>) : (
+                    <span style={{ fontSize: 12, color: T.muted }}>No extracted skill tags yet.</span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr', gap: 10, marginTop: 14 }}>
+                <button onClick={() => decide('skipped')} disabled={busy} style={{
+                  height: 46,
+                  borderRadius: 12,
+                  border: '1px solid #EF444440',
+                  background: dark ? '#251719' : '#FFF4F4',
+                  color: '#EF4444',
+                  fontSize: 13,
+                  fontWeight: 900,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: busy ? 'wait' : 'pointer',
+                }}>Skip</button>
+                <button onClick={() => openPosting(topJob)} disabled={busy} style={{
+                  height: 46,
+                  borderRadius: 12,
+                  border: '1px solid #8B5CF640',
+                  background: T.accent,
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 900,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: busy ? 'wait' : 'pointer',
+                }}>{hasLink ? 'Open link + download docs' : 'Download docs + details'}</button>
+                <button onClick={() => decide('applied')} disabled={busy} style={{
+                  height: 46,
+                  borderRadius: 12,
+                  border: '1px solid #22C55E40',
+                  background: '#22C55E',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 900,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: busy ? 'wait' : 'pointer',
+                }}>Mark applied</button>
+              </div>
+            </div>
+
+            <aside style={{
+              border: `1px solid ${T.border}`,
+              borderRadius: 14,
+              background: dark ? '#151522' : '#FFFFFF',
+              padding: 16,
+            }}>
+              <div style={{ fontSize: 12, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                Apply queue
+              </div>
+              <div style={{ fontSize: 34, fontWeight: 900, color: T.text, lineHeight: 1 }}>{jobs.length}</div>
+              <div style={{ fontSize: 12, color: T.muted, marginTop: 5, marginBottom: 16 }}>approved jobs left</div>
+              <div style={{ display: 'grid', gap: 8, fontSize: 12, color: T.text }}>
+                <div><strong>Enter</strong> opens the posting and downloads docs.</div>
+                <div><strong>Arrow right</strong> marks the job applied.</div>
+                <div><strong>Arrow left</strong> skips it.</div>
+              </div>
+              <div style={{ borderTop: `1px solid ${T.border}`, margin: '16px 0', paddingTop: 14 }}>
+                <button onClick={() => onOpenJob(topJob)} style={{
+                  width: '100%',
+                  padding: '9px 10px',
+                  borderRadius: 10,
+                  border: `1px solid ${T.border}`,
+                  background: 'transparent',
+                  color: T.accent,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                }}>Open full details</button>
+              </div>
+              {nextJob && (
+                <div>
+                  <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7 }}>Up next</div>
+                  <div style={{ fontSize: 13, color: T.text, fontWeight: 800, lineHeight: 1.3 }}>{nextJob.title}</div>
+                  <div style={{ fontSize: 11, color: T.muted, marginTop: 4 }}>{nextJob.company}</div>
+                </div>
+              )}
+            </aside>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const TABS = [
   { id: 'new',      label: 'New',      statusFilter: 'new' },
   { id: 'ready',    label: 'Ready',    statusFilter: 'queued' },
@@ -288,6 +897,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
 
   const [search, setSearch]       = useState('')
   const [sort, setSort]           = useState('score')
+  const [reviewMode, setReviewMode] = useState('deck')
   const [minScore, setMinScore]   = useState(0)
   const [jobs, setJobs]           = useState([])
   const [focus, setFocus]         = useState([])
@@ -329,6 +939,13 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     }
   }
 
+  async function handleReviewDecision(job, status) {
+    await api.patch(job.id, { status })
+    setJobs(prev => prev.filter(j => j.id !== job.id))
+    if (selectedJob?.id === job.id) onSelectJob(null)
+    triggerRefresh?.()
+  }
+
   // Fetch jobs when tab or filters change
   useEffect(() => {
     setLoading(true)
@@ -365,6 +982,10 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
       (j.location || '').toLowerCase().includes(q)
     )
   }, [jobs, search])
+
+  useEffect(() => {
+    setReviewMode(tab === 'ready' || tab === 'approved' ? 'deck' : 'list')
+  }, [tab])
 
   const tabCount = (tabId) => {
     if (!stats) return 0
@@ -419,7 +1040,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
       </div>
 
       {/* Filter bar */}
-      <div style={{ padding: '12px 24px', flexShrink: 0, display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div style={{ padding: '12px 24px', flexShrink: 0, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <Input value={search} onChange={setSearch} placeholder="Search title, company, location…" icon="⌕" style={{ flex: 1, maxWidth: 360 }} />
 
         <select value={sort} onChange={e => setSort(e.target.value)}
@@ -447,9 +1068,49 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
         <div style={{ fontSize: 11, color: T.muted, whiteSpace: 'nowrap' }}>
           {filteredJobs.length} jobs
         </div>
+        {(tab === 'ready' || tab === 'approved') && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, background: dark ? '#13131F' : '#EEF0F7', borderRadius: 8, padding: 4 }}>
+            {['deck', 'list'].map(mode => (
+              <button
+                key={mode}
+                onClick={() => setReviewMode(mode)}
+                style={{
+                  padding: '7px 12px',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  background: reviewMode === mode ? T.accent : 'transparent',
+                  color: reviewMode === mode ? '#fff' : T.muted,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  fontFamily: 'DM Sans, sans-serif',
+                }}
+              >
+                {mode === 'deck' ? (tab === 'approved' ? 'Apply deck' : 'Review deck') : 'List'}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Job list */}
+      {tab === 'ready' && reviewMode === 'deck' ? (
+        <ReviewDeck
+          jobs={filteredJobs}
+          loading={loading}
+          dark={dark}
+          onOpenJob={onSelectJob}
+          onDecision={handleReviewDecision}
+        />
+      ) : tab === 'approved' && reviewMode === 'deck' ? (
+        <ApprovedDeck
+          jobs={filteredJobs}
+          loading={loading}
+          dark={dark}
+          onOpenJob={onSelectJob}
+          onDecision={handleReviewDecision}
+        />
+      ) : (
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 24px', position: 'relative' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
@@ -471,6 +1132,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           ))
         )}
       </div>
+      )}
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (

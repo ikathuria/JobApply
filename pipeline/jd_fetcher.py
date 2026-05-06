@@ -50,6 +50,16 @@ def fetch_jd(url: str, retries: int = 2) -> str:
     Fetch and return cleaned job description text from a URL.
     Returns empty string on failure.
     """
+    if "jobright.ai/jobs/info/" in url:
+        try:
+            from pipeline.jobright_enricher import enrich_jobright_url
+
+            enriched = enrich_jobright_url(url)
+            if enriched.description:
+                return enriched.description
+        except Exception as e:
+            logger.warning(f"Jobright enrichment fallback failed for {url}: {e}")
+
     for attempt in range(retries + 1):
         try:
             resp = requests.get(url, headers=HEADERS, timeout=20)

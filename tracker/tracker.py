@@ -42,6 +42,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             company         TEXT,
             location        TEXT,
             url             TEXT UNIQUE NOT NULL,
+            source_url      TEXT,
             source          TEXT,
             score           REAL DEFAULT 0.0,
             status          TEXT DEFAULT 'new',
@@ -69,6 +70,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     # Migrate existing DBs that pre-date any of these columns (ALTER TABLE
     # is a no-op if the column already exists — the exception is swallowed).
     for _col, _def in [
+        ("source_url",      "TEXT"),
         ("rejection_stage", "TEXT DEFAULT NULL"),
         ("starred",         "INTEGER DEFAULT 0"),
         ("interview_date",  "TEXT DEFAULT NULL"),
@@ -82,6 +84,19 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         except Exception:
             pass  # column already exists — expected for fresh and migrated DBs
 
+    conn.execute("UPDATE jobs SET source_url = url WHERE COALESCE(source_url, '') = ''")
+    try:
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_source_url_unique
+            ON jobs(source_url)
+            WHERE source_url IS NOT NULL AND source_url <> ''
+            """
+        )
+        conn.commit()
+    except Exception:
+        pass
+
 
 def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
     """
@@ -92,24 +107,34 @@ def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
     skipped = 0
 
     for job in jobs:
+        source_url = job.get("source_url") or job.get("url", "")
+        existing = conn.execute(
+            "SELECT id FROM jobs WHERE url = ? OR source_url = ? LIMIT 1",
+            (job.get("url", ""), source_url),
+        ).fetchone()
+        if existing:
+            skipped += 1
+            continue
         try:
             conn.execute(
                 """
-                INSERT INTO jobs (title, company, location, url, source, score,
-                                  easy_apply, description, date_scraped)
-                VALUES (:title, :company, :location, :url, :source, :score,
-                        :easy_apply, :description, :date_scraped)
+                INSERT INTO jobs (title, company, location, url, source_url, source, score,
+                                  easy_apply, description, date_scraped, salary_range)
+                VALUES (:title, :company, :location, :url, :source_url, :source, :score,
+                        :easy_apply, :description, :date_scraped, :salary_range)
                 """,
                 {
                     "title": job.get("title", ""),
                     "company": job.get("company", ""),
                     "location": job.get("location", ""),
                     "url": job.get("url", ""),
+                    "source_url": source_url,
                     "source": job.get("source", ""),
                     "score": job.get("score", 0.0),
                     "easy_apply": 1 if job.get("easy_apply") else 0,
                     "description": job.get("description", ""),
                     "date_scraped": job.get("date_scraped", datetime.utcnow().isoformat()),
+                    "salary_range": job.get("salary_range") or job.get("salary", ""),
                 },
             )
             inserted += 1
@@ -148,7 +173,7 @@ def update_status(conn: sqlite3.Connection, job_id: int, status: str, **kwargs) 
         "starred", "interview_date", "recruiter", "salary_range",
         "follow_up_date", "rejection_stage",
         # direct-edit fields
-        "title", "company", "location", "url", "score",
+        "title", "company", "location", "url", "source_url", "score", "description",
     }
     updates = {"status": status, "updated_at": datetime.utcnow().isoformat()}
     updates.update({k: v for k, v in kwargs.items() if k in allowed})

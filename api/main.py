@@ -258,6 +258,7 @@ class JobPatch(BaseModel):
     company: str | None = None
     location: str | None = None
     url: str | None = None
+    source_url: str | None = None
 
 
 @app.patch("/api/jobs/{job_id}")
@@ -311,9 +312,40 @@ def api_tailor(job_id: int) -> dict:
 
     try:
         from pipeline.jd_fetcher import fetch_jd
+        from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
         from pipeline.resume_tailor import tailor_resume
         from pipeline.cover_letter import generate_cover_letter
         from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
+
+        source_url = job.get("source_url") or job.get("url") or ""
+        if is_jobright_url(source_url):
+            enriched = enrich_jobright_url(source_url)
+            if enriched.is_closed:
+                update_status(conn, job_id, STATUS_SKIPPED, source_url=source_url)
+                raise HTTPException(400, f"Job is closed: {enriched.closed_reason}")
+            update_status(
+                conn,
+                job_id,
+                job["status"],
+                title=enriched.title or job["title"],
+                company=enriched.company or job.get("company"),
+                location=enriched.location or job.get("location"),
+                salary_range=enriched.salary_range or job.get("salary_range"),
+                description=enriched.description or job.get("description"),
+                source_url=source_url,
+                url=enriched.employer_url or job["url"],
+            )
+            job.update(
+                {
+                    "title": enriched.title or job["title"],
+                    "company": enriched.company or job.get("company"),
+                    "location": enriched.location or job.get("location"),
+                    "salary_range": enriched.salary_range or job.get("salary_range"),
+                    "description": enriched.description or job.get("description"),
+                    "source_url": source_url,
+                    "url": enriched.employer_url or job["url"],
+                }
+            )
 
         jd_text = fetch_jd(job["url"])
         if not jd_text:

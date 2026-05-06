@@ -30,8 +30,20 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
 
 from tracker.tracker import (
     init_db, upsert_jobs, get_jobs, get_stats, update_status,
-    STATUS_NEW, STATUS_QUEUED,
+    STATUS_NEW, STATUS_QUEUED, STATUS_SKIPPED, DB_PATH,
 )
+
+
+def _open_db():
+    """Return a DB connection — Turso when TURSO_DATABASE_URL is set, SQLite otherwise."""
+    if os.environ.get("TURSO_DATABASE_URL"):
+        from api.turso import connect as turso_connect, seed_from_sqlite
+        from tracker.tracker import _create_tables
+        conn = turso_connect()
+        _create_tables(conn)
+        seed_from_sqlite(conn, DB_PATH)  # no-op when Turso already has rows
+        return conn
+    return init_db()
 
 try:
     from dotenv import load_dotenv
@@ -119,7 +131,7 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
 def run_pipeline(config: dict, source: str | None = None) -> None:
     from pipeline.job_filter import filter_jobs, deduplicate
 
-    conn = init_db()
+    conn = _open_db()
     min_score = config.get("scoring", {}).get("min_score", 0.3)
 
     raw_jobs = run_discovery(config, source)
@@ -164,11 +176,12 @@ def run_tailor(limit: int = 10) -> None:
       5. Mark job as 'queued' in tracker
     """
     from pipeline.jd_fetcher import fetch_jd
+    from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
     from pipeline.resume_tailor import tailor_resume
     from pipeline.cover_letter import generate_cover_letter
     from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
 
-    conn = init_db()
+    conn = _open_db()
     jobs = get_jobs(conn, status=STATUS_NEW, limit=limit)
 
     if not jobs:
@@ -186,6 +199,42 @@ def run_tailor(limit: int = 10) -> None:
 
         print(f"\n  - {job['title']} @ {job['company'] or 'N/A'}")
         print(f"     Score: {job['score']:.2f} | {job['url']}")
+
+        if is_jobright_url(job.get("source_url") or job.get("url")):
+            print("     Enriching Jobright detail page...")
+            try:
+                source_url = job.get("source_url") or job["url"]
+                enriched = enrich_jobright_url(source_url)
+                new_status = STATUS_SKIPPED if enriched.is_closed else job["status"]
+                update_status(
+                    conn,
+                    job["id"],
+                    new_status,
+                    title=enriched.title or job["title"],
+                    company=enriched.company or job.get("company"),
+                    location=enriched.location or job.get("location"),
+                    salary_range=enriched.salary_range or job.get("salary_range"),
+                    description=enriched.description or job.get("description"),
+                    source_url=source_url,
+                    url=enriched.employer_url or job["url"],
+                )
+                job.update(
+                    {
+                        "title": enriched.title or job["title"],
+                        "company": enriched.company or job.get("company"),
+                        "location": enriched.location or job.get("location"),
+                        "salary_range": enriched.salary_range or job.get("salary_range"),
+                        "description": enriched.description or job.get("description"),
+                        "source_url": source_url,
+                        "url": enriched.employer_url or job["url"],
+                        "status": new_status,
+                    }
+                )
+                if enriched.is_closed:
+                    print(f"     [!] Marked skipped: {enriched.closed_reason}")
+                    continue
+            except Exception as e:
+                logger.warning(f"Could not enrich Jobright job {job['id']}: {e}")
 
         # 1. Fetch JD
         print("     Fetching job description...")
@@ -244,10 +293,146 @@ def run_tailor(limit: int = 10) -> None:
     conn.close()
 
 
+def run_enrich_ready(limit: int = 200) -> None:
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
+
+    conn = _open_db()
+    jobs = get_jobs(conn, status=STATUS_QUEUED, limit=limit)
+    candidates = []
+    for row in jobs:
+        job = dict(row)
+        source_url = job.get("source_url") or job.get("url") or ""
+        if is_jobright_url(source_url):
+            candidates.append(job)
+
+    total = 0
+    updated = 0
+    skipped_closed = 0
+
+    print(f"\n-- Enriching up to {len(candidates)} ready jobs -------------------")
+
+    def _enrich(job: dict) -> tuple[dict, object]:
+        source_url = job.get("source_url") or job.get("url") or ""
+        return job, enrich_jobright_url(source_url)
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        future_map = {executor.submit(_enrich, job): job for job in candidates}
+        for future in as_completed(future_map):
+            job = future_map[future]
+            source_url = job.get("source_url") or job.get("url") or ""
+            total += 1
+            print(f"  - {job['title']} @ {job.get('company') or 'N/A'}")
+            try:
+                _, enriched = future.result()
+            except Exception as e:
+                logger.warning(f"Ready-job enrichment failed for {job['id']}: {e}")
+                print(f"     [!] enrichment failed: {e}")
+                continue
+
+            new_status = STATUS_SKIPPED if enriched.is_closed else job["status"]
+            update_status(
+                conn,
+                job["id"],
+                new_status,
+                title=enriched.title or job["title"],
+                company=enriched.company or job.get("company"),
+                location=enriched.location or job.get("location"),
+                salary_range=enriched.salary_range or job.get("salary_range"),
+                description=enriched.description or job.get("description"),
+                source_url=source_url,
+                url=enriched.employer_url or job["url"],
+            )
+            updated += 1
+            if enriched.is_closed:
+                skipped_closed += 1
+                print(f"     skipped: {enriched.closed_reason}")
+            else:
+                target_url = enriched.employer_url or job["url"]
+                print(f"     updated: {target_url}")
+
+    print("\n-- Ready enrichment summary --------------------")
+    print(f"  Jobright ready jobs seen : {total}")
+    print(f"  Jobs updated            : {updated}")
+    print(f"  Marked skipped/closed   : {skipped_closed}")
+    print()
+    conn.close()
+
+
+def run_resolve_priority_links(limit: int = 60) -> None:
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
+
+    conn = _open_db()
+    approved = [dict(row) for row in get_jobs(conn, status="approved", limit=limit)]
+    ready = [dict(row) for row in get_jobs(conn, status=STATUS_QUEUED, limit=limit)]
+
+    candidates: list[dict] = []
+    seen_ids: set[int] = set()
+    for bucket in (approved, ready):
+        for job in bucket:
+            source_url = job.get("source_url") or job.get("url") or ""
+            if not is_jobright_url(source_url):
+                continue
+            if job["id"] in seen_ids:
+                continue
+            seen_ids.add(job["id"])
+            candidates.append(job)
+
+    print(f"\n-- Resolving employer links for {len(candidates)} priority jobs --------")
+
+    updated = 0
+    resolved = 0
+
+    def _resolve(job: dict) -> tuple[dict, object]:
+        source_url = job.get("source_url") or job.get("url") or ""
+        return job, enrich_jobright_url(source_url)
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        future_map = {executor.submit(_resolve, job): job for job in candidates}
+        for future in as_completed(future_map):
+            job = future_map[future]
+            source_url = job.get("source_url") or job.get("url") or ""
+            print(f"  - {job['title']} @ {job.get('company') or 'N/A'}")
+            try:
+                _, enriched = future.result()
+            except Exception as e:
+                logger.warning(f"Priority link resolution failed for {job['id']}: {e}")
+                print(f"     [!] failed: {e}")
+                continue
+
+            target_url = enriched.employer_url or job["url"]
+            update_status(
+                conn,
+                job["id"],
+                job["status"],
+                source_url=source_url,
+                url=target_url,
+                salary_range=enriched.salary_range or job.get("salary_range"),
+                description=enriched.description or job.get("description"),
+                location=enriched.location or job.get("location"),
+                company=enriched.company or job.get("company"),
+                title=enriched.title or job.get("title"),
+            )
+            updated += 1
+            if target_url != source_url:
+                resolved += 1
+                print(f"     resolved: {target_url}")
+            else:
+                print("     still on Jobright URL")
+
+    print("\n-- Priority link summary ------------------------")
+    print(f"  Priority jobs checked : {len(candidates)}")
+    print(f"  Jobs updated          : {updated}")
+    print(f"  Employer URLs found   : {resolved}")
+    print()
+    conn.close()
+
+
 # -- Stats ---------------------------------------------------------------------
 
 def show_stats() -> None:
-    conn = init_db()
+    conn = _open_db()
     stats = get_stats(conn)
     total = sum(stats.values())
     print("\n-- Application Tracker Stats -------------------")
@@ -278,10 +463,16 @@ def main() -> None:
     parser.add_argument("--headless", action="store_true", help="Headless auto-submit for approved jobs (GHA mode)")
     parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
     parser.add_argument("--stats", action="store_true", help="Show tracker stats")
+    parser.add_argument("--enrich-ready", action="store_true", help="Refresh ready jobs from Jobright detail pages")
+    parser.add_argument("--resolve-priority-links", action="store_true", help="Resolve employer URLs for approved and top ready jobs")
     args = parser.parse_args()
 
     if args.stats:
         show_stats()
+    elif args.enrich_ready:
+        run_enrich_ready(limit=args.limit)
+    elif args.resolve_priority_links:
+        run_resolve_priority_links(limit=args.limit)
     elif args.tailor:
         run_tailor(limit=args.limit)
     elif args.apply:

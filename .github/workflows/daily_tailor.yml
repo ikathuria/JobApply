@@ -51,25 +51,31 @@ jobs:
       - name: Discover — intern-list.com
         if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'intern_list' }}
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
+          TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:     ${{ secrets.TURSO_AUTH_TOKEN }}
         run: python main.py --source intern_list
         continue-on-error: true
 
       - name: Discover — LinkedIn
         if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'linkedin' }}
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          LINKEDIN_EMAIL: ${{ secrets.LINKEDIN_EMAIL }}
-          LINKEDIN_PASSWORD: ${{ secrets.LINKEDIN_PASSWORD }}
+          GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
+          LINKEDIN_EMAIL:       ${{ secrets.LINKEDIN_EMAIL }}
+          LINKEDIN_PASSWORD:    ${{ secrets.LINKEDIN_PASSWORD }}
+          TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:     ${{ secrets.TURSO_AUTH_TOKEN }}
         run: python main.py --source linkedin
         continue-on-error: true   # skips gracefully if secrets not set
 
       - name: Discover — Handshake
         if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'handshake' }}
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          HANDSHAKE_EMAIL: ${{ secrets.HANDSHAKE_EMAIL }}
-          HANDSHAKE_PASSWORD: ${{ secrets.HANDSHAKE_PASSWORD }}
+          GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
+          HANDSHAKE_EMAIL:      ${{ secrets.HANDSHAKE_EMAIL }}
+          HANDSHAKE_PASSWORD:   ${{ secrets.HANDSHAKE_PASSWORD }}
+          TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:     ${{ secrets.TURSO_AUTH_TOKEN }}
         run: python main.py --source handshake
         continue-on-error: true   # skips gracefully if secrets not set
 
@@ -77,17 +83,20 @@ jobs:
 
       - name: Tailor resumes for top new jobs
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
+          TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:     ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           LIMIT=${{ github.event.inputs.limit || '50' }}
           python main.py --tailor --limit $LIMIT
 
       # ── Commit ────────────────────────────────────────────────────────────────
+      # DB changes now go to Turso — only commit generated PDFs.
 
-      - name: Commit updated tracker and generated PDFs
+      - name: Commit generated PDFs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tracker/applications.db output/resumes/
+          git add output/resumes/
           git diff --staged --quiet && echo "Nothing to commit" || \
             git commit -m "chore: daily tailor $(date -u +%Y-%m-%d)" && git push

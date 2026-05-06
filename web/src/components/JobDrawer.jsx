@@ -200,8 +200,10 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
   const T = dark ? DARK : LIGHT
   const [job, setJob] = useState(initialJob)
   const [activeTab, setActiveTab] = useState('overview')
+  const [overviewEditing, setOverviewEditing] = useState(false)
   const [notes, setNotes] = useState('')
   const [coverLetter, setCoverLetter] = useState('')
+  const [coverLetterMode, setCoverLetterMode] = useState('pdf')
   const [jdExpanded, setJdExpanded] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [tailoring, setTailoring] = useState(false)
@@ -224,7 +226,10 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
       setJob(initialJob)
       setNotes(initialJob.notes || '')
     }
-    setActiveTab('overview')
+    const openTab = initialJob._openTab || 'overview'
+    setActiveTab(openTab === 'edit' ? 'overview' : openTab)
+    setOverviewEditing(openTab === 'edit')
+    setCoverLetterMode('pdf')
     setTailorMsg('')
     setTrackingMsg('')
   }, [initialJob?.id])
@@ -248,7 +253,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
   }, [activeTab, job?.id, job?.resume_path])
 
   useEffect(() => {
-    if (activeTab === 'edit' && job) {
+    if (job) {
       setEditForm({
         title: job.title || '',
         company: job.company || '',
@@ -266,7 +271,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
       })
       setEditMsg('')
     }
-  }, [activeTab, job?.id])
+  }, [job?.id])
 
   if (!job) return (
     <div style={{ width: 480, flexShrink: 0, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.surface, borderLeft: `1px solid ${T.border}` }}>
@@ -393,7 +398,8 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
   const setTracking = (k, v) => setTrackingForm(f => ({ ...f, [k]: v }))
   const setEdit = (k, v) => setEditForm(f => ({ ...f, [k]: v }))
   const input = fieldBase(T, dark)
-  const drawerTabs = ['overview', 'resume', 'cover letter', 'edit']
+  const drawerTabs = ['overview', 'resume', 'cover letter']
+  const notesRows = Math.min(18, Math.max(8, notes.split('\n').length + Math.ceil(notes.length / 120)))
 
   return (
     <>
@@ -480,7 +486,10 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
 
         <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
           {drawerTabs.map(t => (
-            <button key={t} onClick={() => setActiveTab(t)}
+            <button key={t} onClick={() => {
+              setOverviewEditing(false)
+              setActiveTab(t)
+            }}
               style={{
                 flex: 1,
                 padding: '9px 4px',
@@ -509,6 +518,56 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                 </div>
               )}
 
+              {editForm && (
+                <FormSection
+                  title={overviewEditing ? 'Edit this job' : 'Role details'}
+                  sub={overviewEditing ? 'You are editing directly in Overview. Save here when the scrape or import needs cleanup.' : 'Core job information and metadata.'}
+                  T={T}
+                  dark={dark}
+                >
+                  {overviewEditing ? (
+                    <>
+                      <TextField label="Title" value={editForm.title} onChange={v => setEdit('title', v)} T={T} dark={dark} />
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                        <TextField label="Company" value={editForm.company} onChange={v => setEdit('company', v)} T={T} dark={dark} />
+                        <TextField label="Location" value={editForm.location} onChange={v => setEdit('location', v)} T={T} dark={dark} />
+                        <TextField label="Score" type="number" value={editForm.score} onChange={v => setEdit('score', v)} T={T} dark={dark} />
+                        <TextField label="Salary range" value={editForm.salary_range} onChange={v => setEdit('salary_range', v)} placeholder="$40-50/hr" T={T} dark={dark} />
+                      </div>
+                      <TextField label="Job URL" value={editForm.url} onChange={v => setEdit('url', v)} T={T} dark={dark} />
+                      <Field label="Starred" T={T}>
+                        <label style={{ ...input, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editForm.starred} onChange={e => setEdit('starred', e.target.checked)} style={{ accentColor: '#F59E0B' }} />
+                          Keep near the top
+                        </label>
+                      </Field>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                        <Btn variant="primary" size="sm" onClick={saveEdit} disabled={editSaving}>{editSaving ? 'Saving...' : 'Save changes'}</Btn>
+                        <Btn variant="secondary" size="sm" onClick={() => setOverviewEditing(false)}>Done</Btn>
+                        {editMsg && <span style={{ fontSize: 12, color: editMsg === 'Saved' ? T.success : T.danger }}>{editMsg}</span>}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                        <Field label="Title" T={T}><div style={{ ...input, minHeight: 34 }}>{job.title || 'Untitled job'}</div></Field>
+                        <Field label="Company" T={T}><div style={{ ...input, minHeight: 34 }}>{job.company || 'Unknown company'}</div></Field>
+                        <Field label="Location" T={T}><div style={{ ...input, minHeight: 34 }}>{job.location || 'Not set'}</div></Field>
+                        <Field label="Score" T={T}><div style={{ ...input, minHeight: 34 }}>{job.score != null ? job.score : 'Not set'}</div></Field>
+                        <Field label="Salary range" T={T}><div style={{ ...input, minHeight: 34 }}>{job.salary_range || 'Not set'}</div></Field>
+                        <Field label="Starred" T={T}><div style={{ ...input, minHeight: 34 }}>{job.starred ? 'Yes' : 'No'}</div></Field>
+                      </div>
+                      <Field label="Job URL" T={T}>
+                        <div style={{ ...input, minHeight: 34, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.url || 'Not set'}</div>
+                      </Field>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                        <Btn variant="secondary" size="sm" onClick={() => setOverviewEditing(true)}>Edit details</Btn>
+                      </div>
+                    </>
+                  )}
+                </FormSection>
+              )}
+
               <FormSection title="Update this application" sub="The fields you are most likely to touch after every job-search session." T={T} dark={dark}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
                   <SelectField label="Status" value={trackingForm.status} onChange={v => setTracking('status', v)} options={STATUS_OPTS} T={T} dark={dark} />
@@ -525,7 +584,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
               </FormSection>
 
               <FormSection title="Notes" T={T} dark={dark}>
-                <Textarea value={notes} onChange={setNotes} placeholder="Referral notes, next step, application quirks..." rows={4} />
+                <Textarea value={notes} onChange={setNotes} placeholder="Referral notes, next step, application quirks..." rows={notesRows} style={{ lineHeight: 1.6 }} />
                 {notes !== (job.notes || '') && (
                   <button onClick={saveNotes} style={{ marginTop: 7, background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 800 }}>
                     Save notes
@@ -592,9 +651,42 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                 </div>
               ) : (
                 <>
-                  <Textarea value={coverLetter} onChange={setCoverLetter} rows={18} style={{ fontSize: 12, lineHeight: 1.7 }} />
+                  <div style={{ display: 'flex', gap: 4, background: dark ? '#13131F' : '#EEF0F7', borderRadius: 8, padding: 4, marginBottom: 12 }}>
+                    {['pdf', 'text'].map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setCoverLetterMode(mode)}
+                        style={{
+                          flex: 1,
+                          padding: '7px 10px',
+                          border: 'none',
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          background: coverLetterMode === mode ? T.accent : 'transparent',
+                          color: coverLetterMode === mode ? '#fff' : T.muted,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          fontFamily: 'DM Sans, sans-serif',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                  {coverLetterMode === 'pdf' ? (
+                    <div style={{ textAlign: 'center' }}>
+                      <iframe
+                        src={api.coverLetterPdfUrl(job.id)}
+                        style={{ width: '100%', height: 500, border: 'none', borderRadius: 8 }}
+                        title="Cover letter PDF"
+                      />
+                    </div>
+                  ) : (
+                    <Textarea value={coverLetter} onChange={setCoverLetter} rows={18} style={{ fontSize: 12, lineHeight: 1.7 }} />
+                  )}
                   <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-                    <Btn variant="secondary" size="sm" onClick={saveCoverLetter}>Save edits</Btn>
+                    {coverLetterMode === 'text' && <Btn variant="secondary" size="sm" onClick={saveCoverLetter}>Save edits</Btn>}
                     <a href={api.coverLetterPdfUrl(job.id)} target="_blank" rel="noopener noreferrer">
                       <Btn variant="ghost" size="sm">Download PDF</Btn>
                     </a>
@@ -604,55 +696,6 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
             </div>
           )}
 
-          {activeTab === 'edit' && editForm && (
-            <div>
-              <FormSection title="Role details" sub="Use this for corrections after import or scraping." T={T} dark={dark}>
-                <TextField label="Title" value={editForm.title} onChange={v => setEdit('title', v)} T={T} dark={dark} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
-                  <TextField label="Company" value={editForm.company} onChange={v => setEdit('company', v)} T={T} dark={dark} />
-                  <TextField label="Location" value={editForm.location} onChange={v => setEdit('location', v)} T={T} dark={dark} />
-                </div>
-                <TextField label="Job URL" value={editForm.url} onChange={v => setEdit('url', v)} T={T} dark={dark} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
-                  <TextField label="Score" type="number" value={editForm.score} onChange={v => setEdit('score', v)} T={T} dark={dark} />
-                  <Field label="Starred" T={T}>
-                    <label style={{ ...input, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={editForm.starred} onChange={e => setEdit('starred', e.target.checked)} style={{ accentColor: '#F59E0B' }} />
-                      Keep near the top
-                    </label>
-                  </Field>
-                </div>
-              </FormSection>
-
-              <FormSection title="Application tracking" sub="The same data as the overview quick-update panel, available here for full edits." T={T} dark={dark}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
-                  <SelectField label="Status" value={editForm.status} onChange={v => setEdit('status', v)} options={STATUS_OPTS} T={T} dark={dark} />
-                  <TextField label="Date applied" type="date" value={editForm.date_applied} onChange={v => setEdit('date_applied', v)} T={T} dark={dark} />
-                  <TextField label="Interview date" type="date" value={editForm.interview_date} onChange={v => setEdit('interview_date', v)} T={T} dark={dark} />
-                  <TextField label="Follow-up date" type="date" value={editForm.follow_up_date} onChange={v => setEdit('follow_up_date', v)} T={T} dark={dark} />
-                </div>
-                <TextField label="Recruiter" value={editForm.recruiter} onChange={v => setEdit('recruiter', v)} placeholder="Name or email" T={T} dark={dark} />
-                <TextField label="Salary range" value={editForm.salary_range} onChange={v => setEdit('salary_range', v)} placeholder="$40-50/hr" T={T} dark={dark} />
-                <TextField label="Rejection stage" value={editForm.rejection_stage} onChange={v => setEdit('rejection_stage', v)} placeholder="Resume screen, OA, phone screen..." T={T} dark={dark} />
-              </FormSection>
-
-              <div style={{
-                position: 'sticky',
-                bottom: -16,
-                background: T.surface,
-                borderTop: `1px solid ${T.border}`,
-                padding: '12px 0 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-              }}>
-                <Btn variant="primary" onClick={saveEdit} disabled={editSaving}>
-                  {editSaving ? 'Saving...' : 'Save changes'}
-                </Btn>
-                {editMsg && <span style={{ fontSize: 12, color: editMsg === 'Saved' ? T.success : T.danger }}>{editMsg}</span>}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </>
