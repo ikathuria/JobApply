@@ -87,7 +87,7 @@ export default function AnalyticsView({ stats }) {
 
   return (
     <div style={{ padding: '28px 32px', overflowY: 'auto', height: '100%' }}>
-      <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>Pipeline Analytics</div>
+      <div className="page-title" style={{ marginBottom: 4 }}>Pipeline Analytics</div>
       <div style={{ fontSize: 13, color: T.muted, marginBottom: 28 }}>Summer 2026 AI/ML Internship Search</div>
 
       {/* Top stats */}
@@ -117,7 +117,7 @@ export default function AnalyticsView({ stats }) {
               <div key={stage.label} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 11, color: T.muted, width: 76, flexShrink: 0 }}>{stage.label}</div>
-                  <div style={{ flex: 1, height: 22, background: dark ? '#252538' : '#E8E8F4', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 22, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{ width: `${width}%`, height: '100%', background: stage.color, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8, transition: 'width 0.6s ease', minWidth: stage.value > 0 ? 28 : 0 }}>
                       <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>{stage.value}</span>
                     </div>
@@ -141,7 +141,7 @@ export default function AnalyticsView({ stats }) {
                   <span style={{ fontSize: 11, color: T.muted }}>{row.from}</span>
                   <span style={{ fontSize: 11, fontWeight: 800, color: row.color, fontFamily: 'JetBrains Mono, monospace' }}>{row.rate}%</span>
                 </div>
-                <div style={{ height: 4, background: dark ? '#252538' : '#E8E8F4', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(parseFloat(row.rate), 100)}%`, height: '100%', background: row.color, borderRadius: 4 }} />
                 </div>
               </div>
@@ -160,7 +160,7 @@ export default function AnalyticsView({ stats }) {
                       <span style={{ fontSize: 10, color: T.muted }}>{stage}</span>
                       <span style={{ fontSize: 10, fontWeight: 700, color: '#EF4444', fontFamily: 'JetBrains Mono, monospace' }}>{cnt}</span>
                     </div>
-                    <div style={{ height: 3, background: dark ? '#252538' : '#E8E8F4', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: 3, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ width: `${(cnt / (s.rejected || 1)) * 100}%`, height: '100%', background: '#EF4444', borderRadius: 2, opacity: 0.7 }} />
                     </div>
                   </div>
@@ -207,28 +207,28 @@ export default function AnalyticsView({ stats }) {
           ].map(n => (
             <g key={n.sub}>
               <text x={n.x} y={n.y + 10} fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="800" fill={n.color}>{n.val}</text>
-              <text x={n.x} y={n.y + 21} fontFamily="DM Sans, sans-serif" fontSize="9" fill="#8888A0">{n.sub}</text>
+              <text x={n.x} y={n.y + 21} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#8888A0">{n.sub}</text>
             </g>
           ))}
 
           {/* Drop labels */}
           {(s.total ?? 0) - totalApplied > 0 && (
-            <text x={mx(X[0], X[1])} y={SVG_H - 4} fontFamily="DM Sans, sans-serif" fontSize="9" fill="#EF4444" textAnchor="middle">
+            <text x={mx(X[0], X[1])} y={SVG_H - 4} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#EF4444" textAnchor="middle">
               {(s.total ?? 0) - totalApplied} not applied
             </text>
           )}
           {totalApplied - oaPlus > 0 && (
-            <text x={mx(X[1], X[2])} y={SVG_H - 4} fontFamily="DM Sans, sans-serif" fontSize="9" fill="#6B7280" textAnchor="middle">
+            <text x={mx(X[1], X[2])} y={SVG_H - 4} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#6B7280" textAnchor="middle">
               {totalApplied - oaPlus} no OA
             </text>
           )}
           {oaPlus - intPlus > 0 && (
-            <text x={mx(X[2], X[3])} y={SVG_H - 4} fontFamily="DM Sans, sans-serif" fontSize="9" fill="#EF4444" textAnchor="middle">
+            <text x={mx(X[2], X[3])} y={SVG_H - 4} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#EF4444" textAnchor="middle">
               {oaPlus - intPlus} no interview
             </text>
           )}
           {(s.offer ?? 0) > 0 && (
-            <text x={X[3] - 4} y={TOP + sc(s.offer ?? 0) + 14} fontFamily="DM Sans, sans-serif" fontSize="9" fill="#10B981" textAnchor="end">
+            <text x={X[3] - 4} y={TOP + sc(s.offer ?? 0) + 14} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#10B981" textAnchor="end">
               {s.offer} offer{s.offer !== 1 ? 's' : ''}
             </text>
           )}
@@ -247,7 +247,7 @@ export default function AnalyticsView({ stats }) {
               <div key={stage}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 11, color: T.muted, width: 140, flexShrink: 0 }}>{stage}</div>
-                  <div style={{ flex: 1, height: 20, background: dark ? '#252538' : '#E8E8F4', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 20, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
                     <div style={{
                       width: `${(cnt / maxStageCount) * 100}%`, height: '100%',
                       background: '#EF4444', borderRadius: 4, opacity: 0.75,

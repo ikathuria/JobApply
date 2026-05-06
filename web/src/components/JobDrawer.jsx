@@ -24,10 +24,10 @@ function fieldBase(T, dark) {
     padding: '8px 10px',
     borderRadius: 7,
     border: `1px solid ${T.border}`,
-    background: dark ? '#1A1A28' : '#FAFAFA',
+    background: T.card,
     color: T.text,
     fontSize: 12,
-    fontFamily: 'DM Sans, sans-serif',
+    fontFamily: 'Inter, system-ui, sans-serif',
     outline: 'none',
     boxSizing: 'border-box',
   }
@@ -86,7 +86,7 @@ function SelectField({ label, value, onChange, T, dark, options, style = {} }) {
 function FormSection({ title, sub, children, T, dark }) {
   return (
     <div style={{
-      background: dark ? '#171724' : '#FFFFFF',
+      background: T.card,
       border: `1px solid ${T.border}`,
       borderRadius: 10,
       padding: '14px 14px 2px',
@@ -119,7 +119,7 @@ function ConfirmModal({ job, onConfirm, onCancel, dark }) {
         </div>
 
         <div style={{ padding: '20px 24px' }}>
-          <div style={{ background: dark ? '#1A1A28' : '#F8F8FF', border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>{job.title}</div>
             <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <span>{job.company}</span>
@@ -170,12 +170,12 @@ function StatusRail({ job, T, dark, disabled, onChange }) {
                 height: 30,
                 border: `1px solid ${active ? meta.color : T.border}`,
                 borderRadius: 7,
-                background: active ? meta.bg : passed ? `${meta.color}18` : dark ? '#171724' : '#F8F8FC',
+                background: active ? meta.bg : passed ? `${meta.color}18` : T.card,
                 color: active || passed ? meta.color : T.muted,
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 fontSize: 10,
                 fontWeight: active ? 800 : 700,
-                fontFamily: 'DM Sans, sans-serif',
+                fontFamily: 'Inter, system-ui, sans-serif',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -282,7 +282,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
   const score = job.score ?? 0
   const primaryAction = {
     new: { label: 'Tailor with AI', color: T.accent, action: handleTailor },
-    queued: { label: 'Approve for apply bot', color: '#8B5CF6', action: () => patchStatus('approved') },
+    queued: { label: 'Approve for apply bot', color: '#8B7BB8', action: () => patchStatus('approved') },
     approved: { label: 'Mark manually applied', color: '#22C55E', action: () => setShowConfirm(true) },
     applied: { label: 'Move to OA', color: '#F59E0B', action: () => patchStatus('oa') },
     oa: { label: 'Move to interview', color: '#EC4899', action: () => patchStatus('interview') },
@@ -471,7 +471,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                   color: '#fff',
                   fontSize: 12,
                   fontWeight: 800,
-                  fontFamily: 'DM Sans, sans-serif',
+                  fontFamily: 'Inter, system-ui, sans-serif',
                   opacity: tailoring || updating ? 0.7 : 1,
                 }}>
                 {tailoring ? 'Tailoring...' : primaryAction.label}
@@ -496,7 +496,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                 border: 'none',
                 cursor: 'pointer',
                 background: 'transparent',
-                fontFamily: 'DM Sans, sans-serif',
+                fontFamily: 'Inter, system-ui, sans-serif',
                 fontSize: 11,
                 fontWeight: activeTab === t ? 800 : 600,
                 color: activeTab === t ? T.accent : T.muted,
@@ -510,8 +510,8 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
           {activeTab === 'overview' && trackingForm && (
             <div>
               {job.status === 'approved' && (
-                <div style={{ background: '#8B5CF615', border: '1px solid #8B5CF640', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: '#8B5CF6', marginBottom: 3 }}>Auto-apply queued</div>
+                <div style={{ background: 'rgba(139,123,184,0.10)', border: '1px solid rgba(139,123,184,0.30)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: '#8B7BB8', marginBottom: 3 }}>Auto-apply queued</div>
                   <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
                     The apply bot will pick this up on the next scheduled run. Use “Mark manually applied” if you submit it yourself.
                   </div>
@@ -651,7 +651,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                 </div>
               ) : (
                 <>
-                  <div style={{ display: 'flex', gap: 4, background: dark ? '#13131F' : '#EEF0F7', borderRadius: 8, padding: 4, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', gap: 4, background: T.surface, borderRadius: 8, padding: 4, marginBottom: 12 }}>
                     {['pdf', 'text'].map(mode => (
                       <button
                         key={mode}
@@ -666,7 +666,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
                           color: coverLetterMode === mode ? '#fff' : T.muted,
                           fontSize: 12,
                           fontWeight: 800,
-                          fontFamily: 'DM Sans, sans-serif',
+                          fontFamily: 'Inter, system-ui, sans-serif',
                           textTransform: 'capitalize',
                         }}
                       >

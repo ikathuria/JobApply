@@ -1,133 +1,175 @@
-import { useContext } from 'react'
-import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT } from '../theme.js'
+// Sidebar — warm paper redesign, CSS-var based
+
+function IconHome() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 1.5L1.5 6.8V14.5H5.5V9.5H10.5V14.5H14.5V6.8L8 1.5Z" />
+    </svg>
+  )
+}
+function IconLayers() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 5.5L8 2.5L14 5.5L8 8.5L2 5.5Z" />
+      <path d="M2 9L8 12L14 9" />
+      <path d="M2 11.5L8 14.5L14 11.5" />
+    </svg>
+  )
+}
+function IconChart() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <rect x="2"  y="8.5" width="2.5" height="5" rx="1" opacity="0.85" />
+      <rect x="6.75" y="5.5" width="2.5" height="8" rx="1" />
+      <rect x="11.5" y="3"   width="2.5" height="10.5" rx="1" opacity="0.85" />
+    </svg>
+  )
+}
+function IconGear() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="8" cy="8" r="2.4" />
+      <path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M11.5 3.4L10.4 4.5M4.5 11.5L3.4 12.6" />
+    </svg>
+  )
+}
+
+const NAV = [
+  { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,   tone: 'blue'   },
+  { id: 'jobs',      label: 'Jobs',       Icon: IconLayers, tone: 'purple', hasBadge: true },
+  { id: 'analytics', label: 'Analytics',  Icon: IconChart,  tone: 'teal'   },
+  { id: 'settings',  label: 'Settings',   Icon: IconGear,   tone: null     },
+]
+
+const STATUS_ROWS = [
+  { key: 'new',       label: 'New',       color: '#5B88B5' },
+  { key: 'ready',     label: 'Ready',     color: '#6A9068' },
+  { key: 'approved',  label: 'Approved',  color: '#8B7BB8' },
+  { key: 'applied',   label: 'Applied',   color: '#D17847' },
+  { key: 'interview', label: 'Interview', color: '#C28098' },
+  { key: 'offer',     label: 'Offer',     color: '#5A9DA8' },
+]
 
 export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
-  const T = dark ? DARK : LIGHT
+  const goTo = (id) => setScreen(id)
 
-  const navItems = [
-    { id: 'jobs',      icon: '⬡', label: 'Jobs',      badge: stats?.ready ?? 0 },
-    { id: 'analytics', icon: '◈', label: 'Analytics',  badge: null },
-    { id: 'settings',  icon: '◎', label: 'Settings',   badge: null },
-  ]
-
-  const pipeline = [
-    { label: 'New',       value: stats?.new       ?? 0, color: '#6B7280' },
-    { label: 'Ready',     value: stats?.ready     ?? 0, color: '#22C55E' },
-    { label: 'Applied',   value: stats?.applied   ?? 0, color: '#3B82F6' },
-    { label: 'OA',        value: stats?.oa        ?? 0, color: '#F59E0B' },
-    { label: 'Interview', value: stats?.interview  ?? 0, color: '#EC4899' },
-    { label: 'Offer',     value: stats?.offer     ?? 0, color: '#10B981' },
-  ]
-
-  const total     = stats?.total     ?? 0
-  const submitted = (stats?.applied ?? 0) + (stats?.oa ?? 0) + (stats?.interview ?? 0) + (stats?.offer ?? 0)
-  const pct = total ? Math.round((submitted / total) * 100) : 0
+  const totalApplied = stats
+    ? ((stats.applied ?? 0) + (stats.oa ?? 0) + (stats.interview ?? 0) + (stats.offer ?? 0) + (stats.rejected ?? 0))
+    : 0
+  const pct = stats?.total ? Math.round((totalApplied / stats.total) * 100) : 0
 
   return (
-    <div style={{
-      width: 220, flexShrink: 0, height: '100vh', display: 'flex', flexDirection: 'column',
-      background: T.surface, borderRight: `1px solid ${T.border}`,
-      position: 'sticky', top: 0,
-    }}>
+    <aside className="sidebar">
       {/* Logo */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8, background: T.accent,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, fontWeight: 900, color: '#fff', letterSpacing: -1,
-          }}>J</div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: T.text, letterSpacing: '-0.02em' }}>JobApply</div>
-            <div style={{ fontSize: 10, color: T.muted, fontWeight: 500 }}>AI/ML · Summer 2026</div>
-          </div>
+      <div className="sidebar-logo">
+        <div className="sidebar-logo-mark">J</div>
+        <div className="col" style={{ lineHeight: 1.15 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>JobApply</span>
+          <span className="mono" style={{ fontSize: 9.5, color: 'var(--ink-3)', letterSpacing: '0.13em', textTransform: 'uppercase' }}>AI · 2026</span>
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {navItems.map(item => {
-          const active = screen === item.id
+      <div className="eyebrow">Workspace</div>
+      <div className="col gap-1">
+        {NAV.map(({ id, label, Icon, tone, hasBadge }) => {
+          const active = screen === id
+          const badge = hasBadge ? (stats?.ready ?? 0) : null
+          const toneColor  = tone ? `var(--${tone})`      : 'var(--paper-3)'
+          const toneInk    = tone ? `var(--${tone}-ink)`  : 'var(--ink-3)'
           return (
-            <button key={item.id} onClick={() => setScreen(item.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
-                borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
-                background: active ? T.accentBg : 'transparent',
-                color: active ? T.accent : T.muted,
-                fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: active ? 700 : 500,
-                transition: 'all 0.15s', width: '100%',
-              }}>
-              <span style={{ fontSize: 16, width: 18, textAlign: 'center' }}>{item.icon}</span>
-              <span style={{ flex: 1 }}>{item.label}</span>
-              {item.badge > 0 && (
-                <span style={{
-                  background: '#22C55E', color: '#fff', fontSize: 10, fontWeight: 800,
-                  borderRadius: 10, padding: '1px 7px', minWidth: 20, textAlign: 'center',
-                }}>{item.badge}</span>
+            <button key={id} className={`nav-item${active ? ' active' : ''}`} onClick={() => goTo(id)}>
+              <div
+                className="nav-icon"
+                style={{
+                  background: active ? toneColor : 'var(--paper-3)',
+                  color:      active ? toneInk   : 'var(--ink-3)',
+                }}
+              >
+                <Icon />
+              </div>
+              <span style={{ flex: 1 }}>{label}</span>
+              {badge > 0 && (
+                <span
+                  className="nav-count"
+                  style={{
+                    background: active ? toneColor        : 'var(--paper-3)',
+                    color:      active ? toneInk          : 'var(--ink-3)',
+                  }}
+                >
+                  {badge}
+                </span>
               )}
             </button>
           )
         })}
-      </nav>
+      </div>
 
-      <div style={{ flex: 1 }} />
-
-      {/* Pipeline mini-stats */}
-      <div style={{ padding: '16px 20px', borderTop: `1px solid ${T.border}` }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-          Pipeline
-        </div>
-        {pipeline.map(p => (
-          <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
-            <div style={{ fontSize: 12, color: T.muted, flex: 1 }}>{p.label}</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.text, fontFamily: 'JetBrains Mono, monospace' }}>{p.value}</div>
+      {/* Pipeline stats */}
+      <div className="sidebar-section-gap" />
+      <div className="eyebrow">Pipeline</div>
+      <div className="col">
+        {STATUS_ROWS.map(({ key, label, color }) => (
+          <div key={key} className="status-row">
+            <div className="row gap-2">
+              <div
+                className="status-dot"
+                style={{ background: color, borderColor: color }}
+              />
+              <span>{label}</span>
+            </div>
+            <span className="mono tabular" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+              {stats?.[key] ?? 0}
+            </span>
           </div>
         ))}
 
         {/* Progress bar */}
-        <div style={{ marginTop: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-            <span style={{ fontSize: 11, color: T.muted }}>Submitted</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: T.text, fontFamily: 'JetBrains Mono, monospace' }}>{pct}%</span>
+        {stats && (
+          <div style={{ padding: '10px 10px 4px' }}>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 5 }}>
+              <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Submitted</span>
+              <span className="mono tabular" style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700 }}>{pct}%</span>
+            </div>
+            <div style={{ height: 5, borderRadius: 5, background: 'var(--paper-3)', overflow: 'hidden' }}>
+              <div style={{
+                width: `${pct}%`, height: '100%', borderRadius: 5,
+                background: `linear-gradient(90deg, var(--accent), var(--ok))`,
+                transition: 'width 0.5s ease',
+              }} />
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 4 }}>
+              {totalApplied} of {stats.total ?? 0} jobs
+            </div>
           </div>
-          <div style={{ height: 5, borderRadius: 5, background: dark ? '#252538' : '#E2E2EE', overflow: 'hidden' }}>
-            <div style={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg, ${T.accent}, #22C55E)`, borderRadius: 5 }} />
-          </div>
-          <div style={{ fontSize: 10, color: T.muted, marginTop: 4 }}>{submitted} of {total} jobs</div>
-        </div>
+        )}
       </div>
 
+      <div className="grow" />
+
+      {/* Footer */}
+      <div className="sidebar-divider" />
+
       {/* Theme toggle */}
-      <div style={{ padding: '12px 20px', borderTop: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, color: T.muted }}>{dark ? 'Dark' : 'Light'} mode</span>
-        <button onClick={() => setDark(!dark)} style={{
-          width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer',
-          background: dark ? T.accent : '#D1D5DB', position: 'relative', transition: 'background 0.2s',
-        }}>
-          <div style={{
-            width: 14, height: 14, borderRadius: '50%', background: '#fff',
-            position: 'absolute', top: 3, left: dark ? 19 : 3, transition: 'left 0.2s',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-          }} />
+      <div className="row" style={{ padding: '4px 6px 8px', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{dark ? 'Dark' : 'Light'} mode</span>
+        <button
+          onClick={() => setDark(!dark)}
+          className="theme-toggle"
+          style={{ background: dark ? 'var(--accent)' : 'var(--paper-4)' }}
+        >
+          <div className="theme-knob" style={{ left: dark ? 19 : 3 }} />
         </button>
       </div>
 
       {/* User */}
-      <div style={{ padding: '12px 20px', borderTop: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          background: `linear-gradient(135deg, ${T.accent}, #EC4899)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 800, color: '#fff',
-        }}>IK</div>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.text }}>Ishani Kathuria</div>
-          <div style={{ fontSize: 10, color: T.muted }}>Summer 2026</div>
+      <div className="user-chip">
+        <div className="user-avatar">IK</div>
+        <div className="col" style={{ lineHeight: 1.2, minWidth: 0 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ishani Kathuria</span>
+          <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>Summer 2026</span>
         </div>
       </div>
-    </div>
+    </aside>
   )
 }

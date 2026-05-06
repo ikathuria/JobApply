@@ -10,7 +10,7 @@ export function ScoreBar({ score, height = 4, showLabel = false }) {
   const color = score >= 0.75 ? T.success : score >= 0.55 ? T.warning : T.danger
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ flex: 1, height, borderRadius: height, background: dark ? '#252538' : '#E2E2EE', overflow: 'hidden' }}>
+      <div style={{ flex: 1, height, borderRadius: height, background: T.border, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: height, transition: 'width 0.4s ease' }} />
       </div>
       {showLabel && (
@@ -48,17 +48,17 @@ export function Btn({ children, variant = 'primary', onClick, style = {}, disabl
   const base = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     gap: 6, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-    fontFamily: 'DM Sans, sans-serif', fontWeight: 600, borderRadius: 8,
+    fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, borderRadius: 8,
     transition: 'all 0.15s ease', opacity: disabled ? 0.5 : 1,
     fontSize:  size === 'sm' ? 12 : size === 'lg' ? 15 : 13,
     padding:   size === 'sm' ? '5px 12px' : size === 'lg' ? '13px 24px' : '8px 16px',
   }
   const variants = {
-    primary:   { background: hov ? '#7577F5' : T.accent, color: '#fff' },
-    secondary: { background: hov ? (dark ? '#2A2A3E' : '#E8E8F4') : (dark ? '#1E1E30' : '#ECECF8'), color: T.text, border: `1px solid ${T.border}` },
+    primary:   { background: hov ? T.accent + 'CC' : T.accent, color: '#fff' },
+    secondary: { background: hov ? T.border : T.card, color: T.text, border: `1px solid ${T.border}` },
     ghost:     { background: hov ? T.accentBg : 'transparent', color: T.muted },
-    danger:    { background: hov ? '#F87171' : T.danger, color: '#fff' },
-    success:   { background: hov ? '#34D399' : T.success, color: '#fff' },
+    danger:    { background: hov ? T.danger + 'CC' : T.danger, color: '#fff' },
+    success:   { background: hov ? T.success + 'CC' : T.success, color: '#fff' },
   }
   return (
     <button style={{ ...base, ...variants[variant], ...style }}
@@ -77,7 +77,7 @@ export function Tag({ children, style = {} }) {
     <span style={{
       display: 'inline-block', padding: '2px 8px', borderRadius: 5,
       fontSize: 11, fontWeight: 600, fontFamily: 'JetBrains Mono, monospace',
-      background: dark ? '#1E1E30' : '#ECECF8', color: T.muted, ...style,
+      background: T.border, color: T.muted, ...style,
     }}>
       {children}
     </span>
@@ -120,10 +120,10 @@ export function Input({ value, onChange, placeholder, style = {}, icon, type = '
         style={{
           width: '100%', boxSizing: 'border-box',
           padding: icon ? '9px 12px 9px 36px' : '9px 12px',
-          background: dark ? '#1A1A28' : '#FAFAFA',
+          background: T.card,
           border: `1px solid ${T.border}`,
           borderRadius: 8, color: T.text, fontSize: 13,
-          fontFamily: 'DM Sans, sans-serif', outline: 'none',
+          fontFamily: 'Inter, system-ui, sans-serif', outline: 'none',
         }}
       />
     </div>
@@ -138,10 +138,10 @@ export function Textarea({ value, onChange, placeholder, rows = 4, style = {} })
     <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
       style={{
         width: '100%', boxSizing: 'border-box', padding: '9px 12px',
-        background: dark ? '#1A1A28' : '#FAFAFA',
+        background: T.card,
         border: `1px solid ${T.border}`,
         borderRadius: 8, color: T.text, fontSize: 13,
-        fontFamily: 'DM Sans, sans-serif', outline: 'none', resize: 'vertical',
+        fontFamily: 'Inter, system-ui, sans-serif', outline: 'none', resize: 'vertical',
         ...style,
       }}
     />
@@ -151,7 +151,8 @@ export function Textarea({ value, onChange, placeholder, rows = 4, style = {} })
 // ── Divider ───────────────────────────────────────────────────────────────────
 export function Divider({ style = {} }) {
   const { dark } = useContext(ThemeCtx)
-  return <div style={{ height: 1, background: dark ? '#252538' : '#E2E2EE', margin: '12px 0', ...style }} />
+  const T = dark ? DARK : LIGHT
+  return <div style={{ height: 1, background: T.border, margin: '12px 0', ...style }} />
 }
 
 // ── Section label ─────────────────────────────────────────────────────────────
@@ -176,7 +177,7 @@ export function Spinner({ size = 20, color }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      border: `2px solid ${dark ? '#252538' : '#E2E2EE'}`,
+      border: `2px solid ${T.border}`,
       borderTopColor: color || T.accent,
       animation: 'spin 0.7s linear infinite',
     }} />

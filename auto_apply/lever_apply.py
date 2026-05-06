@@ -27,6 +27,8 @@ def apply(page: Page, profile: dict, resume_path: Path, cover_letter: str) -> bo
         _fill(page, "[data-qa='name-field'] input, input[name='name']",  profile["name"])
         _fill(page, "[data-qa='email-field'] input, input[name='email']", profile["email"])
         _fill(page, "[data-qa='phone-field'] input, input[name='phone']", profile["phone"])
+        _fill(page, "[data-qa='location-field'] input, input[name='location'], input[placeholder*='ocation']",
+              profile.get("city", profile.get("location", "")), optional=True)
         _fill(page, "input[name='org'], input[placeholder*='company'], input[placeholder*='Company']",
               profile.get("experience", [{}])[0].get("company", ""), optional=True)
         _fill(page, "input[name='urls[LinkedIn]'], input[placeholder*='LinkedIn']",
@@ -74,11 +76,20 @@ def _fill(page: Page, selector: str, value: str, optional: bool = False) -> None
 
 
 def _answer_custom_questions(page: Page, profile: dict, wa: dict) -> None:
-    for q in page.query_selector_all(".application-question, .custom-question"):
-        label_el = q.query_selector("label, p")
+    # Cover both old-style (.application-question) and new-style Lever form structures
+    containers = page.query_selector_all(
+        ".application-question, .custom-question, [data-qa='custom-question'], "
+        "li[class*='question'], div[class*='question'], "
+        ".application-additional-information > div, "
+        "fieldset"
+    )
+    for q in containers:
+        label_el = q.query_selector("label, p, legend, span.t-bold")
         if not label_el:
             continue
         label = label_el.inner_text().lower()
+        if not label.strip():
+            continue
 
         if any(k in label for k in SPONSORSHIP_KEYWORDS):
             if "require" in label or "sponsor" in label:
@@ -88,13 +99,13 @@ def _answer_custom_questions(page: Page, profile: dict, wa: dict) -> None:
         elif any(k in label for k in RELOCATION_KEYWORDS):
             _answer_yes_no(q, wa.get("will_relocate", True))
         elif any(k in label for k in GRADUATION_KEYWORDS):
-            inp = q.query_selector("input")
-            if inp:
-                inp.fill(wa.get("expected_graduation", "May 2027"))
+            el = q.query_selector("input, textarea")
+            if el:
+                el.fill(wa.get("expected_graduation", "May 2027"))
         elif any(k in label for k in GPA_KEYWORDS):
-            inp = q.query_selector("input")
-            if inp:
-                inp.fill(wa.get("gpa", "4.0"))
+            el = q.query_selector("input, textarea")
+            if el:
+                el.fill(wa.get("gpa", "4.0"))
 
 
 def _answer_yes_no(container, answer_yes: bool) -> None:

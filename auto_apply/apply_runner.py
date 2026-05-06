@@ -1,15 +1,13 @@
 """
-Phase 4: Auto-apply orchestrator.
+Phase 4: Interactive apply.
 
 Modes:
-  Local (default)  — headed browser, uses approved jobs and human confirms before each submit
-  Dry-run          — fills form, screenshots result, never submits
-  GHA / headless   — headless, auto-submits approved jobs, no human prompt
+  default  — headed browser, fills form, you confirm before each submit
+  dry-run  — fills form + screenshot, never submits (good for testing)
 
 Run via:
-  python main.py --apply [--limit N]           # local, approved jobs only; human confirms
-  python main.py --apply --dry-run [--limit N] # approved jobs only; fill + screenshot, no submit
-  python main.py --apply --headless [--limit N] # GHA mode, auto-submit
+  python main.py --apply [--limit N]           # fill + confirm each submit
+  python main.py --apply --dry-run [--limit N] # fill + screenshot, no submit
 """
 
 import json
@@ -33,9 +31,37 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent.parent
 
+PROFILE_PATH   = Path("config/profile.json")
+SCREENSHOT_DIR = Path("output/apply_screenshots")
+
+ATS_PATTERNS = {
+    # Greenhouse
+    "greenhouse.io":          "greenhouse",
+    "boards.greenhouse.io":   "greenhouse",
+    "grnh.se":                "greenhouse",
+    # Lever
+    "lever.co":               "lever",
+    "jobs.lever.co":          "lever",
+    # LinkedIn Easy Apply
+    "linkedin.com":           "linkedin",
+    # Known but unsupported — logged + user fills manually
+    "myworkdayjobs.com":      "workday",
+    "wd1.myworkdayjobs.com":  "workday",
+    "wd3.myworkdayjobs.com":  "workday",
+    "ashbyhq.com":            "ashby",
+    "jobs.ashbyhq.com":       "ashby",
+    "smartrecruiters.com":    "smartrecruiters",
+    "jobs.smartrecruiters.com": "smartrecruiters",
+    "icims.com":              "icims",
+    "taleo.net":              "taleo",
+    "jobvite.com":            "jobvite",
+    "rippling.com":           "rippling",
+}
+
+UNSUPPORTED_ATS = {"workday", "ashby", "smartrecruiters", "icims", "taleo", "jobvite", "rippling"}
+
 
 def _get_db():
-    """Return a DB connection — Turso when available, local SQLite otherwise."""
     if os.environ.get("TURSO_DATABASE_URL"):
         from api.turso import connect as turso_connect
         from tracker.tracker import _create_tables
@@ -43,18 +69,6 @@ def _get_db():
         _create_tables(conn)
         return conn
     return init_db()
-
-PROFILE_PATH   = Path("config/profile.json")
-SCREENSHOT_DIR = Path("output/apply_screenshots")
-
-ATS_PATTERNS = {
-    "greenhouse.io":        "greenhouse",
-    "boards.greenhouse.io": "greenhouse",
-    "grnh.se":              "greenhouse",
-    "lever.co":             "lever",
-    "jobs.lever.co":        "lever",
-    "linkedin.com":         "linkedin",
-}
 
 
 def _load_profile() -> dict:
@@ -70,7 +84,6 @@ def _detect_ats(url: str) -> str:
 
 
 def _find_resume(job: dict) -> Path | None:
-    """Resolve resume PDF regardless of which machine generated it."""
     raw = job.get("resume_path")
     if not raw:
         return None
@@ -78,7 +91,6 @@ def _find_resume(job: dict) -> Path | None:
     candidates = [stored]
     if not stored.is_absolute():
         candidates.append(ROOT / stored)
-    # Extract portable suffix from 'output/resumes/...' onward
     parts = stored.parts
     for i, part in enumerate(parts):
         if part in ("output", "resumes"):
@@ -103,8 +115,8 @@ def _load_cover_letter(job: dict) -> str:
 def _confirm(job: dict) -> str:
     """Interactive prompt — returns 'apply', 'skip', or 'quit'."""
     print(f"\n{'='*62}")
-    print(f"  📋  {job['title']} @ {job['company']}")
-    print(f"  🔗  {job['url'][:70]}")
+    print(f"  {job['title']} @ {job['company']}")
+    print(f"  {job['url'][:70]}")
     print(f"{'='*62}")
     print("  Review the filled form in the browser.")
     print("  [Enter] Submit  |  [s] Skip  |  [q] Quit")
@@ -136,15 +148,11 @@ def _linkedin_login(page: Page) -> None:
     page.click("button[type='submit']")
     time.sleep(3)
     if "checkpoint" in page.url or "challenge" in page.url:
-        if sys.stdin.isatty():
-            print("\n  [!] LinkedIn 2FA — complete in browser, then press Enter.")
-            input("  > ")
-        else:
-            raise RuntimeError("LinkedIn 2FA required but running non-interactively.")
+        print("\n  [!] LinkedIn 2FA — complete in browser, then press Enter.")
+        input("  > ")
 
 
 def _submit_form(page: Page, ats: str) -> bool:
-    """Click submit button. Returns True if button found and clicked."""
     selectors = {
         "linkedin":   ["button[aria-label='Submit application']"],
         "greenhouse": ["#submit_app", "button[type='submit']", "input[type='submit']"],
@@ -159,31 +167,27 @@ def _submit_form(page: Page, ats: str) -> bool:
     return False
 
 
-def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) -> None:
+def run_apply(limit: int = 10, dry_run: bool = False) -> None:
     """
-    Main entry point.
-    - dry_run=True  : fill approved forms + screenshot, never submit
-    - headless=True : headless browser, auto-submit approved jobs (GHA mode)
-    - default       : headed browser, approved jobs only; human confirms each submit
+    Interactive apply runner.
+    - dry_run=True : fill form + screenshot, never submit (for testing)
+    - default      : fill form, you confirm before each submit
     """
     profile = _load_profile()
     conn    = _get_db()
 
-    # Approved is the explicit handoff from dashboard review to submission.
     jobs = get_jobs(conn, status=STATUS_APPROVED, limit=limit)
 
     if not jobs:
         print("No approved jobs to apply to.")
-        print("  Review Ready jobs in the dashboard and approve the ones you want submitted.")
+        print("  Approve jobs in the dashboard first.")
         conn.close()
         return
 
-    mode_label = "DRY RUN" if dry_run else ("HEADLESS / AUTO-SUBMIT" if headless else "INTERACTIVE")
-    print(f"\n-- Auto-Apply [{mode_label}]: {len(jobs)} jobs --------------------")
+    mode_label = "DRY RUN" if dry_run else "INTERACTIVE"
+    print(f"\n-- Apply [{mode_label}]: {len(jobs)} approved job{'s' if len(jobs) != 1 else ''} --------------------")
     if dry_run:
         print("  Forms will be filled and screenshotted. Nothing will be submitted.")
-    elif headless:
-        print("  Running headlessly. Auto-submitting approved jobs.")
     else:
         print("  Headed browser. You confirm before every submission.")
     print()
@@ -191,18 +195,16 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
     linkedin_logged_in = False
     applied = skipped = errors = 0
 
-    launch_opts = {"headless": headless, "slow_mo": 0 if headless else 80}
-
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(**launch_opts)
-        context  = browser.new_context()
-        page     = context.new_page()
+        browser = pw.chromium.launch(headless=False, slow_mo=80)
+        context = browser.new_context()
+        page    = context.new_page()
 
         for job in jobs:
-            job   = dict(job)
-            title = job["title"]
+            job     = dict(job)
+            title   = job["title"]
             company = job.get("company") or "N/A"
-            url   = job["url"]
+            url     = job["url"]
 
             resume_path  = _find_resume(job)
             cover_letter = _load_cover_letter(job)
@@ -214,10 +216,9 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
 
             print(f"\n  → {title} @ {company}")
 
-            # Navigate
             try:
                 page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-                time.sleep(2 if headless else 3)
+                time.sleep(3)
             except Exception as e:
                 print(f"  [!] Navigation failed: {e}")
                 errors += 1
@@ -227,7 +228,6 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
             ats = _detect_ats(final_url)
             print(f"     ATS: {ats} | {final_url[:72]}")
 
-            # Fill form
             filled = False
             try:
                 if ats == "linkedin":
@@ -247,12 +247,13 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
                     from auto_apply.lever_apply import apply as lv_apply
                     filled = lv_apply(page, profile, resume_path, cover_letter)
 
+                elif ats in UNSUPPORTED_ATS:
+                    print(f"     [!] {ats.capitalize()} ATS — no automated handler. Fill manually in the browser.")
+                    filled = True
+
                 else:
-                    print(f"     [!] Unknown ATS — {'skipping in headless mode' if headless else 'manual fill needed'}")
-                    if headless:
-                        skipped += 1
-                        continue
-                    filled = True  # let user fill manually
+                    print(f"     [!] Unrecognized ATS — fill manually in the browser.")
+                    filled = True
 
             except Exception as e:
                 logger.error(f"Form fill error for {url}: {e}")
@@ -260,35 +261,15 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
                 errors += 1
                 continue
 
-            # Screenshot always
             shot = _take_screenshot(page, job)
             print(f"     Screenshot: {shot}")
 
-            # --- DRY RUN: stop here ---
             if dry_run:
                 print(f"     [DRY RUN] Would submit — skipping.")
                 continue
 
-            # --- HEADLESS: auto-submit ---
-            if headless:
-                if not filled:
-                    print(f"     [!] Form not filled — skipping.")
-                    skipped += 1
-                    continue
-                submitted = _submit_form(page, ats)
-                if submitted:
-                    update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
-                    print(f"     ✓ Submitted.")
-                    applied += 1
-                else:
-                    print(f"     [!] Submit button not found — skipping.")
-                    errors += 1
-                time.sleep(1)
-                continue
-
-            # --- INTERACTIVE: human confirms ---
             if not filled:
-                print(f"     [!] Form fill incomplete — check browser.")
+                print(f"     [!] Form fill incomplete — check browser and fill any missing fields.")
 
             decision = _confirm(job)
             if decision == "quit":
@@ -303,7 +284,7 @@ def run_apply(limit: int = 10, dry_run: bool = False, headless: bool = False) ->
             submitted = _submit_form(page, ats)
             if submitted:
                 update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
-                print(f"     ✓ Applied.")
+                print(f"     Applied.")
                 applied += 1
             else:
                 print(f"     [!] Submit button not found.")

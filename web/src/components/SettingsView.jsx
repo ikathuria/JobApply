@@ -27,7 +27,7 @@ export default function SettingsView() {
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 640, overflowY: 'auto', height: '100%' }}>
-      <div style={{ fontSize: 20, fontWeight: 800, color: T.text, marginBottom: 4 }}>Settings</div>
+      <div className="page-title" style={{ marginBottom: 4 }}>Settings</div>
       <div style={{ fontSize: 13, color: T.muted, marginBottom: 4 }}>Configure your profile, API keys, and preferences</div>
       <Divider />
 
