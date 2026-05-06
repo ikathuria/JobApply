@@ -2,7 +2,7 @@ name: Daily Resume Tailor
 
 on:
   schedule:
-    - cron: '0 9 * * *'   # 9 AM UTC daily
+    - cron: '0 21 * * *'  # 4 PM CDT (21:00 UTC) daily
   workflow_dispatch:
     inputs:
       limit:
