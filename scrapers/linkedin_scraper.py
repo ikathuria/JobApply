@@ -63,22 +63,77 @@ async def scrape_linkedin(
 
 async def _login(page: Page, email: str, password: str) -> None:
     logger.info("Logging into LinkedIn...")
-    await page.goto(LINKEDIN_LOGIN_URL, wait_until="networkidle")
+    await page.goto(LINKEDIN_LOGIN_URL, wait_until="domcontentloaded")
+    await asyncio.sleep(2)
 
-    await page.fill("#username", email)
-    await page.fill("#password", password)
-    await page.click("button[type='submit']")
+    await asyncio.sleep(3)  # let React finish rendering
+
+    async def fill_first_visible(selectors: list[str], value: str):
+        for sel in selectors:
+            for el in await page.query_selector_all(sel):
+                if await el.is_visible():
+                    await el.fill(value)
+                    return el
+        return None
+
+    await fill_first_visible(["input[type='email']", "#username"], email)
+    await asyncio.sleep(0.5)
+
+    pass_el = await fill_first_visible(["input[type='password']", "#password"], password)
+    await asyncio.sleep(0.3)
+
+    submit = await page.query_selector(
+        "button[data-litms-control-urn='login-submit'], "
+        "form.login__form button[type='submit']"
+    )
+    if submit:
+        await submit.click()
+    elif pass_el:
+        await pass_el.press("Enter")
 
     try:
-        # wait for redirect to feed — if 2FA appears, user handles it in the browser window
         await page.wait_for_url("**/feed/**", timeout=60_000)
         logger.info("LinkedIn login successful.")
     except PWTimeout:
         logger.warning(
-            "LinkedIn login redirect timed out — if 2FA appeared, "
+            "LinkedIn login redirect timed out — if 2FA/challenge appeared, "
             "complete it in the browser window. Waiting 30s..."
         )
         await asyncio.sleep(30)
+
+
+CARD_SELECTORS = [
+    "li[data-occludable-job-id]",
+    "li.scaffold-layout__list-item",
+    "li.jobs-search-results__list-item",
+]
+
+TITLE_SELECTORS = [
+    "a.job-card-list__title--link",
+    "a.job-card-list__title",
+    "a[data-control-name='jobcard_title']",
+]
+
+COMPANY_SELECTORS = [
+    "span.job-card-container__primary-description",
+    ".job-card-container__company-name",
+    ".artdeco-entity-lockup__subtitle span",
+    ".artdeco-entity-lockup__subtitle",
+]
+
+LOCATION_SELECTORS = [
+    "li.job-card-container__metadata-item",
+    ".job-card-container__metadata-item",
+    ".artdeco-entity-lockup__caption",
+]
+
+
+async def _first_match(el, selectors):
+    for sel in selectors:
+        found = await el.query_selector(sel)
+        if found:
+            return found
+    return None
 
 
 async def _search_jobs(
@@ -93,9 +148,9 @@ async def _search_jobs(
     params = {
         "keywords": query,
         "location": location,
-        "f_JT": "I",      # Internship job type
-        "f_TPR": "r604800",  # Past week
-        "sortBy": "DD",    # Date descending
+        "f_JT": "I",         # Internship job type
+        "f_TPR": "r2592000", # Past 30 days (was r604800/1 week — too narrow)
+        "sortBy": "DD",      # Date descending
     }
     if easy_apply_only:
         params["f_LF"] = "f_AL"  # Easy Apply filter
@@ -104,34 +159,53 @@ async def _search_jobs(
     url = f"{LINKEDIN_JOBS_URL}?{query_string}"
 
     await page.goto(url, wait_until="domcontentloaded")
-    await asyncio.sleep(3)
+    await asyncio.sleep(4)
+
+    current_url = page.url
+    logger.info(f"Job search landed on: {current_url}")
 
     jobs = []
     date_scraped = datetime.utcnow().isoformat()
     seen_urls = set()
+    stall_count = 0
 
     while len(jobs) < max_jobs:
-        job_cards = await page.query_selector_all("li.jobs-search-results__list-item")
+        # Try each card selector until one returns results
+        job_cards = []
+        for sel in CARD_SELECTORS:
+            job_cards = await page.query_selector_all(sel)
+            if job_cards:
+                logger.debug(f"Card selector '{sel}' matched {len(job_cards)} cards")
+                break
 
+        if not job_cards:
+            logger.warning("No job cards found with any known selector — dumping visible text sample")
+            try:
+                sample = await page.evaluate("() => document.body.innerText.slice(0, 500)")
+                logger.warning(f"Page text sample: {sample!r}")
+            except Exception:
+                pass
+            break
+
+        prev_len = len(jobs)
         for card in job_cards:
             if len(jobs) >= max_jobs:
                 break
-
             try:
-                title_el = await card.query_selector("a.job-card-list__title, a[data-control-name='jobcard_title']")
-                company_el = await card.query_selector(".job-card-container__company-name, .artdeco-entity-lockup__subtitle")
-                location_el = await card.query_selector(".job-card-container__metadata-item, .artdeco-entity-lockup__caption")
+                title_el   = await _first_match(card, TITLE_SELECTORS)
+                company_el = await _first_match(card, COMPANY_SELECTORS)
+                loc_el     = await _first_match(card, LOCATION_SELECTORS)
 
-                title = (await title_el.inner_text()).strip() if title_el else ""
+                title   = (await title_el.inner_text()).strip()   if title_el   else ""
                 company = (await company_el.inner_text()).strip() if company_el else ""
-                location = (await location_el.inner_text()).strip() if location_el else ""
-                href = await title_el.get_attribute("href") if title_el else ""
+                loc     = (await loc_el.inner_text()).strip()     if loc_el     else ""
+                href    = await title_el.get_attribute("href")    if title_el   else ""
 
                 if not title or not href:
                     continue
 
                 job_url = f"https://www.linkedin.com{href}" if href.startswith("/") else href
-                job_url = job_url.split("?")[0]  # strip tracking params
+                job_url = job_url.split("?")[0]
 
                 if job_url in seen_urls:
                     continue
@@ -140,7 +214,7 @@ async def _search_jobs(
                 jobs.append({
                     "title": title,
                     "company": company,
-                    "location": location,
+                    "location": loc,
                     "url": job_url,
                     "source": "linkedin",
                     "easy_apply": easy_apply_only,
@@ -153,7 +227,13 @@ async def _search_jobs(
 
         logger.info(f"Collected {len(jobs)} LinkedIn jobs so far...")
 
-        # scroll to load more
+        if len(jobs) == prev_len:
+            stall_count += 1
+            if stall_count >= 2:
+                break
+        else:
+            stall_count = 0
+
         loaded = await _load_more(page)
         if not loaded:
             break
@@ -165,22 +245,39 @@ async def _search_jobs(
 
 
 async def _load_more(page: Page) -> bool:
-    """Scroll down to trigger infinite scroll. Returns False if no new content."""
-    prev_count = len(await page.query_selector_all("li.jobs-search-results__list-item"))
+    """Scroll to trigger infinite scroll. Returns False if no new cards appeared."""
+    prev_count = 0
+    for sel in CARD_SELECTORS:
+        cards = await page.query_selector_all(sel)
+        if cards:
+            prev_count = len(cards)
+            break
 
     await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     await asyncio.sleep(2)
 
     # try clicking 'See more jobs' button if present
-    see_more = await page.query_selector("button.infinite-scroller__show-more-button")
-    if see_more:
-        try:
-            await see_more.click()
-            await asyncio.sleep(2)
-        except Exception:
-            pass
+    for btn_sel in [
+        "button.infinite-scroller__show-more-button",
+        "button[aria-label='See more jobs']",
+        "button.scaffold-finite-scroll__load-button",
+    ]:
+        see_more = await page.query_selector(btn_sel)
+        if see_more:
+            try:
+                await see_more.click()
+                await asyncio.sleep(2)
+            except Exception:
+                pass
+            break
 
-    new_count = len(await page.query_selector_all("li.jobs-search-results__list-item"))
+    new_count = 0
+    for sel in CARD_SELECTORS:
+        cards = await page.query_selector_all(sel)
+        if cards:
+            new_count = len(cards)
+            break
+
     return new_count > prev_count
 
 
