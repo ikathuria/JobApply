@@ -45,7 +45,7 @@ def _gemini(system_prompt: str, user_message: str, max_tokens: int) -> str:
     if not api_key:
         raise RuntimeError("GOOGLE_API_KEY not set in .env")
 
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=api_key, http_options={"timeout": 60})
     model_name = _config().get("gemini_model", "gemini-2.0-flash")
 
     # 1K RPM paid tier → 2s between calls is plenty

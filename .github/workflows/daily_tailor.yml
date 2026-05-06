@@ -82,6 +82,8 @@ jobs:
       # ── Tailor ────────────────────────────────────────────────────────────────
 
       - name: Tailor resumes for top new jobs
+        timeout-minutes: 25
+        continue-on-error: true
         env:
           GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
           TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
