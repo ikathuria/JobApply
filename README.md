@@ -499,7 +499,7 @@ sources:
     enabled: true
   linkedin:
     enabled: true
-    search_query: "intern"
+    search_query: "AI ML internship"
     easy_apply_only: true
     max_jobs: 60
   handshake:

@@ -104,7 +104,7 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
         logger.info("=== Scraping LinkedIn ===")
         li_cfg = sources["linkedin"]
         jobs = scrape_linkedin_sync(
-            query=li_cfg.get("search_query", "intern"),
+            query=li_cfg.get("search_query", "AI ML internship"),
             location="United States",
             easy_apply_only=li_cfg.get("easy_apply_only", True),
             max_jobs=li_cfg.get("max_jobs", 60),

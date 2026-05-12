@@ -18,7 +18,7 @@ LINKEDIN_JOBS_URL = "https://www.linkedin.com/jobs/search/"
 
 
 async def scrape_linkedin(
-    query: str = "intern",
+    query: str = "AI ML internship",
     location: str = "United States",
     easy_apply_only: bool = True,
     max_jobs: int = 50,
@@ -282,7 +282,7 @@ async def _load_more(page: Page) -> bool:
 
 
 def scrape_linkedin_sync(
-    query: str = "intern",
+    query: str = "AI ML internship",
     location: str = "United States",
     easy_apply_only: bool = True,
     max_jobs: int = 50,
