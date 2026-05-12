@@ -10,7 +10,7 @@
 
 An end-to-end automated AI/ML internship application system. JobApply discovers job listings, scores and filters them, enriches job details via Jobright, generates tailored resumes and cover letters with an LLM, and walks you through an interactive apply session with a headed browser — pausing for your confirmation before any form is submitted.
 
-Built for Ishani Kathuria (MS AI @ Purdue, ex-AWS SDE) targeting Summer 2026 AI/ML internships in the USA.
+Built for Ishani Kathuria (MS AI @ Purdue, ex-AWS SDE) targeting internship roles in the USA, with AI/ML relevance handled by scoring.
 
 ---
 
@@ -499,12 +499,12 @@ sources:
     enabled: true
   linkedin:
     enabled: true
-    search_query: "AI ML internship"
+    search_query: "intern"
     easy_apply_only: true
     max_jobs: 60
   handshake:
     enabled: true
-    queries: ["AI intern", "machine learning intern", "LLM intern"]
+    queries: ["intern", "software intern", "data intern", "AI intern", "machine learning intern"]
     max_jobs: 80
 
 scoring:

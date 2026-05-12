@@ -1,6 +1,6 @@
 """
 LinkedIn scraper using Playwright.
-Logs in as the user, searches for AI/ML internships, and collects Easy Apply listings.
+Logs in as the user, searches for internships, and collects Easy Apply listings.
 Operates as a real browser session — not raw scraping.
 """
 
@@ -18,7 +18,7 @@ LINKEDIN_JOBS_URL = "https://www.linkedin.com/jobs/search/"
 
 
 async def scrape_linkedin(
-    query: str = "AI ML internship",
+    query: str = "intern",
     location: str = "United States",
     easy_apply_only: bool = True,
     max_jobs: int = 50,
@@ -282,7 +282,7 @@ async def _load_more(page: Page) -> bool:
 
 
 def scrape_linkedin_sync(
-    query: str = "AI ML internship",
+    query: str = "intern",
     location: str = "United States",
     easy_apply_only: bool = True,
     max_jobs: int = 50,

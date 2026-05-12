@@ -1,7 +1,7 @@
 """
 Handshake scraper using Playwright.
 Logs into app.joinhandshake.com with university credentials,
-searches for AI/ML internships, and collects listings.
+searches for internships, and collects listings.
 
 Requires env vars:
   HANDSHAKE_EMAIL     – your university email
@@ -45,7 +45,7 @@ async def scrape_handshake(
     headless: bool = True,
 ) -> list[dict]:
     """
-    Log into Handshake and collect AI/ML internship listings.
+    Log into Handshake and collect internship listings.
     Returns a list of job dicts.
     """
     email    = os.getenv("HANDSHAKE_EMAIL", "")
@@ -56,7 +56,7 @@ async def scrape_handshake(
         return []
 
     if queries is None:
-        queries = ["AI intern", "machine learning intern", "LLM intern", "data science intern"]
+        queries = ["intern", "software intern", "data intern", "AI intern", "machine learning intern"]
 
     jobs: dict[str, dict] = {}  # url -> job dict (dedupe by URL)
 
