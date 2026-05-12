@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -31,8 +32,22 @@ logger = logging.getLogger(__name__)
 PRE_APPLICATION_STATUSES = {"new", "queued", "approved"}
 
 
+def open_db():
+    """Use Turso in CI/production when configured; otherwise use local SQLite."""
+    if os.environ.get("TURSO_DATABASE_URL"):
+        from api.turso import connect as turso_connect, seed_from_sqlite
+        from tracker.tracker import _create_tables
+
+        conn = turso_connect()
+        _create_tables(conn)
+        seed_from_sqlite(conn, DB_PATH)
+        return conn
+
+    return init_db(DB_PATH)
+
+
 def main(delay: float) -> None:
-    conn = init_db(DB_PATH)
+    conn = open_db()
 
     rows = conn.execute("""
         SELECT id, title, company, status, url, source_url
