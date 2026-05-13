@@ -10,7 +10,7 @@
 |---|---|
 | **Market** | Personal tool — no commercial intent; built for Ishani's Summer 2026 AI/ML internship search |
 | **Feasibility** | Medium — core pipeline is complete; remaining work is polish, ATS coverage, and quality |
-| **Free to build** | Mostly — Render free tier for hosting; Gemini free tier for LLM; Turso free tier for cloud DB |
+| **Free to build** | Mostly — Render free tier for hosting; Groq free tier for LLM; Turso free tier for cloud DB |
 | **Monetization** | Portfolio project |
 
 ---
@@ -20,7 +20,7 @@
 | Layer | Choice | Reason |
 |---|---|---|
 | Scrapers | Python + BeautifulSoup + Playwright | intern-list (HTML scrape), LinkedIn & Handshake (browser automation) |
-| LLM / Tailoring | Gemini 2.5 Flash (default) / Claude Sonnet (fallback) | Gemini free tier handles daily batch; Claude via `pipeline/llm_client.py` |
+| LLM / Tailoring | Llama 3.1 8B via Groq (default) / Gemini / Claude Sonnet (fallbacks) | Groq free tier (console.groq.com); switchable via `pipeline/llm_client.py` |
 | PDF generation | ReportLab | local, no API dependency |
 | Backend API | FastAPI + Uvicorn | full CRUD; serves React build in production |
 | Database | SQLite (local) + Turso libsql (cloud) | WAL local dev; Turso for GHA + Render persistence |
@@ -35,7 +35,8 @@
 
 ```
 # Required for tailoring
-GOOGLE_API_KEY=         # Gemini API key — aistudio.google.com (free)
+GROQ_API_KEY=           # Groq API key — console.groq.com (free)
+GOOGLE_API_KEY=         # Gemini API key — aistudio.google.com (free, fallback)
 ANTHROPIC_API_KEY=      # Claude fallback — console.anthropic.com
 
 # Required for LinkedIn scraper + LinkedIn auto-apply
@@ -92,7 +93,7 @@ The pipeline is **production-ready and running daily**. The sections below track
 **Goal:** LLM-tailored resume + cover letter PDFs per job, output to `output/resumes/<slug>/`.
 
 - [x] `pipeline/jd_fetcher.py` — fetches full JD text from employer URL
-- [x] `pipeline/llm_client.py` — unified Gemini / Anthropic interface; 2s delay for Gemini rate limit; prompt cache for Anthropic
+- [x] `pipeline/llm_client.py` — unified Groq / Gemini / Anthropic interface; Groq is default (free tier, OpenAI-compatible API)
 - [x] `pipeline/resume_tailor.py` — system prompt includes full profile; returns JSON (summary, experience, projects, skills, why_fit); never fabricates
 - [x] `pipeline/cover_letter.py` — generates personalized cover letter from JD + why_fit hook
 - [x] `pipeline/pdf_generator.py` — ReportLab renders resume + cover letter PDFs
@@ -208,7 +209,7 @@ claude "Read PLAN.md. Without building anything new, test everything marked done
 
 ## Notes & Decisions
 
-- **LLM provider default is Gemini** (`gemini-2.5-flash`) because the free tier handles the daily batch (50 jobs/day) without cost; Anthropic is a fallback for local dev or when Gemini quota is hit.
+- **LLM provider default is Groq** (`llama-3.1-8b-instant`) via Groq's free tier (console.groq.com); Gemini and Anthropic remain as fallbacks — switch via `llm.provider` in `config/settings.yaml`.
 - **Turso for cloud DB** — SQLite WAL is used locally; Turso bridges to the same SQL API for GHA + Render. `seed_from_sqlite` is a no-op after first seed.
 - **PDFs committed to git** — GHA commits generated PDFs so Render can serve them without a persistent disk. This works while output is <100MB; revisit if the `output/` dir grows too large.
 - **No auth on the dashboard** — personal tool, Render URL is obscure enough. If shared, add HTTP Basic Auth via FastAPI middleware.

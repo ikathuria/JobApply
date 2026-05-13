@@ -58,7 +58,8 @@ handshake:
   password: ""   # fill in .env as HANDSHAKE_PASSWORD
 
 llm:
-  provider: "gemini"       # options: "gemini", "anthropic"
+  provider: "groq"         # options: "groq", "gemini", "anthropic"
+  groq_model: "llama-3.1-8b-instant"
   gemini_model: "gemini-2.5-flash"
   anthropic_model: "claude-sonnet-4-6"
 

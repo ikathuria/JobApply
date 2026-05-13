@@ -1,5 +1,5 @@
 """
-Unified LLM client — wraps Gemini and Anthropic behind one interface.
+Unified LLM client — wraps Groq, Gemini, and Anthropic behind one interface.
 Provider is set via config/settings.yaml (llm.provider).
 """
 
@@ -29,12 +29,49 @@ def complete(system_prompt: str, user_message: str, max_tokens: int = 2000) -> s
     """
     provider = _config().get("provider", "gemini").lower()
 
-    if provider == "gemini":
+    if provider == "groq":
+        return _groq(system_prompt, user_message, max_tokens)
+    elif provider == "gemini":
         return _gemini(system_prompt, user_message, max_tokens)
     elif provider == "anthropic":
         return _anthropic(system_prompt, user_message, max_tokens)
     else:
         raise ValueError(f"Unknown LLM provider: {provider}. Set llm.provider in settings.yaml.")
+
+
+def _groq(system_prompt: str, user_message: str, max_tokens: int) -> str:
+    from openai import OpenAI
+
+    api_key = os.getenv("GROQ_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY not set in .env")
+
+    client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+    model_name = _config().get("groq_model", "llama-3.1-8b-instant")
+
+    response = client.chat.completions.create(
+        model=model_name,
+        max_tokens=max_tokens,
+        temperature=0.3,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
+    )
+
+    choice = response.choices[0]
+    finish_reason = choice.finish_reason
+    if finish_reason not in ("stop", "length"):
+        logger.warning(f"Groq finish_reason={finish_reason} — response may be incomplete")
+
+    text = choice.message.content or ""
+    if not text:
+        raise RuntimeError(f"Groq returned empty response (finish_reason={finish_reason})")
+
+    if finish_reason == "length":
+        logger.warning("Groq hit max_tokens — output may be cut off.")
+
+    return text
 
 
 def _gemini(system_prompt: str, user_message: str, max_tokens: int) -> str:
