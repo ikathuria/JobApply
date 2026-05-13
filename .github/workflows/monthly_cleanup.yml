@@ -1,0 +1,50 @@
+name: Monthly Stale Job Cleanup
+
+on:
+  schedule:
+    - cron: '0 12 1 * *'  # 1st of every month at noon UTC
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Age threshold in days (default: 30)'
+        default: '30'
+        required: false
+      dry_run:
+        description: 'Dry run — preview only, no deletes (true/false)'
+        default: 'false'
+        required: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Delete stale jobs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:   ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          DAYS=${{ github.event.inputs.days || '30' }}
+          DRY_RUN=${{ github.event.inputs.dry_run || 'false' }}
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/cleanup_stale_jobs.py --days "$DAYS" --dry-run
+          else
+            python scripts/cleanup_stale_jobs.py --days "$DAYS"
+          fi
