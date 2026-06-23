@@ -25,4 +25,5 @@ prod: build
 # Install all dependencies (Python + Node)
 install:
 	pip install -r requirements.txt
+	pip install -e .
 	npm run install:web

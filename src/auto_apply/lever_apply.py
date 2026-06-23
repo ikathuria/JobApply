@@ -21,7 +21,6 @@ def apply(page: Page, profile: dict, resume_path: Path, cover_letter: str) -> bo
     Returns True if filled successfully.
     """
     wa = profile.get("work_authorization", {})
-    name_parts = profile["name"].split(" ", 1)
 
     try:
         _fill(page, "[data-qa='name-field'] input, input[name='name']",  profile["name"])

@@ -94,7 +94,8 @@ def _fill_cover_letter(page: Page, cover_letter: str) -> None:
                 "textarea[id*='message']", "textarea"]:
         el = page.query_selector(sel)
         if el:
-            label_el = page.query_selector(f"label[for='{el.get_attribute(\"id\")}']")
+            el_id = el.get_attribute("id")
+            label_el = page.query_selector(f"label[for='{el_id}']")
             label = (label_el.inner_text() if label_el else "").lower()
             if "cover" in label or not label:
                 el.fill(cover_letter)

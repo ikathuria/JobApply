@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
 from tracker.tracker import init_db, update_status, DB_PATH
 from pipeline.jobright_enricher import enrich_jobright_url

@@ -18,8 +18,9 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
+# src/api/main.py → repo root is three levels up (src/api/ → src/ → root)
+ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(ROOT / "src"))
 
 # Load .env for local dev so LLM/SMTP endpoints work when running uvicorn
 # directly. In production (Render) env vars come from the platform and no .env
@@ -52,10 +53,10 @@ app.add_middleware(
 # In production (Render), DB_PATH env var points to the persistent disk.
 # Locally it falls back to tracker/applications.db in the repo.
 _db_env = os.environ.get("DB_PATH")
-DB_PATH = Path(_db_env) if _db_env else ROOT / "tracker" / "applications.db"
+DB_PATH = Path(_db_env) if _db_env else ROOT / "src" / "tracker" / "applications.db"
 
 # Seed the persistent-disk DB from the repo copy on first deploy
-_git_db = ROOT / "tracker" / "applications.db"
+_git_db = ROOT / "src" / "tracker" / "applications.db"
 if _db_env and not DB_PATH.exists() and _git_db.exists():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(_git_db, DB_PATH)
@@ -68,7 +69,7 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", str(ROOT / "output" / "resumes"))
 _conn = None
 
 
-_GIT_DB = ROOT / "tracker" / "applications.db"   # always the git-committed copy
+_GIT_DB = ROOT / "src" / "tracker" / "applications.db"   # always the git-committed copy
 
 
 def db():

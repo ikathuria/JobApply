@@ -15,7 +15,7 @@ if env_file.exists():
             k, _, v = line.partition("=")
             os.environ.setdefault(k.strip(), v.strip())
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import requests as _req
 
@@ -31,7 +31,7 @@ _req.post = _post_long
 
 from api.turso import connect
 
-SQLITE_PATH = Path(__file__).parent.parent / "tracker" / "applications.db"
+SQLITE_PATH = Path(__file__).parent.parent / "src" / "tracker" / "applications.db"
 BATCH = 100
 
 

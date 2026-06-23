@@ -10,19 +10,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 dynamic = ["dependencies"]
 
-[project.scripts]
-jobapply = "main:main"
-
 [tool.setuptools]
-# Flat layout: the Python packages live at the repo root (not under src/), so
-# `from pipeline.x import y` keeps working and the deploy entry points
-# (`uvicorn api.main:app`, `python main.py`) are unaffected. main.py is exposed
-# as a top-level module so the `jobapply` console script can target main:main.
-py-modules = ["main"]
+# src layout: application packages live under src/ (keeps the repo root tidy).
+# Package names stay top-level (api, pipeline, …) — `from pipeline.x import y`
+# is unchanged. Run `pip install -e .` so the packages resolve from any working
+# directory (needed for `uvicorn api.main:app`, pytest, and the scripts).
+# The CLI entry point is `python main.py` (it bootstraps src/ onto sys.path).
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["api*", "pipeline*", "scrapers*", "tracker*", "auto_apply*"]
-exclude = ["tests*", "scripts*", "output*", "logs*", "config*", "apps*"]
 
 [tool.setuptools.dynamic]
 # Single source of truth for runtime deps — render.yaml and GHA still install

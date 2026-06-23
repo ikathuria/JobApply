@@ -39,7 +39,9 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install -e . --no-deps   # src-layout packages importable for `python main.py`
 
       # NOTE: No "playwright install chromium" step — the daily path is fully
       # browserless. intern-list + newgrad-jobs use jobright.ai's JSON API via

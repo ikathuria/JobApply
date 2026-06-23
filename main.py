@@ -30,6 +30,10 @@ from pathlib import Path
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+# App packages live under src/ — make them importable whether or not the project
+# was installed with `pip install -e .`.
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
 from tracker.tracker import (
     init_db, upsert_jobs, get_jobs, get_stats, update_status,
     STATUS_NEW, STATUS_QUEUED, STATUS_SKIPPED, DB_PATH,

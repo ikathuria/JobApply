@@ -13,7 +13,6 @@ Run via:
 import json
 import logging
 import os
-import sys
 import time
 from datetime import date
 from pathlib import Path
@@ -29,7 +28,7 @@ from tracker.tracker import (
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parent.parent.parent  # src/auto_apply/ → src/ → repo root
 
 PROFILE_PATH   = Path("config/profile.json")
 SCREENSHOT_DIR = Path("output/apply_screenshots")
@@ -252,7 +251,7 @@ def run_apply(limit: int = 10, dry_run: bool = False) -> None:
                     filled = True
 
                 else:
-                    print(f"     [!] Unrecognized ATS — fill manually in the browser.")
+                    print("     [!] Unrecognized ATS — fill manually in the browser.")
                     filled = True
 
             except Exception as e:
@@ -265,11 +264,11 @@ def run_apply(limit: int = 10, dry_run: bool = False) -> None:
             print(f"     Screenshot: {shot}")
 
             if dry_run:
-                print(f"     [DRY RUN] Would submit — skipping.")
+                print("     [DRY RUN] Would submit — skipping.")
                 continue
 
             if not filled:
-                print(f"     [!] Form fill incomplete — check browser and fill any missing fields.")
+                print("     [!] Form fill incomplete — check browser and fill any missing fields.")
 
             decision = _confirm(job)
             if decision == "quit":
@@ -277,17 +276,17 @@ def run_apply(limit: int = 10, dry_run: bool = False) -> None:
                 break
             elif decision == "skip":
                 update_status(conn, job["id"], STATUS_SKIPPED)
-                print(f"     Skipped.")
+                print("     Skipped.")
                 skipped += 1
                 continue
 
             submitted = _submit_form(page, ats)
             if submitted:
                 update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
-                print(f"     Applied.")
+                print("     Applied.")
                 applied += 1
             else:
-                print(f"     [!] Submit button not found.")
+                print("     [!] Submit button not found.")
                 ans = input("     Mark as applied anyway? [y/n] > ").strip().lower()
                 if ans == "y":
                     update_status(conn, job["id"], STATUS_APPLIED, date_applied=str(date.today()))
@@ -295,7 +294,7 @@ def run_apply(limit: int = 10, dry_run: bool = False) -> None:
 
         browser.close()
 
-    print(f"\n-- Apply run complete ---------------------------------")
+    print("\n-- Apply run complete ---------------------------------")
     print(f"  Applied  : {applied}")
     print(f"  Skipped  : {skipped}")
     print(f"  Errors   : {errors}")

@@ -9,7 +9,7 @@ logs/
 output/apply_screenshots/
 output/resumes/_test/
 apps/web/node_modules/
-tracker/applications.db
-tracker/applications.backup*.db
-tracker/*.db-shm
-tracker/*.db-wal
+src/tracker/applications.db
+src/tracker/applications.backup*.db
+src/tracker/*.db-shm
+src/tracker/*.db-wal

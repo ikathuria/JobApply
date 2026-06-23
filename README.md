@@ -143,31 +143,38 @@ JobApply/
 ├── main.py                        # CLI orchestrator (discover / tailor / apply / stats)
 ├── requirements.txt               # Python deps (includes playwright, fastapi, uvicorn)
 ├── render.yaml                    # Render one-click deploy config
+├── pyproject.toml                # packaging (src layout); deps read from requirements.txt
 ├── config/
 │   ├── settings.yaml              # sources, scoring weights, LLM provider
 │   └── profile.json               # candidate profile (resume data, work auth)
-├── scrapers/
-│   ├── intern_list_scraper.py     # Playwright → Jobright embed on intern-list.com
-│   ├── linkedin_scraper.py        # Playwright → LinkedIn Easy Apply search
-│   └── handshake_scraper.py       # Playwright → Handshake job search
-├── pipeline/
-│   ├── job_filter.py              # keyword scoring & exclusion
-│   ├── jd_fetcher.py              # fetch full JD text (requests + BS4)
-│   ├── jobright_enricher.py       # resolve Jobright URLs → employer ATS URLs
-│   ├── llm_client.py              # unified Gemini / Anthropic client
-│   ├── resume_tailor.py           # LLM → tailored resume JSON
-│   ├── cover_letter.py            # LLM → cover letter text
-│   └── pdf_generator.py           # ReportLab PDF renderer
-├── auto_apply/
-│   ├── apply_runner.py            # ATS detection + interactive apply loop
-│   ├── greenhouse_apply.py        # Greenhouse form handler
-│   ├── lever_apply.py             # Lever form handler
-│   └── linkedin_apply.py          # LinkedIn Easy Apply handler
-├── tracker/
-│   └── tracker.py                 # DB CRUD (works with both SQLite and Turso)
-├── api/
-│   ├── main.py                    # FastAPI REST API (stats, jobs, tailor, import, patch)
-│   └── turso.py                   # Turso (libSQL) HTTP connection wrapper
+├── src/                          # all Python application packages (src layout)
+│   ├── scrapers/
+│   │   ├── jobright_minisite.py   # shared requests client for jobright.ai JSON API
+│   │   ├── intern_list_scraper.py # category intern:us:ml_ai
+│   │   ├── newgrad_jobs_scraper.py# category newgrad:us:ml_ai
+│   │   ├── linkedin_scraper.py    # PAUSED (Playwright)
+│   │   └── handshake_scraper.py   # PAUSED (Playwright)
+│   ├── pipeline/
+│   │   ├── job_filter.py          # keyword scoring & exclusion
+│   │   ├── jd_fetcher.py          # fetch full JD text (requests + BS4)
+│   │   ├── jobright_enricher.py   # resolve Jobright URLs → employer ATS URLs
+│   │   ├── llm_client.py          # unified Groq / Gemini / Anthropic client
+│   │   ├── resume_tailor.py       # LLM → tailored resume JSON
+│   │   ├── cover_letter.py        # LLM → cover letter text
+│   │   ├── pdf_generator.py       # ReportLab PDF renderer
+│   │   ├── email_generator.py     # LLM cold email + referral drafts
+│   │   ├── email_finder.py        # SMTP probe + Hunter.io email discovery
+│   │   └── email_sender.py        # Gmail SMTP send
+│   ├── auto_apply/
+│   │   ├── apply_runner.py        # ATS detection + interactive apply loop
+│   │   ├── greenhouse_apply.py    # Greenhouse form handler
+│   │   ├── lever_apply.py         # Lever form handler
+│   │   └── linkedin_apply.py      # LinkedIn Easy Apply handler
+│   ├── tracker/
+│   │   └── tracker.py             # DB CRUD; jobs + recruiters + outreach (SQLite/Turso)
+│   └── api/
+│       ├── main.py                # FastAPI REST API (jobs, recruiters, outreach, tailor)
+│       └── turso.py               # Turso (libSQL) HTTP connection wrapper
 ├── apps/web/                      # React frontend (own package.json)
 │   ├── index.html                 # Vite entry point
 │   ├── package.json
@@ -219,10 +226,11 @@ cd JobApply
 
 ```bash
 pip install -r requirements.txt
-playwright install chromium
+pip install -e .              # registers the src/ packages (api, pipeline, …)
+playwright install chromium   # only needed for the PAUSED LinkedIn/Handshake scrapers + auto-apply
 ```
 
-Playwright is pinned in `requirements.txt`; the second command installs the Chromium browser binary.
+`pip install -e .` makes the `src/`-layout packages importable from any directory (required for `uvicorn api.main:app`). Playwright is pinned in `requirements.txt`; its `chromium` binary is only needed for browser-based features.
 
 ### 3. Install frontend dependencies
 
