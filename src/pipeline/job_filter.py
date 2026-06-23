@@ -89,20 +89,32 @@ def score_job(job: dict) -> float:
     return round(min(score, 1.0), 3)
 
 
-def filter_jobs(jobs: list[dict], min_score: float = 0.0) -> list[dict]:
+def filter_jobs(jobs: list[dict], min_score: float = 0.0, skip_phd: bool = True) -> list[dict]:
     """
     Score all jobs, attach score, filter below threshold, sort by score desc.
     min_score=0.0 keeps all listings (score still computed for ranking).
+
+    When skip_phd is True (default), jobs that require a PhD (and don't accept a
+    Master's) are tagged with status "skipped" so they enter the DB out of the
+    active pipeline rather than as "new". "skipped" matches tracker.STATUS_SKIPPED.
     """
     scored = []
+    n_phd = 0
     for job in jobs:
+        text = _combined_text(job)
         s = score_job(job)
         if s >= min_score:
             job["score"] = s
+            if skip_phd and is_phd_only(text):
+                job["status"] = "skipped"
+                n_phd += 1
             scored.append(job)
 
     scored.sort(key=lambda j: j["score"], reverse=True)
-    logger.info(f"Filtered {len(scored)} / {len(jobs)} jobs above score {min_score}")
+    logger.info(
+        f"Filtered {len(scored)} / {len(jobs)} jobs above score {min_score}"
+        + (f"; {n_phd} PhD-only tagged skipped" if n_phd else "")
+    )
     return scored
 
 

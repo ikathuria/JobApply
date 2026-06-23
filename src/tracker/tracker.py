@@ -167,9 +167,9 @@ def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
             conn.execute(
                 """
                 INSERT INTO jobs (title, company, location, url, source_url, source, score,
-                                  easy_apply, description, date_scraped, salary_range)
+                                  status, easy_apply, description, date_scraped, salary_range)
                 VALUES (:title, :company, :location, :url, :source_url, :source, :score,
-                        :easy_apply, :description, :date_scraped, :salary_range)
+                        :status, :easy_apply, :description, :date_scraped, :salary_range)
                 """,
                 {
                     "title": job.get("title", ""),
@@ -179,6 +179,7 @@ def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
                     "source_url": source_url,
                     "source": job.get("source", ""),
                     "score": job.get("score", 0.0),
+                    "status": job.get("status") or STATUS_NEW,
                     "easy_apply": 1 if job.get("easy_apply") else 0,
                     "description": job.get("description", ""),
                     "date_scraped": job.get("date_scraped", datetime.utcnow().isoformat()),

@@ -5,7 +5,7 @@ The rule must filter PhD-required roles while KEEPING roles that accept a
 Master's ("MS or PhD", "Master's/PhD", etc.).
 """
 
-from pipeline.job_filter import is_phd_only, score_job
+from pipeline.job_filter import is_phd_only, score_job, filter_jobs
 
 
 # ── is_phd_only ───────────────────────────────────────────────────────────────
@@ -52,3 +52,27 @@ def test_score_nonzero_for_ms_or_phd_job():
         "location": "Remote",
     }
     assert score_job(job) > 0.0
+
+
+# ── filter_jobs auto-tagging (scrape-time) ────────────────────────────────────
+
+def _jobs():
+    return [
+        {"title": "ML Intern", "company": "Acme", "url": "u1",
+         "description": "MS or PhD welcome. RAG, PyTorch.", "location": "Remote"},
+        {"title": "AI Research Intern", "company": "Lab", "url": "u2",
+         "description": "PhD required. Doctoral candidates only.", "location": "NYC"},
+    ]
+
+
+def test_filter_jobs_tags_phd_only_as_skipped():
+    out = filter_jobs(_jobs(), min_score=0.0)
+    by_url = {j["url"]: j for j in out}
+    assert by_url["u2"].get("status") == "skipped"   # PhD-only → skipped
+    assert by_url["u1"].get("status") is None        # MS-or-PhD → untouched (defaults new on insert)
+
+
+def test_filter_jobs_skip_phd_can_be_disabled():
+    out = filter_jobs(_jobs(), min_score=0.0, skip_phd=False)
+    by_url = {j["url"]: j for j in out}
+    assert by_url["u2"].get("status") is None        # not tagged when disabled
