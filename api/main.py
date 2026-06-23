@@ -770,6 +770,6 @@ def api_email_finder(first: str, last: str, domain: str, probe: bool = True) -> 
 
 # ── Serve built React app (production) ───────────────────────────────────────
 
-_dist = ROOT / "web" / "dist"
+_dist = ROOT / "apps" / "web" / "dist"
 if _dist.exists():
     app.mount("/", StaticFiles(directory=str(_dist), html=True), name="static")

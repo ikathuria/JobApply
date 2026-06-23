@@ -33,7 +33,7 @@ JobApply is a personal, fully-automated AI/ML internship search pipeline built f
 
 1. **GHA daily workflow** → runs `main.py --source intern_list` + `main.py --source newgrad_jobs` → jobs scored + inserted into Turso DB
 2. **`main.py --tailor`** → fetches JDs → LLM tailors resume + cover letter → ReportLab generates PDFs → committed to `output/resumes/`
-3. **FastAPI** (`api/main.py`) → REST API for jobs, recruiters, outreach; serves `web/dist` in production
+3. **FastAPI** (`api/main.py`) → REST API for jobs, recruiters, outreach; serves `apps/web/dist` in production
 4. **React dashboard** → 6 views: Dashboard, Jobs, Analytics, Outreach, Settings, JobDrawer
 5. **Cold email flow** → user adds recruiter in Outreach tab → LLM drafts email → user edits → send via Gmail SMTP → status tracked in `outreach` table
 
@@ -64,36 +64,44 @@ JobApply/
 │  ├─ tracker.py                 # SQLite CRUD; jobs + recruiters + outreach tables
 │  └─ ...
 ├─ api/
-│  └─ main.py                    # FastAPI: all REST endpoints; serves web/dist
+│  ├─ __init__.py                # marks api as a package (for pyproject discovery)
+│  ├─ main.py                    # FastAPI: all REST endpoints; serves apps/web/dist
+│  └─ turso.py                   # Turso HTTP bridge
 ├─ auto_apply/
 │  ├─ apply_runner.py            # ATS detection + human-confirm loop
 │  ├─ greenhouse_apply.py        # ✅ done
 │  ├─ linkedin_apply.py          # ✅ done
 │  └─ lever_apply.py             # ✅ done
-├─ web/
-│  └─ src/
-│     ├─ App.jsx                 # Sidebar-driven screen routing
-│     ├─ api.js                  # fetch client for all /api endpoints
-│     ├─ theme.js                # design tokens (warm paper/ink palette)
-│     └─ components/
-│        ├─ Sidebar.jsx          # nav (Dashboard/Jobs/Outreach/Analytics/Settings)
-│        ├─ DashboardView.jsx    # Hero stats + focus cards
-│        ├─ JobsView.jsx         # Tabbed by status, bulk update
-│        ├─ AnalyticsView.jsx    # Funnel + Sankey
-│        ├─ OutreachView.jsx     # Recruiter mgmt + composer + follow-up banner (M16)
-│        ├─ SettingsView.jsx     # Settings (UI only until M7)
-│        ├─ JobDrawer.jsx        # Full job detail panel + "Reach out"
-│        └─ ui/index.jsx         # shared kit: Card, Btn, Input, Textarea, …
+├─ apps/
+│  └─ web/                       # React frontend (own package.json) — served by FastAPI
+│     └─ src/
+│        ├─ App.jsx              # Sidebar-driven screen routing
+│        ├─ api.js               # fetch client for all /api endpoints
+│        ├─ theme.js             # design tokens (warm paper/ink palette)
+│        └─ components/
+│           ├─ Sidebar.jsx       # nav (Dashboard/Jobs/Outreach/Analytics/Settings)
+│           ├─ DashboardView.jsx # Hero stats + focus cards
+│           ├─ JobsView.jsx      # Tabbed by status, bulk update
+│           ├─ AnalyticsView.jsx # Funnel + Sankey
+│           ├─ OutreachView.jsx  # Recruiter mgmt + composer + follow-up banner (M16)
+│           ├─ SettingsView.jsx  # Settings (UI only until M7)
+│           ├─ JobDrawer.jsx     # Full job detail panel + "Reach out"
+│           └─ ui/index.jsx      # shared kit: Card, Btn, Input, Textarea, …
 ├─ config/
 │  ├─ settings.yaml              # Runtime config (sources, scoring, LLM)
 │  └─ profile.json               # Ishani's resume data (base for tailoring)
 ├─ output/resumes/               # LLM-generated PDFs committed here for Render
 ├─ tests/                        # pytest unit tests
 ├─ .github/workflows/
+│  ├─ ci.yml                     # lint (flake8) + pytest + web build on push/PR
 │  └─ daily_tailor.yml           # Scheduled GHA pipeline
 ├─ main.py                       # CLI entry: --source, --tailor, --limit
-├─ requirements.txt
+├─ pyproject.toml                # packaging: declares packages, deps (from requirements.txt), `jobapply` script
+├─ package.json                  # root delegator → apps/web npm scripts
+├─ setup.cfg                     # flake8 config
+├─ requirements.txt              # pinned deps (source of truth, read by pyproject)
 ├─ render.yaml
+├─ CLAUDE.md                     # one-liner → PROJECT.md
 └─ .env.example
 ```
 
@@ -105,6 +113,9 @@ JobApply/
 - **New pipeline modules** → `pipeline/<name>.py`; import `llm_client` for any LLM calls
 - **New API endpoints** → add to `api/main.py`; follow existing route naming (`GET /api/...`, `POST /api/...`, `PATCH /api/...`)
 - **Tests** → `tests/test_<module>.py`; use `pytest`; mock external calls (HTTP, SMTP, LLM) with `unittest.mock`
+- **Packaging** → flat-layout `pyproject.toml`; Python packages stay at repo root (imports unchanged). `pip install -e .` installs them + the `jobapply` console script. Deps live in `requirements.txt` (pyproject reads them dynamically).
+- **Frontend** → lives in `apps/web/`; run via root npm scripts (`npm run dev|build`) which delegate with `--prefix apps/web`. FastAPI serves `apps/web/dist` in production.
+- **Lint** → `flake8` (config in `setup.cfg`); CI (`.github/workflows/ci.yml`) runs lint + pytest + web build on push/PR. Keep the whole tracked tree flake8-clean.
 - **Before coding against any library**: fetch its latest official docs — never code APIs from memory
 
 ---
@@ -143,6 +154,7 @@ JobApply/
 - 2026-06-22 — Gmail SMTP chosen over OAuth2 for email sending — app password avoids the OAuth consent screen and is simpler for a personal tool; 500 sends/day is well within outreach volume.
 - 2026-06-22 — All emails require user review before send — no auto-send to avoid mistakes; the system is a composer + tracker, not a blast tool.
 - 2026-06-22 — `recruiters`/`outreach` FKs are declarative only; cascade-delete enforced in `delete_recruiter()` code — local sqlite doesn't set `foreign_keys=ON` and the Turso HTTP bridge skips PRAGMAs, so DB-level enforcement would behave differently per backend. Enforcing in code keeps both identical.
+- 2026-06-23 — Repo restructured toward project-planner layout: frontend moved `web/` → `apps/web/`; added root `package.json` delegator, `pyproject.toml` (flat-layout packaging), `CLAUDE.md`, and a `ci.yml` (lint+test+build). **Python kept flat at repo root (not moved to `src/`)** — `api/main.py` anchors `ROOT` via `__file__` to find `apps/web/dist` + `output/`, and the deploy entry points (`uvicorn api.main:app`, `python main.py`) run from root; a `src/` move would force coordinated path surgery + `pip install -e .` everywhere for purely cosmetic gain. Flat-layout `pyproject.toml` delivers the packaging benefits with zero import/path churn.
 - Earlier — LLM provider default changed from Gemini to Groq (llama-3.1-8b-instant) — Groq free tier has no daily quota; Gemini was hitting rate limits during heavy tailoring days.
 - Earlier — PDFs committed to git for Render access — Render free tier has no persistent disk; committing output/ is the simplest path. Revisit if output/ exceeds 100MB.
 

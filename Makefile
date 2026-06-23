@@ -4,19 +4,19 @@
 dev:
 	@echo "Starting FastAPI (8000) + Vite (3000)..."
 	@start cmd /k "uvicorn api.main:app --reload --port 8000"
-	@start cmd /k "cd web && npm run dev"
+	@start cmd /k "npm run dev"
 
 # Run only the FastAPI backend (dev, with hot-reload)
 api:
 	uvicorn api.main:app --reload --port 8000
 
-# Run only the React dev server
+# Run only the React dev server (delegates to apps/web via root package.json)
 web:
-	cd web && npm run dev
+	npm run dev
 
-# Build React for production (output to web/dist, served by FastAPI)
+# Build React for production (output to apps/web/dist, served by FastAPI)
 build:
-	cd web && npm run build
+	npm run build
 
 # Production: build React then serve everything from FastAPI
 prod: build
@@ -25,4 +25,4 @@ prod: build
 # Install all dependencies (Python + Node)
 install:
 	pip install -r requirements.txt
-	cd web && npm install
+	npm run install:web

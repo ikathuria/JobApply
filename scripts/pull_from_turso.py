@@ -5,7 +5,6 @@ Run from repo root: python scripts/pull_from_turso.py
 import os
 import sqlite3
 import sys
-import time
 from pathlib import Path
 
 env_file = Path(__file__).parent.parent / ".env"
@@ -19,10 +18,15 @@ if env_file.exists():
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import requests as _req
+
 _orig_post = _req.post
+
+
 def _post_long(*a, **kw):
     kw["timeout"] = 60
     return _orig_post(*a, **kw)
+
+
 _req.post = _post_long
 
 from api.turso import connect
@@ -30,8 +34,9 @@ from api.turso import connect
 SQLITE_PATH = Path(__file__).parent.parent / "tracker" / "applications.db"
 BATCH = 100
 
+
 def main():
-    print(f"Connecting to Turso...")
+    print("Connecting to Turso...")
     turso = connect()
 
     total = turso.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
@@ -75,6 +80,7 @@ def main():
 
     local_total = sqlite3.connect(str(SQLITE_PATH)).execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
     print(f"\nDone — local SQLite now has {local_total} rows ({fail} failed)")
+
 
 if __name__ == "__main__":
     main()

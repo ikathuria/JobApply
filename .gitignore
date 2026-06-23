@@ -3,10 +3,12 @@
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+*.egg-info/
 logs/
 output/apply_screenshots/
 output/resumes/_test/
-web/node_modules/
+apps/web/node_modules/
 tracker/applications.db
 tracker/applications.backup*.db
 tracker/*.db-shm

@@ -47,6 +47,7 @@ def _open_db():
         return conn
     return init_db()
 
+
 try:
     from dotenv import load_dotenv
 except ModuleNotFoundError:
@@ -473,7 +474,8 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
     parser.add_argument("--stats", action="store_true", help="Show tracker stats")
     parser.add_argument("--enrich-ready", action="store_true", help="Refresh ready jobs from Jobright detail pages")
-    parser.add_argument("--resolve-priority-links", action="store_true", help="Resolve employer URLs for approved and top ready jobs")
+    parser.add_argument("--resolve-priority-links", action="store_true",
+                        help="Resolve employer URLs for approved and top ready jobs")
     args = parser.parse_args()
 
     if args.stats:

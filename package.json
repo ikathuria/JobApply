@@ -2,11 +2,11 @@
   "name": "jobapply",
   "version": "2.0.0",
   "private": true,
-  "description": "Root delegator — the web app lives in web/. Scripts proxy to it via npm --prefix.",
+  "description": "Root delegator — the web app lives in apps/web/. Scripts proxy to it via npm --prefix.",
   "scripts": {
-    "dev": "npm --prefix web run dev",
-    "build": "npm --prefix web run build",
-    "preview": "npm --prefix web run preview",
-    "install:web": "npm --prefix web install"
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "preview": "npm --prefix apps/web run preview",
+    "install:web": "npm --prefix apps/web install"
   }
 }

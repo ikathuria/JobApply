@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobapply"
+version = "2.0.0"
+description = "Automated AI/ML internship pipeline: scrape, score, tailor resumes, cold-email recruiters, track outcomes."
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[project.scripts]
+jobapply = "main:main"
+
+[tool.setuptools]
+# Flat layout: the Python packages live at the repo root (not under src/), so
+# `from pipeline.x import y` keeps working and the deploy entry points
+# (`uvicorn api.main:app`, `python main.py`) are unaffected. main.py is exposed
+# as a top-level module so the `jobapply` console script can target main:main.
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["api*", "pipeline*", "scrapers*", "tracker*", "auto_apply*"]
+exclude = ["tests*", "scripts*", "output*", "logs*", "config*", "apps*"]
+
+[tool.setuptools.dynamic]
+# Single source of truth for runtime deps — render.yaml and GHA still install
+# via `pip install -r requirements.txt`.
+dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

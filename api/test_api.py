@@ -11,8 +11,6 @@ Exit code 0 = all tests passed.
 """
 
 import sys
-import json
-import time
 import requests
 
 BASE = "http://localhost:8000/api"
@@ -44,7 +42,7 @@ print("\n── Stats ───────────────────�
 r = req("GET", "/stats")
 check("GET /stats → 200", r.status_code == 200)
 s = r.json()
-check("stats has required keys", all(k in s for k in ["total","new","applied","offer"]), str(list(s.keys())))
+check("stats has required keys", all(k in s for k in ["total", "new", "applied", "offer"]), str(list(s.keys())))
 
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n── Focus ────────────────────────────────────────────────")
@@ -98,7 +96,7 @@ if test_id:
     check("job has company field", "company" in job)
     check("job has status field",  "status"  in job)
     check("title matches",  job.get("title")   == payload["title"],   job.get("title"))
-    check("company matches",job.get("company") == payload["company"], job.get("company"))
+    check("company matches", job.get("company") == payload["company"], job.get("company"))
 
 r_404 = req("GET", "/jobs/999999999")
 check("GET /jobs/999999999 → 404", r_404.status_code == 404)

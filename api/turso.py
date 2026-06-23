@@ -141,7 +141,7 @@ class TursoConn:
         if "LAST_INSERT_ROWID" in stripped:
             val = self._last_rowid or 0
             return _StaticCursor(["last_insert_rowid()"],
-                                  [_DictRow(["last_insert_rowid()"], [val])])
+                                 [_DictRow(["last_insert_rowid()"], [val])])
 
         # Named params (dict) → Turso named_args; positional (list/tuple) → args
         if isinstance(params, dict):

@@ -24,15 +24,20 @@ import requests as _req
 
 # Patch requests timeout globally to 60s
 _orig_post = _req.post
+
+
 def _post_long(*a, **kw):
     kw["timeout"] = 60
     return _orig_post(*a, **kw)
+
+
 _req.post = _post_long
 
 from api.turso import connect
 
 SQLITE_PATH = Path(__file__).parent.parent / "tracker" / "applications.db"
 BATCH = 10  # small batches to avoid timeouts
+
 
 def main():
     print(f"Connecting to Turso: {os.environ['TURSO_DATABASE_URL']}")
@@ -109,6 +114,7 @@ def main():
 
     final = turso.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
     print(f"\nFinal Turso count: {final} rows (local: {len(jobs)})")
+
 
 if __name__ == "__main__":
     main()

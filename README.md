@@ -168,7 +168,7 @@ JobApply/
 ├── api/
 │   ├── main.py                    # FastAPI REST API (stats, jobs, tailor, import, patch)
 │   └── turso.py                   # Turso (libSQL) HTTP connection wrapper
-├── web/
+├── apps/web/                      # React frontend (own package.json)
 │   ├── index.html                 # Vite entry point
 │   ├── package.json
 │   ├── vite.config.js             # proxies /api → :8000 in dev
@@ -227,7 +227,7 @@ Playwright is pinned in `requirements.txt`; the second command installs the Chro
 ### 3. Install frontend dependencies
 
 ```bash
-cd web && npm install && cd ..
+npm run install:web   # delegates to apps/web
 ```
 
 ### 4. Configure environment variables
@@ -313,8 +313,8 @@ The apply loop:
 # Terminal 1 — FastAPI backend
 uvicorn api.main:app --reload --port 8000
 
-# Terminal 2 — React dev server
-cd web && npm run dev
+# Terminal 2 — React dev server (delegates to apps/web)
+npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173). The Vite dev server proxies `/api/*` to `:8000`.
@@ -322,11 +322,11 @@ Open [http://localhost:5173](http://localhost:5173). The Vite dev server proxies
 ### Production build
 
 ```bash
-cd web && npm run build && cd ..
+npm run build   # builds apps/web → apps/web/dist
 uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 
-FastAPI serves the built `web/dist/` bundle at `/` and the API at `/api/*`.
+FastAPI serves the built `apps/web/dist/` bundle at `/` and the API at `/api/*`.
 
 ---
 
@@ -485,7 +485,7 @@ The repo includes `render.yaml` for one-click deploys:
 
 4. Click **Create Web Service**
 
-The start command is `uvicorn api.main:app --host 0.0.0.0 --port $PORT`. The `web/dist/` bundle is pre-built and committed to the repo so there is zero frontend build time on deploy.
+The start command is `uvicorn api.main:app --host 0.0.0.0 --port $PORT`. The `apps/web/dist/` bundle is pre-built and committed to the repo so there is zero frontend build time on deploy.
 
 ---
 
@@ -557,7 +557,7 @@ Contains all candidate data used by the LLM to tailor applications and by the ap
 | **No LLM fabrication** | The system prompt explicitly prohibits inventing skills, experience, or credentials. Tailoring only reframes and emphasizes real content. |
 | **Turso for cloud, SQLite for local** | Turso (libSQL) provides a persistent cloud replica accessible from CI, the deployed web app, and the local machine simultaneously. Local runs fall back to SQLite automatically when Turso credentials are absent, keeping the project usable offline without any configuration. |
 | **React + FastAPI over Streamlit** | Streamlit's execution model made fine-grained UI state (drawers, modals, inline edits, swipe decks) awkward. FastAPI serves as both the API layer and the static file host for the built React bundle, keeping deployment a single process. |
-| **`web/dist` committed to git** | Render's free tier has limited build time; committing the pre-built bundle means zero frontend build time on deploy and faster cold starts. |
+| **`apps/web/dist` committed to git** | Render's free tier has limited build time; committing the pre-built bundle means zero frontend build time on deploy and faster cold starts. |
 | **Playwright in `requirements.txt`** | Playwright is pinned alongside all other Python deps so the version is consistent across local installs and CI. The browser binary is installed separately with `playwright install chromium` because it requires OS-level dependencies. |
 | **`thinking_budget=0` for Gemini** | Disables chain-of-thought on structured JSON tasks, preventing token budget overruns that would truncate the resume JSON output mid-object. |
 | **`continue-on-error` per scraper in CI** | Each discovery source runs as an independent step. A LinkedIn block or Handshake timeout never prevents the other sources from completing or the tailor step from running. |
