@@ -268,18 +268,22 @@ Tasks:
 
 ---
 
-## Milestone 16: Outreach Dashboard UI
+## Milestone 16: Outreach Dashboard UI ✅
 **Goal:** A new "Outreach" tab in the React dashboard lets Ishani manage recruiters, compose emails, and track replies — without leaving the app.
 
+> **Nav note:** the app navigates via the `Sidebar` (screen state), not a top tab bar — Outreach was added as a 5th `Sidebar` nav item + `screen === 'outreach'` branch in `App.jsx` (with `Topbar` title).
+> **Follow-up banner:** backed by a new `GET /api/outreach/followups` endpoint (+ `tracker.list_followups_due`) so the banner is one query, not an N+1 fetch across recruiters.
+> **Local-dev fix:** added `load_dotenv()` to `api/main.py` startup — running `uvicorn` directly previously didn't load `.env`, so the draft/send endpoints failed locally without exported env vars (this surfaced during the live server smoke test). No-op in production where the platform supplies env vars.
+
 Tasks:
-- [ ] Create `web/src/OutreachView.jsx`; add it to the tab bar in `web/src/App.jsx` as the 5th tab ("Outreach") — Done when: clicking the tab renders the component without a console error
-- [ ] Recruiter list panel: fetches `GET /api/recruiters`, displays name + company + email + # emails sent; "Add Recruiter" button opens an inline form (name, email, company, title, notes); on submit POSTs to `POST /api/recruiters` and refreshes list — Done when: adding a recruiter appears in the list immediately
-- [ ] Per-recruiter outreach panel: clicking a recruiter shows their outreach history (subject, status, sent_at, follow_up_date); each row has a status dropdown (sent/replied/bounced/ignored) that PATCHes `PATCH /api/outreach/{id}` on change — Done when: status changes persist on reload
-- [ ] Email composer: "New Email" button on a recruiter row; calls `POST /api/outreach/draft` with `{recruiter_id, type: 'cold'}` to pre-fill subject + body; user edits in a textarea; "Send" button calls `POST /api/outreach/{id}/send`; success shows a toast "Email sent to {name}" — Done when: full flow (draft → edit → send) completes without page reload
-- [ ] Referral variant: "Request Referral" button (same flow but `type: 'referral'`); appears alongside "New Email" — Done when: referral draft generates different copy from cold email draft
-- [ ] Follow-up reminder banner: if any outreach has `status='sent'` and `follow_up_date <= today`, show a yellow banner at the top of OutreachView listing those recruiters — Done when: banner appears when a test record with `follow_up_date = yesterday` exists
-- [ ] "Reach Out" button on `JobDrawer.jsx`: opens the email composer pre-linked to the job (`job_id` passed to draft endpoint); if no recruiter is selected for this job, prompts user to pick or add one first — Done when: clicking the button from a job opens the composer with the job title/company pre-filled in the LLM prompt context
-- [ ] Gate: `npm --prefix web run build` succeeds with no type errors; manual click-through of the full Outreach tab flow — Done when: all green and no console errors
+- [x] `web/src/components/OutreachView.jsx` + 5th `Sidebar` nav item ("Outreach", mail icon) + `App.jsx` screen branch + `Topbar` title — `npm run build` compiles it (45 modules), live server renders the SPA
+- [x] Recruiter list panel: `GET /api/recruiters` (name, title·company, email, sent count); "+ Add" inline form (name/email/company/title/notes) → `POST /api/recruiters` → refresh + auto-select — verified via live server add cycle
+- [x] Per-recruiter outreach history (subject, type, sent_at, follow_up_date) with a status `<select>` (draft/sent/replied/bounced/ignored) → `PATCH /api/outreach/{id}`
+- [x] Composer: "New Email" → `POST /api/outreach/draft {type:'cold'}` pre-fills subject+body; editable; "Send" persists edits via PATCH then `POST /api/outreach/{id}/send`; success toast "Email sent to {name}" — draft path verified live through the server
+- [x] Referral variant: "Request Referral" button → `type:'referral'` (distinct prompt/copy)
+- [x] Follow-up reminder banner: `GET /api/outreach/followups` (sent + follow_up_date ≤ today); clickable chips jump to the recruiter — `tracker.list_followups_due` unit-tested (excludes future + drafts)
+- [x] "Reach out" button on `JobDrawer.jsx` → `onReachOut(job)` switches to Outreach screen, shows a job-context banner, prefills the add-recruiter company, and passes `job_id` into the draft so the LLM has the role context
+- [x] Gate: `npm run build` succeeds (no errors), `pytest tests/` → 46 passed, `flake8` clean; live server smoke test green (SPA + all new endpoints)
 
 ---
 

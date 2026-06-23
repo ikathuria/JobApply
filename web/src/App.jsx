@@ -9,6 +9,7 @@ import JobDrawer from './components/JobDrawer.jsx'
 import DashboardView from './components/DashboardView.jsx'
 import AnalyticsView from './components/AnalyticsView.jsx'
 import SettingsView from './components/SettingsView.jsx'
+import OutreachView from './components/OutreachView.jsx'
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('ja_state') || '{}') } catch { return {} }
@@ -24,6 +25,7 @@ export default function App() {
   const [screen, setScreenRaw] = useState(stored.screen || 'dashboard')
   const [tab, setTabRaw]       = useState(stored.tab || 'new')
   const [selectedJob, setSelectedJob] = useState(null)
+  const [reachOutJob, setReachOutJob] = useState(null)
   const [stats, setStats]      = useState(null)
   const [refreshKey, setRefreshKey]  = useState(0)
 
@@ -101,8 +103,18 @@ export default function App() {
                     dark={dark}
                     onClose={() => setSelectedJob(null)}
                     onRefresh={onRefresh}
+                    onReachOut={job => { setReachOutJob(job); setSelectedJob(null); setScreen('outreach') }}
                   />
                 )}
+              </div>
+            )}
+
+            {screen === 'outreach' && (
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <OutreachView
+                  reachOutJob={reachOutJob}
+                  clearReachOut={() => setReachOutJob(null)}
+                />
               </div>
             )}
 

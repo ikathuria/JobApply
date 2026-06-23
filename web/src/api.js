@@ -45,4 +45,19 @@ export const api = {
   bulk:       (ids, status) => req('POST', '/jobs/bulk', { ids, status }),
   resumeUrl:  (id)        => `${BASE}/jobs/${id}/resume`,
   coverLetterPdfUrl: (id) => `${BASE}/jobs/${id}/cover_letter.pdf`,
+
+  // ── Outreach: recruiters ──
+  recruiters:       ()          => req('GET',    '/recruiters'),
+  addRecruiter:     (data)      => req('POST',   '/recruiters', data),
+  patchRecruiter:   (id, data)  => req('PATCH',  `/recruiters/${id}`, data),
+  deleteRecruiter:  (id)        => req('DELETE', `/recruiters/${id}`),
+  recruiterOutreach:(id)        => req('GET',    `/recruiters/${id}/outreach`),
+
+  // ── Outreach: emails ──
+  draftOutreach:    (data)      => req('POST',   '/outreach/draft', data),
+  patchOutreach:    (id, data)  => req('PATCH',  `/outreach/${id}`, data),
+  sendOutreach:     (id)        => req('POST',   `/outreach/${id}/send`),
+  followups:        ()          => req('GET',    '/outreach/followups'),
+  emailFinder:      (first, last, domain, probe=false) =>
+                       req('GET', '/email-finder?' + new URLSearchParams({ first, last, domain, probe })),
 }

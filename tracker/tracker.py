@@ -408,3 +408,22 @@ def update_outreach_status(
 ) -> None:
     """Convenience wrapper: set status plus any other outreach fields."""
     update_outreach(conn, outreach_id, status=status, **fields)
+
+
+def list_followups_due(conn: sqlite3.Connection, today: str) -> list[sqlite3.Row]:
+    """Sent outreach whose follow-up date is on or before `today` (ISO date),
+    joined with recruiter name/company — powers the follow-up reminder banner."""
+    return conn.execute(
+        """
+        SELECT o.id, o.subject, o.sent_at, o.follow_up_date,
+               r.id AS recruiter_id, r.name AS recruiter_name, r.company
+        FROM outreach o
+        JOIN recruiters r ON r.id = o.recruiter_id
+        WHERE o.status = 'sent'
+          AND o.follow_up_date IS NOT NULL
+          AND o.follow_up_date <> ''
+          AND o.follow_up_date <= ?
+        ORDER BY o.follow_up_date ASC
+        """,
+        (today,),
+    ).fetchall()

@@ -196,7 +196,7 @@ function StatusRail({ job, T, dark, disabled, onChange }) {
   )
 }
 
-export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh }) {
+export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, onReachOut }) {
   const T = dark ? DARK : LIGHT
   const [job, setJob] = useState(initialJob)
   const [activeTab, setActiveTab] = useState('overview')
@@ -479,6 +479,9 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh })
             )}
             {job.url && !job.url.startsWith('manual://') && (
               <Btn variant="secondary" size="sm" onClick={() => window.open(job.url, '_blank')}>Posting</Btn>
+            )}
+            {onReachOut && (
+              <Btn variant="secondary" size="sm" onClick={() => onReachOut(job)}>Reach out</Btn>
             )}
           </div>
           {tailorMsg && <div style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>{tailorMsg}</div>}

@@ -21,6 +21,15 @@ from pydantic import BaseModel
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
+# Load .env for local dev so LLM/SMTP endpoints work when running uvicorn
+# directly. In production (Render) env vars come from the platform and no .env
+# exists, so this is a harmless no-op there.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ModuleNotFoundError:
+    pass
+
 from tracker.tracker import (
     init_db, get_jobs, get_stats, update_status,
     STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED, STATUS_APPLIED,
@@ -28,7 +37,7 @@ from tracker.tracker import (
     add_recruiter, get_recruiter, get_recruiter_by_email, list_recruiters,
     update_recruiter, delete_recruiter,
     add_outreach, get_outreach, list_outreach_for_recruiter, update_outreach,
-    update_outreach_status,
+    update_outreach_status, list_followups_due,
     OUTREACH_COLD, OUTREACH_REFERRAL, OUTREACH_SENT,
 )
 
@@ -742,6 +751,13 @@ def api_send_outreach(outreach_id: int) -> dict:
     follow_up = (now + timedelta(days=7)).date().isoformat()
     update_outreach_status(conn, outreach_id, OUTREACH_SENT, sent_at=sent_at, follow_up_date=follow_up)
     return {"sent": True, "to": to, "sent_at": sent_at, "follow_up_date": follow_up}
+
+
+@app.get("/api/outreach/followups")
+def api_outreach_followups() -> list[dict]:
+    """Sent outreach due for follow-up (follow_up_date <= today), for the banner."""
+    from datetime import date as _date
+    return [dict(r) for r in list_followups_due(db(), _date.today().isoformat())]
 
 
 @app.get("/api/email-finder")

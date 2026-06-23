@@ -33,10 +33,19 @@ function IconGear() {
     </svg>
   )
 }
+function IconMail() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1.5" y="3" width="13" height="10" rx="1.5" />
+      <path d="M2 4L8 8.5L14 4" />
+    </svg>
+  )
+}
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,   tone: 'blue'   },
   { id: 'jobs',      label: 'Jobs',       Icon: IconLayers, tone: 'purple', hasBadge: true },
+  { id: 'outreach',  label: 'Outreach',   Icon: IconMail,   tone: 'blue'   },
   { id: 'analytics', label: 'Analytics',  Icon: IconChart,  tone: 'teal'   },
   { id: 'settings',  label: 'Settings',   Icon: IconGear,   tone: null     },
 ]

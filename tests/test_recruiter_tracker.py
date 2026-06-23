@@ -102,6 +102,24 @@ def test_update_outreach_status_sets_fields(conn):
     assert o["follow_up_date"] == "2026-06-29"
 
 
+def test_list_followups_due(conn):
+    rid = T.add_recruiter(conn, "R", email="fu@x.com")
+    # due yesterday (sent), future (sent), and a draft due yesterday (excluded)
+    due = T.add_outreach(conn, rid, subject="due")
+    T.update_outreach_status(conn, due, T.OUTREACH_SENT, follow_up_date="2026-06-22")
+    future = T.add_outreach(conn, rid, subject="future")
+    T.update_outreach_status(conn, future, T.OUTREACH_SENT, follow_up_date="2026-12-31")
+    draft = T.add_outreach(conn, rid, subject="still draft")
+    T.update_outreach(conn, draft, follow_up_date="2026-06-22")  # status stays draft
+
+    rows = T.list_followups_due(conn, "2026-06-23")
+    ids = [r["id"] for r in rows]
+    assert due in ids
+    assert future not in ids      # follow-up still in the future
+    assert draft not in ids       # not sent
+    assert rows[0]["recruiter_name"] == "R"
+
+
 def test_delete_recruiter_cascades_outreach(conn):
     rid = T.add_recruiter(conn, "Doomed", email="d@x.com")
     T.add_outreach(conn, rid, subject="a")

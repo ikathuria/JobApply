@@ -72,13 +72,18 @@ JobApply/
 │  └─ lever_apply.py             # ✅ done
 ├─ web/
 │  └─ src/
-│     ├─ App.jsx                 # Tab bar + routing
-│     ├─ DashboardView.jsx       # Hero stats + focus cards
-│     ├─ JobsView.jsx            # Tabbed by status, bulk update
-│     ├─ AnalyticsView.jsx       # Funnel + Sankey
-│     ├─ OutreachView.jsx        # Recruiter mgmt + email composer (M16)
-│     ├─ SettingsView.jsx        # Settings (UI only until M7)
-│     └─ JobDrawer.jsx           # Full job detail panel
+│     ├─ App.jsx                 # Sidebar-driven screen routing
+│     ├─ api.js                  # fetch client for all /api endpoints
+│     ├─ theme.js                # design tokens (warm paper/ink palette)
+│     └─ components/
+│        ├─ Sidebar.jsx          # nav (Dashboard/Jobs/Outreach/Analytics/Settings)
+│        ├─ DashboardView.jsx    # Hero stats + focus cards
+│        ├─ JobsView.jsx         # Tabbed by status, bulk update
+│        ├─ AnalyticsView.jsx    # Funnel + Sankey
+│        ├─ OutreachView.jsx     # Recruiter mgmt + composer + follow-up banner (M16)
+│        ├─ SettingsView.jsx     # Settings (UI only until M7)
+│        ├─ JobDrawer.jsx        # Full job detail panel + "Reach out"
+│        └─ ui/index.jsx         # shared kit: Card, Btn, Input, Textarea, …
 ├─ config/
 │  ├─ settings.yaml              # Runtime config (sources, scoring, LLM)
 │  └─ profile.json               # Ishani's resume data (base for tailoring)
@@ -123,10 +128,10 @@ JobApply/
 | 13. Recruiter Database | ✅ done | `recruiters` + `outreach` tables, CRUD + 8 API endpoints (25 tests) |
 | 14. Cold Email Generator | ✅ done | LLM cold + referral drafts; `POST /api/outreach/draft` (33 tests) |
 | 15. Email Discovery & Sending | ✅ done | email_finder (SMTP probe + Hunter), email_sender (Gmail), send endpoint + 7-day follow-up (45 tests) |
-| 16. Outreach Dashboard UI | ☐ todo | New Outreach tab in React |
+| 16. Outreach Dashboard UI | ✅ done | Outreach screen: recruiters, composer, send, follow-up banner, JobDrawer "Reach out" |
 
-**In progress now:** M15 complete — email discovery + Gmail send + send endpoint done
-**Next up:** M16 — Outreach Dashboard UI (`web/src/OutreachView.jsx`, new Outreach tab)
+**In progress now:** M16 complete — Outreach dashboard UI done. **All planned outreach milestones (M12–M16) shipped.**
+**Next up:** Optional — set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` to enable real sends; remaining pre-pivot milestones (M7–M11) if desired.
 
 ---
 
