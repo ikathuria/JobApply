@@ -10,7 +10,7 @@ on:
         default: '50'
         required: false
       sources:
-        description: 'Sources to run (all / intern_list / linkedin / handshake)'
+        description: 'Sources to run (all / intern_list / newgrad_jobs)'
         default: 'all'
         required: false
 
@@ -57,8 +57,19 @@ jobs:
         run: python main.py --source intern_list
         continue-on-error: true
 
+      - name: Discover - newgrad-jobs.com
+        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'newgrad_jobs' }}
+        env:
+          GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
+          TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:     ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: python main.py --source newgrad_jobs
+        continue-on-error: true
+
+      # LinkedIn + Handshake PAUSED 2026-06-22 (if: false). Steps retained so they
+      # can be re-enabled by flipping the condition back to the sources check.
       - name: Discover - LinkedIn
-        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'linkedin' }}
+        if: false
         env:
           GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
           LINKEDIN_EMAIL:       ${{ secrets.LINKEDIN_EMAIL }}
@@ -69,7 +80,7 @@ jobs:
         continue-on-error: true   # skips gracefully if secrets not set
 
       - name: Discover - Handshake
-        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'handshake' }}
+        if: false
         env:
           GOOGLE_API_KEY:       ${{ secrets.GOOGLE_API_KEY }}
           HANDSHAKE_EMAIL:      ${{ secrets.HANDSHAKE_EMAIL }}

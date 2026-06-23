@@ -34,13 +34,18 @@ sources:
   intern_list:
     url: "https://www.intern-list.com/?k=aiml"
     enabled: true
-  linkedin:
+  newgrad_jobs:
+    url: "https://www.newgrad-jobs.com/?k=aiml"
     enabled: true
+  # LinkedIn + Handshake PAUSED 2026-06-22 — fragile browser automation,
+  # account-ban risk. Code + secrets retained; set enabled: true to re-enable.
+  linkedin:
+    enabled: false
     search_query: "AI ML internship"
     easy_apply_only: true
     max_jobs: 60
   handshake:
-    enabled: true
+    enabled: false
     queries:
       - "intern"
       - "software intern"

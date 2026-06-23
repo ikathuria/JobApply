@@ -1,6 +1,6 @@
 # JobApply
 
-> Fully-automated AI internship pipeline: scrape → score → tailor resume per JD → review in React dashboard → auto-fill ATS forms → track outcomes.
+> Fully-automated AI internship pipeline: scrape → score → tailor resume per JD → cold email recruiters → review in React dashboard → auto-fill ATS forms → track outcomes.
 
 ---
 
@@ -54,6 +54,13 @@ JOBRIGHT_PASSWORD=
 # Optional — Turso cloud DB (needed for GHA + Render persistence)
 TURSO_DATABASE_URL=     # from Turso dashboard
 TURSO_AUTH_TOKEN=       # from Turso dashboard → Generate token
+
+# Required for cold email sending (Gmail SMTP)
+GMAIL_ADDRESS=          # e.g. defeated.social@gmail.com
+GMAIL_APP_PASSWORD=     # Google Account → Security → App Passwords → generate one
+
+# Optional — Hunter.io email finder (25 free searches/month)
+HUNTER_API_KEY=         # hunter.io → dashboard → API key
 ```
 
 ---
@@ -188,6 +195,84 @@ The pipeline is **production-ready and running daily**. The sections below track
 
 ---
 
+---
+
+## Milestone 12: Scraper Pivot ✅
+**Goal:** intern-list.com + newgrad-jobs.com run daily; LinkedIn and Handshake are paused cleanly (not deleted).
+
+> **Reality note:** intern-list.com (and newgrad-jobs.com) embed a *virtualized
+> jobright.ai table*, not static HTML — the existing scraper is Playwright-driven,
+> not BeautifulSoup. So the tasks below were implemented by extracting the shared
+> scroll/harvest logic into `scrapers/jobright_minisite.py` and pointing both
+> scrapers at their embed URLs (newgrad = `jobright.ai/minisites-jobs/newgrad/us/ml_ai?embed=true`).
+> The test mocks `scrape_minisite` (browserless) rather than `requests.get`.
+
+Tasks:
+- [x] Pause "Discover - LinkedIn" and "Discover - Handshake" in GHA via `if: false` (steps retained for re-enable) — also set `enabled: false` in `config/settings.yaml`
+- [x] Update the `sources` input description to `all / intern_list / newgrad_jobs`
+- [x] Extract shared jobright scroll logic into `scrapers/jobright_minisite.py`; refactor `intern_list_scraper.py` to use it; create `scrapers/newgrad_jobs_scraper.py` (`scrape_newgrad_jobs`) — verified: live scrape returned 22 real jobs with required keys
+- [x] Add `newgrad_jobs` to `--source` choices in `main.py` + discovery branch wired to `scrape_newgrad_jobs`; `newgrad_jobs` source added to `settings.yaml` (enabled)
+- [x] Add "Discover - newgrad-jobs.com" GHA step (runs on `sources == 'all'` or `'newgrad_jobs'`, `continue-on-error: true`)
+- [x] `tests/test_newgrad_scraper.py` — mocks `scrape_minisite`, asserts URL/source contract + required keys; `pytest tests/` → 3 passed
+- [x] Gate: `flake8` clean on new files (repo `setup.cfg` added), `pytest` green
+
+---
+
+## Milestone 13: Recruiter & Outreach Database
+**Goal:** SQLite schema extended with `recruiters` and `outreach` tables; full CRUD via existing tracker pattern; API endpoints wired.
+
+Tasks:
+- [ ] Add `recruiters` table migration in `tracker/tracker.py` (alongside existing jobs table): columns `id INTEGER PK`, `name TEXT`, `email TEXT UNIQUE`, `company TEXT`, `title TEXT`, `linkedin_url TEXT`, `source TEXT` (manual/hunter/guessed), `notes TEXT`, `created_at TEXT` — Done when: `python -c "from tracker.tracker import Tracker; t=Tracker(); t.create_tables()"` creates the table without error on a fresh DB
+- [ ] Add `outreach` table: `id INTEGER PK`, `recruiter_id INTEGER FK→recruiters`, `job_id INTEGER FK→jobs (nullable)`, `type TEXT` (cold_email/referral), `subject TEXT`, `body TEXT`, `status TEXT` (draft/sent/replied/bounced/ignored), `sent_at TEXT`, `reply_received_at TEXT`, `follow_up_date TEXT`, `notes TEXT` — Done when: table created, FK constraint tested
+- [ ] Add CRUD methods to `tracker/tracker.py`: `add_recruiter`, `get_recruiter`, `list_recruiters`, `update_recruiter`, `delete_recruiter`, `add_outreach`, `get_outreach`, `list_outreach_for_recruiter`, `update_outreach_status` — Done when: `pytest tests/test_recruiter_tracker.py` passes (write tests in same task)
+- [ ] Add API endpoints in `api/main.py`: `GET /api/recruiters`, `POST /api/recruiters`, `GET /api/recruiters/{id}`, `PATCH /api/recruiters/{id}`, `DELETE /api/recruiters/{id}`, `GET /api/recruiters/{id}/outreach`, `POST /api/outreach`, `PATCH /api/outreach/{id}` — Done when: `curl -s http://localhost:8000/api/recruiters` returns `[]` on a fresh DB
+- [ ] Gate: lint and tests pass — Done when: all green
+
+---
+
+## Milestone 14: Cold Email Generator
+**Goal:** LLM generates a personalized cold email (or referral ask) for a given recruiter + job combination; output is a subject line + body ready to review.
+
+Tasks:
+- [ ] Create `pipeline/email_generator.py` with function `generate_cold_email(recruiter: dict, job: dict, profile: dict, email_type: str) -> dict` where `email_type` is `cold` or `referral`; uses existing `llm_client.py` (Groq default); returns `{subject: str, body: str}` — Done when: unit test with mocked LLM returns expected keys
+- [ ] Cold email prompt: opening that names the specific role + company, 2–3 sentences on Ishani's relevant background (MS AI @ Purdue, ex-AWS, RAG/LLM focus), a clear ask ("Would you have 15 minutes to connect, or could you point me to the right contact?"), sign-off. Tone: warm, direct, not generic. Max 200 words. — Done when: manual review of 3 sample outputs is coherent and non-generic
+- [ ] Referral ask prompt: targets a current employee (not recruiter); references mutual context if available (alumni, shared interest); asks specifically for a referral or intro to the hiring team. Max 150 words. — Done when: manual review of 2 sample outputs reads naturally
+- [ ] Add `POST /api/outreach/draft` endpoint: accepts `{recruiter_id, job_id (optional), type}`, calls `generate_cold_email`, saves result as a `draft` outreach record, returns `{id, subject, body}` — Done when: `curl -X POST http://localhost:8000/api/outreach/draft -d '{"recruiter_id":1,"type":"cold"}'` returns a subject + body
+- [ ] Add `pytest` unit tests for `email_generator.py` with mocked `llm_client` — Done when: `pytest tests/test_email_generator.py` passes
+- [ ] Gate: lint and tests pass — Done when: all green
+
+---
+
+## Milestone 15: Email Discovery & Sending
+**Goal:** Given a company + name, the system guesses and optionally verifies a recruiter's email; confirmed emails can be sent from Ishani's Gmail via SMTP.
+
+Tasks:
+- [ ] Create `pipeline/email_finder.py` with `guess_emails(first: str, last: str, domain: str) -> list[str]`; generates the 6 most common patterns (`first@`, `firstlast@`, `first.last@`, `flast@`, `f.last@`, `lastfirst@`); verifies each via SMTP RCPT probe (no-send check, `smtplib`); returns list sorted by likelihood — Done when: `python -c "from pipeline.email_finder import guess_emails; print(guess_emails('john','smith','anthropic.com'))"` returns a list (may be empty if all bounce)
+- [ ] Add `GET /api/email-finder?first=X&last=X&domain=X` endpoint that calls `guess_emails` and returns the ranked list — Done when: curl returns a JSON array
+- [ ] Optional Hunter.io integration in `email_finder.py`: if `HUNTER_API_KEY` is set, call `https://api.hunter.io/v2/email-finder` as a fallback when SMTP probing finds nothing; skip gracefully if key is not set — Done when: the function works with and without `HUNTER_API_KEY` in env
+- [ ] Create `pipeline/email_sender.py` with `send_email(to: str, subject: str, body: str) -> bool`; uses `smtplib.SMTP_SSL` with Gmail (`smtp.gmail.com:465`); credentials from `GMAIL_ADDRESS` + `GMAIL_APP_PASSWORD` env vars; returns `True` on success, logs error and returns `False` on failure — Done when: unit test with mocked SMTP passes; live test (guarded by `GMAIL_ADDRESS` in env) sends a real email to `defeated.social@gmail.com`
+- [ ] Add `POST /api/outreach/{id}/send` endpoint: loads the draft outreach record, calls `send_email`, sets `status='sent'` + `sent_at=now`, returns `{sent: true}` — Done when: curl sends a real email and the DB record is updated
+- [ ] Set `follow_up_date = sent_at + 7 days` automatically on send — Done when: outreach record has `follow_up_date` set after send
+- [ ] Add `pytest` tests for `email_sender.py` (mocked SMTP) and `email_finder.py` (mocked `smtplib`) — Done when: `pytest tests/test_email_sender.py tests/test_email_finder.py` passes
+- [ ] Gate: lint and tests pass — Done when: all green
+
+---
+
+## Milestone 16: Outreach Dashboard UI
+**Goal:** A new "Outreach" tab in the React dashboard lets Ishani manage recruiters, compose emails, and track replies — without leaving the app.
+
+Tasks:
+- [ ] Create `web/src/OutreachView.jsx`; add it to the tab bar in `web/src/App.jsx` as the 5th tab ("Outreach") — Done when: clicking the tab renders the component without a console error
+- [ ] Recruiter list panel: fetches `GET /api/recruiters`, displays name + company + email + # emails sent; "Add Recruiter" button opens an inline form (name, email, company, title, notes); on submit POSTs to `POST /api/recruiters` and refreshes list — Done when: adding a recruiter appears in the list immediately
+- [ ] Per-recruiter outreach panel: clicking a recruiter shows their outreach history (subject, status, sent_at, follow_up_date); each row has a status dropdown (sent/replied/bounced/ignored) that PATCHes `PATCH /api/outreach/{id}` on change — Done when: status changes persist on reload
+- [ ] Email composer: "New Email" button on a recruiter row; calls `POST /api/outreach/draft` with `{recruiter_id, type: 'cold'}` to pre-fill subject + body; user edits in a textarea; "Send" button calls `POST /api/outreach/{id}/send`; success shows a toast "Email sent to {name}" — Done when: full flow (draft → edit → send) completes without page reload
+- [ ] Referral variant: "Request Referral" button (same flow but `type: 'referral'`); appears alongside "New Email" — Done when: referral draft generates different copy from cold email draft
+- [ ] Follow-up reminder banner: if any outreach has `status='sent'` and `follow_up_date <= today`, show a yellow banner at the top of OutreachView listing those recruiters — Done when: banner appears when a test record with `follow_up_date = yesterday` exists
+- [ ] "Reach Out" button on `JobDrawer.jsx`: opens the email composer pre-linked to the job (`job_id` passed to draft endpoint); if no recruiter is selected for this job, prompts user to pick or add one first — Done when: clicking the button from a job opens the composer with the job title/company pre-filled in the LLM prompt context
+- [ ] Gate: `npm --prefix web run build` succeeds with no type errors; manual click-through of the full Outreach tab flow — Done when: all green and no console errors
+
+---
+
 ## Claude Code Commands
 
 **Resume from any point:**
@@ -215,3 +300,8 @@ claude "Read PLAN.md. Without building anything new, test everything marked done
 - **No auth on the dashboard** — personal tool, Render URL is obscure enough. If shared, add HTTP Basic Auth via FastAPI middleware.
 - **Workday not automated** — Workday's DOM is dynamically generated and varies per company config. A robust handler requires iframe traversal and state machine logic. For now, the browser opens and the user fills manually.
 - **Settings UI currently cosmetic** — `SettingsView.jsx` renders fields with hardcoded defaults but Save does nothing. Milestone 7 fixes this.
+- **LinkedIn and Handshake PAUSED (2026-06-22)** — both scrapers disabled in GHA via `if: false`; code and secrets retained for easy re-enable. Replaced by newgrad-jobs.com (Milestone 12).
+- **Cold email via Gmail SMTP** — using app password + `smtplib.SMTP_SSL` avoids the OAuth2 dance. Gmail allows 500 sends/day, well within personal outreach volume. App password requires 2FA on the account.
+- **Email discovery: SMTP probing first, Hunter.io optional** — SMTP RCPT probing is free and works ~50–60% of the time for common domains. Hunter.io (25 free/month) is reserved for high-priority targets. Manual entry is the primary UI path for precise control.
+- **Referral vs cold email are separate LLM prompts** — cold targets recruiters/HR; referral targets engineers/PMs at the company. Different tone, different ask, same send infrastructure.
+- **No auto-send** — all emails go through a draft-review-send flow in the UI. The system never sends without user confirmation.

@@ -9,7 +9,8 @@ Phases:
 Usage:
   python main.py                          # discover + filter (all sources)
   python main.py --source intern_list     # single source
-  python main.py --source linkedin
+  python main.py --source newgrad_jobs
+  python main.py --source linkedin        # PAUSED (disabled in config)
   python main.py --tailor                 # tailor top unreviewed jobs
   python main.py --tailor --limit 5       # tailor top N jobs
   python main.py --apply                  # apply to approved jobs (you confirm each)
@@ -96,6 +97,14 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
         logger.info("=== Scraping intern-list.com ===")
         jobs = scrape_intern_list(max_rows=300)
         logger.info(f"intern-list.com: {len(jobs)} raw listings")
+        all_jobs.extend(jobs)
+
+    if source in (None, "newgrad_jobs") and sources.get("newgrad_jobs", {}).get("enabled"):
+        from scrapers.newgrad_jobs_scraper import scrape_newgrad_jobs
+
+        logger.info("=== Scraping newgrad-jobs.com ===")
+        jobs = scrape_newgrad_jobs(max_rows=300)
+        logger.info(f"newgrad-jobs.com: {len(jobs)} raw listings")
         all_jobs.extend(jobs)
 
     if source in (None, "linkedin") and sources.get("linkedin", {}).get("enabled"):
@@ -457,7 +466,7 @@ def _slug(text: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
-    parser.add_argument("--source", choices=["intern_list", "linkedin", "handshake"])
+    parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "linkedin", "handshake"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
     parser.add_argument("--apply",   action="store_true", help="Apply to approved jobs (you confirm each submit)")
     parser.add_argument("--dry-run", action="store_true", help="Fill forms + screenshot, never submit")
