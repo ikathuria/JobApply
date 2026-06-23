@@ -9,7 +9,8 @@ from pipeline.llm_client import complete
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are an expert career coach writing concise, compelling cover letters for AI/ML internship positions.
+SYSTEM_PROMPT = """You are an expert career coach writing concise, compelling cover letters \
+for AI/ML internship positions.
 
 Write in first person, professional but not stiff. Keep it to 3 short paragraphs:
 1. Hook — what excites you about this specific company/role (use why_fit from context)

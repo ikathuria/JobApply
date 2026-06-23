@@ -115,7 +115,10 @@ def _gemini(system_prompt: str, user_message: str, max_tokens: int) -> str:
         raise RuntimeError(f"Gemini returned empty response (finish_reason={finish_name})")
 
     if finish_name == "MAX_TOKENS":
-        logger.warning("Gemini hit MAX_TOKENS — output may be cut off. Consider raising max_tokens or using a model with higher output quota.")
+        logger.warning(
+            "Gemini hit MAX_TOKENS — output may be cut off. "
+            "Consider raising max_tokens or using a model with higher output quota."
+        )
 
     return text
 

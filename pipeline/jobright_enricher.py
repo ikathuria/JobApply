@@ -135,15 +135,20 @@ def enrich_jobright_url(url: str) -> JobrightEnrichment:
     soup = BeautifulSoup(resp.text, "html.parser")
 
     next_data = _load_next_data(soup)
-    job_data = (((next_data.get("props") or {}).get("pageProps") or {}).get("dataSource") or {}).get("jobResult") or {}
-    company_data = (((next_data.get("props") or {}).get("pageProps") or {}).get("dataSource") or {}).get("companyResult") or {}
+    data_source = ((next_data.get("props") or {}).get("pageProps") or {}).get("dataSource") or {}
+    job_data = data_source.get("jobResult") or {}
+    company_data = data_source.get("companyResult") or {}
     schema_data = _load_job_schema(soup)
 
     title = str(job_data.get("jobTitle") or schema_data.get("title") or "").strip()
     company = _coalesce_company(job_data, company_data, schema_data)
     location = str(job_data.get("jobLocation") or _schema_location(schema_data) or "").strip()
     salary_range = str(job_data.get("salaryDesc") or "").strip()
-    company_url = str(company_data.get("companyURL") or ((schema_data.get("hiringOrganization") or {}).get("sameAs")) or "").strip()
+    company_url = str(
+        company_data.get("companyURL")
+        or ((schema_data.get("hiringOrganization") or {}).get("sameAs"))
+        or ""
+    ).strip()
     employer_url = _extract_origin_url(soup) or _find_employer_url(title, company, company_url)
     valid_through = str(schema_data.get("validThrough") or "").strip()
     closed_reason = _detect_closed_reason(resp.text, soup, valid_through)
@@ -160,7 +165,11 @@ def enrich_jobright_url(url: str) -> JobrightEnrichment:
         employment_type=str(job_data.get("employmentType") or "").strip(),
         seniority=str(job_data.get("jobSeniority") or "").strip(),
         valid_through=valid_through,
-        recommendation_tags=[str(tag).strip() for tag in (job_data.get("recommendationTags") or []) if str(tag).strip()],
+        recommendation_tags=[
+            str(tag).strip()
+            for tag in (job_data.get("recommendationTags") or [])
+            if str(tag).strip()
+        ],
         core_skills=[
             str(item.get("skill")).strip()
             for item in (job_data.get("jdCoreSkills") or [])
@@ -251,7 +260,11 @@ def _build_description(job_data: dict[str, Any], schema_data: dict[str, Any], co
     if skills:
         sections.append("Core Skills\n" + ", ".join(skills))
 
-    recommendation_tags = [str(item).strip() for item in (job_data.get("recommendationTags") or []) if str(item).strip()]
+    recommendation_tags = [
+        str(item).strip()
+        for item in (job_data.get("recommendationTags") or [])
+        if str(item).strip()
+    ]
     if recommendation_tags:
         sections.append("Signals\n" + ", ".join(recommendation_tags))
 

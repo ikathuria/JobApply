@@ -58,7 +58,8 @@ def _profile_text(profile: dict) -> str:
     return "\n".join(lines)
 
 
-SYSTEM_PROMPT_TEMPLATE = """You are an expert technical resume writer helping a candidate tailor their resume for AI/ML internship roles.
+SYSTEM_PROMPT_TEMPLATE = """You are an expert technical resume writer helping a candidate \
+tailor their resume for AI/ML internship roles.
 
 CANDIDATE PROFILE:
 {profile_text}

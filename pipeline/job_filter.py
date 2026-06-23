@@ -3,9 +3,7 @@ Scores and filters job listings against Ishani's profile and target criteria.
 No LLM needed here — pure keyword/heuristic scoring for Phase 1.
 """
 
-import re
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.platypus import (
@@ -19,7 +19,7 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,6 @@ MARGIN = 0.55 * inch
 
 
 def _styles() -> dict:
-    base = getSampleStyleSheet()
     return {
         "name": ParagraphStyle(
             "name",
