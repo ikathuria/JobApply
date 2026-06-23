@@ -17,6 +17,14 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
+# Load .env so a local run targets the Turso cloud DB (when configured) rather
+# than the local SQLite copy. No-op in CI where env vars come from the platform.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / ".env")
+except ModuleNotFoundError:
+    pass
+
 from tracker.tracker import init_db, DB_PATH
 
 logging.basicConfig(
