@@ -19,10 +19,19 @@ services:
         sync: false          # optional — set in Render dashboard for persistent storage
       - key: TURSO_AUTH_TOKEN
         sync: false          # from Turso dashboard → your db → Generate token
+      - key: GROQ_API_KEY
+        sync: false          # default LLM provider — needed for outreach draft generation
       - key: GOOGLE_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Cold email sending (Gmail SMTP App Password) — needed for /api/outreach/{id}/send
+      - key: GMAIL_ADDRESS
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: HUNTER_API_KEY
+        sync: false          # optional — email-finder fallback
       - key: LINKEDIN_EMAIL
         sync: false
       - key: LINKEDIN_PASSWORD

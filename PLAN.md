@@ -253,15 +253,18 @@ Tasks:
 ## Milestone 15: Email Discovery & Sending
 **Goal:** Given a company + name, the system guesses and optionally verifies a recruiter's email; confirmed emails can be sent from Ishani's Gmail via SMTP.
 
+> **Reality note on SMTP probing:** RCPT verification needs outbound port 25 and a non-catch-all MX — both frequently unavailable (Google/Microsoft reject probes; most networks + Render block port 25). So `guess_emails` treats probing as best-effort: verified addresses first, else Hunter.io, else the unrejected candidate patterns ranked by likelihood. It returns `[]` only when every candidate is *explicitly* rejected and Hunter finds nothing. MX lookup uses `dnspython` (added to requirements).
+> **Live send test:** `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` aren't set in this env, so the real-send leg is deferred to first use; the send endpoint + 7-day follow-up logic were verified with `send_email` mocked (status→sent, sent_at set, follow_up = today+7), plus graceful 502 (SMTP fail, status stays draft) and 400 (recruiter has no email).
+
 Tasks:
-- [ ] Create `pipeline/email_finder.py` with `guess_emails(first: str, last: str, domain: str) -> list[str]`; generates the 6 most common patterns (`first@`, `firstlast@`, `first.last@`, `flast@`, `f.last@`, `lastfirst@`); verifies each via SMTP RCPT probe (no-send check, `smtplib`); returns list sorted by likelihood — Done when: `python -c "from pipeline.email_finder import guess_emails; print(guess_emails('john','smith','anthropic.com'))"` returns a list (may be empty if all bounce)
-- [ ] Add `GET /api/email-finder?first=X&last=X&domain=X` endpoint that calls `guess_emails` and returns the ranked list — Done when: curl returns a JSON array
-- [ ] Optional Hunter.io integration in `email_finder.py`: if `HUNTER_API_KEY` is set, call `https://api.hunter.io/v2/email-finder` as a fallback when SMTP probing finds nothing; skip gracefully if key is not set — Done when: the function works with and without `HUNTER_API_KEY` in env
-- [ ] Create `pipeline/email_sender.py` with `send_email(to: str, subject: str, body: str) -> bool`; uses `smtplib.SMTP_SSL` with Gmail (`smtp.gmail.com:465`); credentials from `GMAIL_ADDRESS` + `GMAIL_APP_PASSWORD` env vars; returns `True` on success, logs error and returns `False` on failure — Done when: unit test with mocked SMTP passes; live test (guarded by `GMAIL_ADDRESS` in env) sends a real email to `defeated.social@gmail.com`
-- [ ] Add `POST /api/outreach/{id}/send` endpoint: loads the draft outreach record, calls `send_email`, sets `status='sent'` + `sent_at=now`, returns `{sent: true}` — Done when: curl sends a real email and the DB record is updated
-- [ ] Set `follow_up_date = sent_at + 7 days` automatically on send — Done when: outreach record has `follow_up_date` set after send
-- [ ] Add `pytest` tests for `email_sender.py` (mocked SMTP) and `email_finder.py` (mocked `smtplib`) — Done when: `pytest tests/test_email_sender.py tests/test_email_finder.py` passes
-- [ ] Gate: lint and tests pass — Done when: all green
+- [x] `pipeline/email_finder.py` — `guess_emails(first, last, domain, probe=True) -> list[str]`; 6 ranked patterns (`first.last`, `firstlast`, `flast`, `first`, `f.last`, `lastfirst`); per-candidate SMTP RCPT probe via `smtplib` (no send); MX via `dnspython` — verified: live call on `anthropic.com` returns a ranked list
+- [x] `GET /api/email-finder?first=&last=&domain=&probe=` → returns the ranked JSON array — verified via handler
+- [x] Hunter.io fallback in `email_finder.py`: `_hunter_lookup` calls `api.hunter.io/v2/email-finder` only when `HUNTER_API_KEY` is set, used when SMTP finds nothing; no-op without the key — covered by tests with/without key
+- [x] `pipeline/email_sender.py` — `send_email(to, subject, body) -> bool` via `smtplib.SMTP_SSL` (`smtp.gmail.com:465`), creds from `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD`, returns False (logged) on any failure incl. missing creds
+- [x] `POST /api/outreach/{id}/send` — sends to the recruiter's email, marks `status='sent'` + `sent_at=now`, returns `{sent, to, sent_at, follow_up_date}`; 400 if recruiter has no email, 502 on send failure (status unchanged)
+- [x] `follow_up_date = sent_at + 7 days` set automatically on send — verified (sent today → follow_up 7 days out)
+- [x] `tests/test_email_finder.py` (8) + `tests/test_email_sender.py` (4), both fully mocked (smtplib/MX/Hunter) — `pytest` green
+- [x] Gate: `flake8` clean, `pytest tests/` → 45 passed. Env vars added to `.env.example` + `render.yaml` (also added missing `GROQ_API_KEY` to render).
 
 ---
 

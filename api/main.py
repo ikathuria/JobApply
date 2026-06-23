@@ -28,7 +28,8 @@ from tracker.tracker import (
     add_recruiter, get_recruiter, get_recruiter_by_email, list_recruiters,
     update_recruiter, delete_recruiter,
     add_outreach, get_outreach, list_outreach_for_recruiter, update_outreach,
-    OUTREACH_COLD, OUTREACH_REFERRAL,
+    update_outreach_status,
+    OUTREACH_COLD, OUTREACH_REFERRAL, OUTREACH_SENT,
 )
 
 app = FastAPI(title="JobApply API", version="2.0")
@@ -711,6 +712,44 @@ def api_draft_outreach(body: OutreachDraft) -> dict:
         subject=draft.get("subject"), body=draft.get("body"), job_id=body.job_id,
     )
     return {"id": oid, "subject": draft.get("subject", ""), "body": draft.get("body", "")}
+
+
+@app.post("/api/outreach/{outreach_id}/send")
+def api_send_outreach(outreach_id: int) -> dict:
+    """Send a draft outreach email via Gmail SMTP, then mark it sent and set a
+    7-day follow-up reminder."""
+    from datetime import datetime, timedelta
+
+    conn = db()
+    o = get_outreach(conn, outreach_id)
+    if not o:
+        raise HTTPException(404, "Outreach not found")
+    recruiter = get_recruiter(conn, o["recruiter_id"])
+    to = ((recruiter["email"] if recruiter else "") or "").strip()
+    if not to:
+        raise HTTPException(400, "Recruiter has no email address — add one first")
+
+    try:
+        from pipeline.email_sender import send_email
+    except (ImportError, ModuleNotFoundError) as e:
+        raise HTTPException(503, f"Email sender unavailable: {e}")
+
+    if not send_email(to, o["subject"] or "", o["body"] or ""):
+        raise HTTPException(502, "Email send failed — check GMAIL_ADDRESS / GMAIL_APP_PASSWORD")
+
+    now = datetime.utcnow()
+    sent_at = now.isoformat()
+    follow_up = (now + timedelta(days=7)).date().isoformat()
+    update_outreach_status(conn, outreach_id, OUTREACH_SENT, sent_at=sent_at, follow_up_date=follow_up)
+    return {"sent": True, "to": to, "sent_at": sent_at, "follow_up_date": follow_up}
+
+
+@app.get("/api/email-finder")
+def api_email_finder(first: str, last: str, domain: str, probe: bool = True) -> list[str]:
+    """Best-effort recruiter email guesses for a name + company domain, ranked.
+    SMTP probing (probe=true) is often blocked/inconclusive — see email_finder."""
+    from pipeline.email_finder import guess_emails
+    return guess_emails(first, last, domain, probe=probe)
 
 
 # ── Serve built React app (production) ───────────────────────────────────────
