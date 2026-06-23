@@ -28,6 +28,7 @@ from tracker.tracker import (
     add_recruiter, get_recruiter, get_recruiter_by_email, list_recruiters,
     update_recruiter, delete_recruiter,
     add_outreach, get_outreach, list_outreach_for_recruiter, update_outreach,
+    OUTREACH_COLD, OUTREACH_REFERRAL,
 )
 
 app = FastAPI(title="JobApply API", version="2.0")
@@ -668,6 +669,48 @@ def api_patch_outreach(outreach_id: int, patch: OutreachPatch) -> dict:
         raise HTTPException(404, "Outreach not found")
     update_outreach(conn, outreach_id, **patch.model_dump(exclude_unset=True))
     return dict(get_outreach(conn, outreach_id))
+
+
+class OutreachDraft(BaseModel):
+    recruiter_id: int
+    job_id: int | None = None
+    type: str = "cold"  # "cold" | "referral"
+
+
+@app.post("/api/outreach/draft")
+def api_draft_outreach(body: OutreachDraft) -> dict:
+    """LLM-generate a cold email / referral ask and save it as a draft outreach
+    record. Returns {id, subject, body}."""
+    conn = db()
+    recruiter = get_recruiter(conn, body.recruiter_id)
+    if not recruiter:
+        raise HTTPException(404, "Recruiter not found")
+
+    job = None
+    if body.job_id is not None:
+        job_row = conn.execute("SELECT * FROM jobs WHERE id = ?", (body.job_id,)).fetchone()
+        if not job_row:
+            raise HTTPException(404, "Job not found")
+        job = dict(job_row)
+
+    is_referral = body.type == "referral"
+    try:
+        from pipeline.email_generator import generate_cold_email, COLD, REFERRAL
+        draft = generate_cold_email(
+            dict(recruiter), job, profile=None,
+            email_type=REFERRAL if is_referral else COLD,
+        )
+    except (ImportError, ModuleNotFoundError) as e:
+        raise HTTPException(503, f"Email generator unavailable: {e}")
+    except Exception as e:
+        raise HTTPException(500, f"Email generation failed: {e}")
+
+    stored_type = OUTREACH_REFERRAL if is_referral else OUTREACH_COLD
+    oid = add_outreach(
+        conn, body.recruiter_id, type=stored_type,
+        subject=draft.get("subject"), body=draft.get("body"), job_id=body.job_id,
+    )
+    return {"id": oid, "subject": draft.get("subject", ""), "body": draft.get("body", "")}
 
 
 # ── Serve built React app (production) ───────────────────────────────────────

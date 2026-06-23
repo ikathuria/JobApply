@@ -121,12 +121,12 @@ JobApply/
 | 11. Production Hardening | ☐ todo | |
 | 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; intern-list + newgrad on jobright JSON API (browserless, ~1.9s/source) |
 | 13. Recruiter Database | ✅ done | `recruiters` + `outreach` tables, CRUD + 8 API endpoints (25 tests) |
-| 14. Cold Email Generator | ☐ todo | LLM draft: cold + referral variants |
+| 14. Cold Email Generator | ✅ done | LLM cold + referral drafts; `POST /api/outreach/draft` (33 tests) |
 | 15. Email Discovery & Sending | ☐ todo | SMTP probe + Hunter.io + Gmail send |
 | 16. Outreach Dashboard UI | ☐ todo | New Outreach tab in React |
 
-**In progress now:** M13 complete — recruiter + outreach DB and API done
-**Next up:** M14 — Cold Email Generator (`pipeline/email_generator.py`, LLM cold + referral drafts)
+**In progress now:** M14 complete — LLM cold-email + referral generator and draft endpoint done
+**Next up:** M15 — Email Discovery & Sending (`pipeline/email_finder.py` SMTP probe + Hunter.io; `pipeline/email_sender.py` Gmail SMTP)
 
 ---
 

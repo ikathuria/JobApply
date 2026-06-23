@@ -234,16 +234,19 @@ Tasks:
 
 ---
 
-## Milestone 14: Cold Email Generator
+## Milestone 14: Cold Email Generator ✅
 **Goal:** LLM generates a personalized cold email (or referral ask) for a given recruiter + job combination; output is a subject line + body ready to review.
 
+> **Parsing note:** the model returns `{"subject","body"}` JSON, but pretty-prints it with literal newlines inside the body string (invalid under strict JSON). `_parse` uses `json.loads(..., strict=False)` to tolerate that, with a `Subject:`-line fallback. This was caught during the live quality check, not by mocked tests — regression test added.
+> **Env note:** the local `openai` package was a stale 0.27.2 (broke Groq via `OpenAI` import — also broke local tailoring); upgraded to 2.x to run the live check. `requirements.txt` already pins `openai>=1.0.0`, so CI/Render were unaffected.
+
 Tasks:
-- [ ] Create `pipeline/email_generator.py` with function `generate_cold_email(recruiter: dict, job: dict, profile: dict, email_type: str) -> dict` where `email_type` is `cold` or `referral`; uses existing `llm_client.py` (Groq default); returns `{subject: str, body: str}` — Done when: unit test with mocked LLM returns expected keys
-- [ ] Cold email prompt: opening that names the specific role + company, 2–3 sentences on Ishani's relevant background (MS AI @ Purdue, ex-AWS, RAG/LLM focus), a clear ask ("Would you have 15 minutes to connect, or could you point me to the right contact?"), sign-off. Tone: warm, direct, not generic. Max 200 words. — Done when: manual review of 3 sample outputs is coherent and non-generic
-- [ ] Referral ask prompt: targets a current employee (not recruiter); references mutual context if available (alumni, shared interest); asks specifically for a referral or intro to the hiring team. Max 150 words. — Done when: manual review of 2 sample outputs reads naturally
-- [ ] Add `POST /api/outreach/draft` endpoint: accepts `{recruiter_id, job_id (optional), type}`, calls `generate_cold_email`, saves result as a `draft` outreach record, returns `{id, subject, body}` — Done when: `curl -X POST http://localhost:8000/api/outreach/draft -d '{"recruiter_id":1,"type":"cold"}'` returns a subject + body
-- [ ] Add `pytest` unit tests for `email_generator.py` with mocked `llm_client` — Done when: `pytest tests/test_email_generator.py` passes
-- [ ] Gate: lint and tests pass — Done when: all green
+- [x] `pipeline/email_generator.py` — `generate_cold_email(recruiter, job, profile=None, email_type="cold") -> {subject, body}`; uses `llm_client.complete`; loads profile from `config/profile.json` if not passed; `_candidate_context` builds a factual blurb (no fabrication)
+- [x] Cold email prompt: names specific role + company, 2-3 sentences of relevant background, clear 15-min/pointer ask, warm + non-generic, ≤200 words — live Groq sample reviewed: 132 words, named real projects (TrustworthyRAG) + AWS background, correct ask
+- [x] Referral prompt: targets a current employee, references shared context, asks for referral/intro to hiring team, ≤150 words — live sample reviewed: reads naturally, distinct from cold copy
+- [x] `POST /api/outreach/draft` ({recruiter_id, job_id?, type}) → generates + saves a `draft` outreach record → returns {id, subject, body}; maps `cold`→`cold_email`, `referral`→`referral`; 404 on missing recruiter/job — verified end-to-end against live LLM
+- [x] `tests/test_email_generator.py` (8 tests, mocked LLM): parsing (JSON/fences/newlines/Subject-fallback), cold-vs-referral routing, candidate context, job=None handling
+- [x] Gate: `flake8` clean, `pytest tests/` → 33 passed
 
 ---
 
