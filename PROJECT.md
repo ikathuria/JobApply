@@ -16,7 +16,7 @@ JobApply is a personal, fully-automated AI/ML internship search pipeline built f
 
 | Layer | Choice | Version | Notes |
 |---|---|---|---|
-| Scrapers | Python + Playwright | Python 3.12 | intern-list + newgrad-jobs scroll a virtualized jobright.ai embed table; LinkedIn + Handshake paused |
+| Scrapers | Python + requests | Python 3.12 | intern-list + newgrad-jobs hit jobright.ai's JSON API (browserless); LinkedIn + Handshake paused (Playwright, disabled) |
 | LLM / Tailoring | Groq (llama-3.1-8b-instant) | Groq API | Free tier; Gemini + Claude are fallbacks via `pipeline/llm_client.py` |
 | Email | Gmail SMTP (smtplib) + optional Hunter.io | — | App password auth; 500 sends/day free |
 | PDF generation | ReportLab | latest | Local, no API |
@@ -44,9 +44,9 @@ JobApply is a personal, fully-automated AI/ML internship search pipeline built f
 ```
 JobApply/
 ├─ scrapers/
-│  ├─ jobright_minisite.py       # Shared Playwright scroll/harvest for jobright.ai embed tables
-│  ├─ intern_list_scraper.py     # intern-list.com embed URL + source label (uses jobright_minisite)
-│  ├─ newgrad_jobs_scraper.py    # newgrad-jobs.com embed URL + source label (M12)
+│  ├─ jobright_minisite.py       # Shared requests client for jobright.ai JSON API (paging + normalize)
+│  ├─ intern_list_scraper.py     # category "intern:us:ml_ai" + source label (uses jobright_minisite)
+│  ├─ newgrad_jobs_scraper.py    # category "newgrad:us:ml_ai" + source label (M12)
 │  ├─ linkedin_scraper.py        # PAUSED — Playwright, not run in GHA
 │  └─ handshake_scraper.py       # PAUSED — Playwright, not run in GHA
 ├─ pipeline/
@@ -119,7 +119,7 @@ JobApply/
 | 9. Interview Prep Module | ☐ todo | |
 | 10. Email Notifications | ☐ todo | |
 | 11. Production Hardening | ☐ todo | |
-| 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; newgrad-jobs.com live (22 jobs verified) |
+| 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; intern-list + newgrad on jobright JSON API (browserless, ~1.9s/source) |
 | 13. Recruiter Database | ☐ todo | `recruiters` + `outreach` tables + CRUD API |
 | 14. Cold Email Generator | ☐ todo | LLM draft: cold + referral variants |
 | 15. Email Discovery & Sending | ☐ todo | SMTP probe + Hunter.io + Gmail send |
@@ -132,7 +132,8 @@ JobApply/
 
 ## Decision log
 
-- 2026-06-22 — LinkedIn + Handshake scrapers paused; replaced by newgrad-jobs.com — LinkedIn automation is fragile and risks account bans; newgrad-jobs.com is a cleaner HTML target. Can be re-enabled in GHA by removing `if: false`.
+- 2026-06-22 — LinkedIn + Handshake scrapers paused; replaced by newgrad-jobs.com — LinkedIn automation is fragile and risks account bans. Can be re-enabled in GHA by removing `if: false`.
+- 2026-06-22 — intern-list + newgrad scrapers rewritten from Playwright to `requests` against jobright.ai's `swan/mini-sites/list` JSON API — ~1.9s vs 30–60s per source, no browser flakiness, and CI dropped the Chromium install (whole daily path is now browserless). Risk: undocumented internal endpoint could change; mitigated by it serving anonymously and a clean fallback to the git-tagged Playwright version if needed.
 - 2026-06-22 — Added cold email outreach as a core feature (M13–M16) — job boards alone are insufficient; direct recruiter outreach dramatically increases response rates for internship searches.
 - 2026-06-22 — Gmail SMTP chosen over OAuth2 for email sending — app password avoids the OAuth consent screen and is simpler for a personal tool; 500 sends/day is well within outreach volume.
 - 2026-06-22 — All emails require user review before send — no auto-send to avoid mistakes; the system is a composer + tracker, not a blast tool.

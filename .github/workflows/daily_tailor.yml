@@ -39,10 +39,14 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
 
       - name: Install dependencies
-        run: pip install -r requirements.txt playwright
+        run: pip install -r requirements.txt
 
-      - name: Install Playwright browsers
-        run: playwright install chromium --with-deps
+      # NOTE: No "playwright install chromium" step — the daily path is fully
+      # browserless. intern-list + newgrad-jobs use jobright.ai's JSON API via
+      # requests; enrich + tailor are HTTP-only. If LinkedIn/Handshake discovery
+      # is ever re-enabled (they use Playwright), restore:
+      #   - name: Install Playwright browsers
+      #     run: playwright install chromium --with-deps
 
       # Discovery
       # Each source runs independently with continue-on-error so one failure

@@ -1,11 +1,11 @@
 """
 Unit tests for the newgrad-jobs.com scraper.
 
-newgrad-jobs.com embeds a virtualized jobright.ai table, so the scraper is
-Playwright-driven (not a static HTML parse). These tests exercise the wrapper's
-contract — that it targets the correct embed URL and source label, and that the
-shared minisite scraper's output flows through unchanged — by mocking the shared
-``scrape_minisite`` so no browser is launched.
+newgrad-jobs.com is backed by jobright.ai's JSON API, so the scraper is a plain
+``requests`` client (no browser). These tests exercise the wrapper's contract —
+that it targets the correct category slug and source label, and that the shared
+minisite scraper's output flows through unchanged — by mocking the shared
+``scrape_minisite`` so no network call is made.
 """
 
 from unittest.mock import patch
@@ -30,16 +30,16 @@ SAMPLE_ROWS = [
 ]
 
 
-def test_targets_newgrad_embed_url():
-    assert ng.SOURCE_URL == "https://jobright.ai/minisites-jobs/newgrad/us/ml_ai?embed=true"
+def test_targets_newgrad_category():
+    assert ng.CATEGORY == "newgrad:us:ml_ai"
     assert ng.SOURCE == "newgrad-jobs.com"
 
 
-def test_scrape_passes_url_and_source_to_minisite():
+def test_scrape_passes_category_and_source_to_minisite():
     with patch.object(ng, "scrape_minisite", return_value=SAMPLE_ROWS) as mock:
         result = ng.scrape_newgrad_jobs(max_rows=50)
 
-    mock.assert_called_once_with(ng.SOURCE_URL, ng.SOURCE, 50)
+    mock.assert_called_once_with(ng.CATEGORY, ng.SOURCE, 50)
     assert result == SAMPLE_ROWS
 
 

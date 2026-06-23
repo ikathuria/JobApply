@@ -1,152 +1,116 @@
 """
-Generic scraper for jobright.ai embedded "minisite" job tables.
+Scraper for jobright.ai embedded "minisite" job tables.
 
 intern-list.com and newgrad-jobs.com both embed the same virtualized table
-component from jobright.ai. The table only renders the rows currently in the
-viewport, so we scroll the inner viewport container to progressively reveal all
-rows, collecting each unique row (tracked by data-index) as it enters the DOM.
+component from jobright.ai. That component is backed by a public JSON endpoint:
+
+    POST https://jobright.ai/swan/mini-sites/list?position=<offset>&count=<n>
+    body: {"category": "<type>:<country>:<vertical>"}   e.g. "newgrad:us:ml_ai"
+    ->   {"result": {"jobList": [...], "total": <int>}}
+
+We page through that endpoint with plain ``requests`` — no browser. The endpoint
+serves data anonymously (``swan/auth/newinfo`` reports ``logined: false``), so no
+auth token is needed. ``total`` lets us paginate exactly rather than guess.
 
 Both site scrapers (intern_list_scraper, newgrad_jobs_scraper) call
-``scrape_minisite`` with their own embed URL and source label.
+``scrape_minisite`` with their own category slug and source label.
 """
 
-import asyncio
 import logging
-import re
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 
-from playwright.async_api import async_playwright, TimeoutError as PWTimeout
+import requests
 
 logger = logging.getLogger(__name__)
 
-VIEWPORT_SEL = "div.index_bodyViewport__3xQLm"
-ROW_SEL      = "tr.index_tableRow___byxr"
-COUNT_SEL    = "span.index_recordCount__iL4yH"
+API_URL  = "https://jobright.ai/swan/mini-sites/list"
+JOB_URL  = "https://jobright.ai/jobs/info/{job_id}"
+PAGE_SIZE = 50
 
-TITLE_SEL   = "span.index_positionTitle__xrG_i"
-LINK_SEL    = "a.index_airtableApplyLink__Dob0_"
-MODE_SEL    = "td:nth-child(5) .ant-tag"
-LOC_SEL     = "td:nth-child(6) span.index_cellText__hfa_t"
-COMPANY_SEL = "td:nth-child(7) span.index_cellText__hfa_t"
-SALARY_SEL  = "td:nth-child(8) span.index_cellText__hfa_t"
-SEASON_SEL  = "td:nth-child(9) span.index_cellText__hfa_t"
-QUALS_SEL   = "div.index_qualificationsContent__4kAgd"
+_HEADERS = {
+    "content-type": "application/json",
+    "origin": "https://jobright.ai",
+    "user-agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+}
 
 
-async def _parse_row(row, source: str) -> dict | None:
-    """Extract all fields from a visible table row."""
-    async def txt(sel):
-        el = await row.query_selector(sel)
-        return (await el.inner_text()).strip() if el else ""
-
-    async def href(sel):
-        el = await row.query_selector(sel)
-        return (await el.get_attribute("href") or "").strip() if el else ""
-
-    title = await txt(TITLE_SEL)
-    url   = await href(LINK_SEL)
-    if not title or not url:
+def _normalize(job: dict, source: str) -> dict | None:
+    """Map a jobright API job object onto the pipeline's job dict schema."""
+    job_id = job.get("jobId")
+    props  = job.get("properties") or {}
+    title  = (props.get("title") or "").strip()
+    if not job_id or not title:
         return None
 
     return {
         "title":        title,
-        "company":      await txt(COMPANY_SEL),
-        "location":     await txt(LOC_SEL),
-        "url":          url,
+        "company":      (props.get("company") or "").strip(),
+        "location":     (props.get("location") or "").strip(),
+        "url":          JOB_URL.format(job_id=job_id),
         "source":       source,
-        "work_mode":    await txt(MODE_SEL),
-        "salary":       await txt(SALARY_SEL),
-        "season":       await txt(SEASON_SEL),
-        "description":  await txt(QUALS_SEL),
-        "date_scraped": datetime.utcnow().isoformat(),
+        "work_mode":    (props.get("workModel") or "").strip(),
+        "salary":       (props.get("salary") or "").strip(),
+        "season":       (props.get("roleType") or props.get("expLevel") or "").strip(),
+        "description":  (props.get("qualifications") or "").strip(),
+        "date_scraped": datetime.now(timezone.utc).isoformat(),
     }
 
 
-async def _scrape(source_url: str, source: str, max_rows: int) -> list[dict]:
-    jobs_by_idx: dict[str, dict] = {}  # data-index -> job dict
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page(
-            viewport={"width": 1280, "height": 900},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
-            ),
-        )
-
-        logger.info(f"Loading jobright.ai listings: {source_url}")
-        await page.goto(source_url, wait_until="load", timeout=45_000)
-        await asyncio.sleep(4)
-
-        try:
-            await page.wait_for_selector(ROW_SEL, timeout=20_000)
-        except PWTimeout:
-            logger.error("Timed out waiting for job rows.")
-            await browser.close()
-            return []
-
-        # Read total record count from the page
-        total = max_rows
-        count_el = await page.query_selector(COUNT_SEL)
-        if count_el:
-            count_text = await count_el.inner_text()
-            m = re.search(r"(\d+)", count_text.replace(",", ""))
-            if m:
-                total = min(int(m.group(1)), max_rows)
-                logger.info(f"Total records available: {int(m.group(1))}, collecting up to {total}")
-
-        async def harvest():
-            """Parse all currently visible rows and store by data-index."""
-            rows = await page.query_selector_all(ROW_SEL)
-            for row in rows:
-                idx = await row.get_attribute("data-index")
-                if idx is None or idx in jobs_by_idx:
-                    continue
-                job = await _parse_row(row, source)
-                if job:
-                    jobs_by_idx[idx] = job
-
-        await harvest()
-        logger.info(f"Initial harvest: {len(jobs_by_idx)} rows")
-
-        # Scroll the virtualized viewport container to load more rows
-        stale_rounds = 0
-        while len(jobs_by_idx) < total:
-            prev = len(jobs_by_idx)
-
-            await page.evaluate(f'''
-                const vp = document.querySelector("{VIEWPORT_SEL}");
-                if (vp) vp.scrollTop += 600;
-            ''')
-            await asyncio.sleep(1.2)
-            await harvest()
-
-            gained = len(jobs_by_idx) - prev
-            logger.info(f"Scroll step: {len(jobs_by_idx)}/{total} rows collected (+{gained})")
-
-            if gained == 0:
-                stale_rounds += 1
-                if stale_rounds >= 4:
-                    logger.info("No new rows after 4 consecutive scrolls — stopping.")
-                    break
-            else:
-                stale_rounds = 0
-
-        await browser.close()
-
-    jobs = list(jobs_by_idx.values())
-    logger.info(f"{source}: {len(jobs)} jobs collected total.")
-    return jobs
-
-
-def scrape_minisite(source_url: str, source: str, max_rows: int = 500) -> list[dict]:
-    """Scrape a jobright.ai embedded minisite table.
+def scrape_minisite(category: str, source: str, max_rows: int = 500) -> list[dict]:
+    """Scrape a jobright.ai minisite category via its JSON API.
 
     Args:
-        source_url: the ``?embed=true`` jobright.ai minisite URL.
-        source: label stored on each job dict (e.g. ``"intern-list.com"``).
+        category: the minisite slug, ``"<type>:<country>:<vertical>"``
+            (e.g. ``"newgrad:us:ml_ai"``).
+        source: label stored on each job dict (e.g. ``"newgrad-jobs.com"``).
         max_rows: hard cap on rows to collect.
+
+    Returns a list of job dicts, deduplicated by URL.
     """
-    return asyncio.run(_scrape(source_url, source, max_rows))
+    referer = f"https://jobright.ai/minisites-jobs/{category.replace(':', '/')}?embed=true"
+    headers = {**_HEADERS, "referer": referer}
+
+    jobs_by_url: dict[str, dict] = {}
+    position = 0
+    total = max_rows
+
+    while len(jobs_by_url) < max_rows and position < total:
+        try:
+            resp = requests.post(
+                API_URL,
+                params={"position": position, "count": PAGE_SIZE},
+                json={"category": category},
+                headers=headers,
+                timeout=30,
+            )
+            resp.raise_for_status()
+            result = (resp.json() or {}).get("result") or {}
+        except (requests.RequestException, ValueError) as e:
+            logger.error(f"{source}: API request failed at position {position}: {e}")
+            break
+
+        page = result.get("jobList") or []
+        if result.get("total") is not None:
+            total = min(int(result["total"]), max_rows)
+
+        if not page:
+            logger.info(f"{source}: empty page at position {position} — stopping.")
+            break
+
+        for raw in page:
+            job = _normalize(raw, source)
+            if job:
+                jobs_by_url[job["url"]] = job
+
+        logger.info(f"{source}: {len(jobs_by_url)}/{total} jobs collected (position {position})")
+        position += PAGE_SIZE
+        time.sleep(0.4)  # be polite to the endpoint
+
+    jobs = list(jobs_by_url.values())[:max_rows]
+    logger.info(f"{source}: {len(jobs)} jobs collected total.")
+    return jobs

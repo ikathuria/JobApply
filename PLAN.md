@@ -200,21 +200,23 @@ The pipeline is **production-ready and running daily**. The sections below track
 ## Milestone 12: Scraper Pivot ✅
 **Goal:** intern-list.com + newgrad-jobs.com run daily; LinkedIn and Handshake are paused cleanly (not deleted).
 
-> **Reality note:** intern-list.com (and newgrad-jobs.com) embed a *virtualized
-> jobright.ai table*, not static HTML — the existing scraper is Playwright-driven,
-> not BeautifulSoup. So the tasks below were implemented by extracting the shared
-> scroll/harvest logic into `scrapers/jobright_minisite.py` and pointing both
-> scrapers at their embed URLs (newgrad = `jobright.ai/minisites-jobs/newgrad/us/ml_ai?embed=true`).
-> The test mocks `scrape_minisite` (browserless) rather than `requests.get`.
+> **Reality note:** intern-list.com and newgrad-jobs.com embed a *virtualized
+> jobright.ai table* (not static HTML). The table is backed by a public JSON
+> endpoint — `POST jobright.ai/swan/mini-sites/list?position=N&count=50` with body
+> `{"category": "<type>:us:ml_ai"}` — which serves anonymously. So the scrapers use
+> plain `requests` (no Playwright, no bs4). Shared paging/normalization lives in
+> `scrapers/jobright_minisite.py`; the two site modules just pin a category slug
+> (`newgrad:us:ml_ai`, `intern:us:ml_ai`). This made the whole daily discovery path
+> browserless, so CI no longer installs Chromium.
 
 Tasks:
 - [x] Pause "Discover - LinkedIn" and "Discover - Handshake" in GHA via `if: false` (steps retained for re-enable) — also set `enabled: false` in `config/settings.yaml`
 - [x] Update the `sources` input description to `all / intern_list / newgrad_jobs`
-- [x] Extract shared jobright scroll logic into `scrapers/jobright_minisite.py`; refactor `intern_list_scraper.py` to use it; create `scrapers/newgrad_jobs_scraper.py` (`scrape_newgrad_jobs`) — verified: live scrape returned 22 real jobs with required keys
+- [x] Reverse-engineer the jobright JSON API; build `requests`-based paging/normalization in `scrapers/jobright_minisite.py`; refactor `intern_list_scraper.py` + create `newgrad_jobs_scraper.py` as thin category-slug wrappers — verified: live pull of 150 jobs each in ~1.9s, deduped, well-formed
 - [x] Add `newgrad_jobs` to `--source` choices in `main.py` + discovery branch wired to `scrape_newgrad_jobs`; `newgrad_jobs` source added to `settings.yaml` (enabled)
-- [x] Add "Discover - newgrad-jobs.com" GHA step (runs on `sources == 'all'` or `'newgrad_jobs'`, `continue-on-error: true`)
-- [x] `tests/test_newgrad_scraper.py` — mocks `scrape_minisite`, asserts URL/source contract + required keys; `pytest tests/` → 3 passed
-- [x] Gate: `flake8` clean on new files (repo `setup.cfg` added), `pytest` green
+- [x] Add "Discover - newgrad-jobs.com" GHA step (runs on `sources == 'all'` or `'newgrad_jobs'`, `continue-on-error: true`); drop the Chromium install step (daily path is now browserless)
+- [x] `tests/test_newgrad_scraper.py` (wrapper contract) + `tests/test_jobright_minisite.py` (pagination/normalization/dedupe via mocked `requests.post`); `pytest tests/` → 8 passed
+- [x] Gate: `flake8` clean on touched files (repo `setup.cfg` added), `pytest` green
 
 ---
 
