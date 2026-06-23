@@ -149,7 +149,7 @@ async def _search_jobs(
         "keywords": query,
         "location": location,
         "f_JT": "I",         # Internship job type
-        "f_TPR": "r2592000", # Past 30 days (was r604800/1 week — too narrow)
+        "f_TPR": "r2592000",  # Past 30 days (was r604800/1 week — too narrow)
         "sortBy": "DD",      # Date descending
     }
     if easy_apply_only:

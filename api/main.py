@@ -9,10 +9,8 @@ import os
 import re
 import shutil
 import sqlite3
-import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +25,9 @@ from tracker.tracker import (
     init_db, get_jobs, get_stats, update_status,
     STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED, STATUS_APPLIED,
     STATUS_OA, STATUS_INTERVIEW, STATUS_REJECTED, STATUS_OFFER, STATUS_SKIPPED,
+    add_recruiter, get_recruiter, get_recruiter_by_email, list_recruiters,
+    update_recruiter, delete_recruiter,
+    add_outreach, get_outreach, list_outreach_for_recruiter, update_outreach,
 )
 
 app = FastAPI(title="JobApply API", version="2.0")
@@ -57,6 +58,7 @@ _conn = None
 
 
 _GIT_DB = ROOT / "tracker" / "applications.db"   # always the git-committed copy
+
 
 def db():
     global _conn
@@ -355,7 +357,7 @@ def api_tailor(job_id: int) -> dict:
         if not tailored:
             raise HTTPException(500, "Tailoring failed — check API key in Streamlit secrets")
 
-        slug = re.sub(r"[^a-z0-9_]", "", f"{job.get('company','')}{job['title']}".lower().replace(" ", "_"))[:60]
+        slug = re.sub(r"[^a-z0-9_]", "", f"{job.get('company', '')}{job['title']}".lower().replace(" ", "_"))[:60]
         job_dir = OUTPUT_DIR / slug
         job_dir.mkdir(parents=True, exist_ok=True)
         resume_path = job_dir / "resume.pdf"
@@ -534,9 +536,138 @@ def api_import_job(body: ImportJob) -> dict:
         existing = conn.execute("SELECT id, status FROM jobs WHERE url = ?", (url,)).fetchone()
         if existing:
             update_status(conn, existing["id"], body.status,
-                         date_applied=body.date_applied, notes=body.notes or None)
+                          date_applied=body.date_applied, notes=body.notes or None)
             return {"status": "updated", "id": existing["id"], "message": f"Updated: {body.title}"}
         raise HTTPException(409, "URL conflict")
+
+
+# ── Recruiters ────────────────────────────────────────────────────────────────
+
+
+class RecruiterIn(BaseModel):
+    name: str
+    email: str | None = None
+    company: str | None = None
+    title: str | None = None
+    linkedin_url: str | None = None
+    source: str = "manual"
+    notes: str | None = None
+
+
+class RecruiterPatch(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    company: str | None = None
+    title: str | None = None
+    linkedin_url: str | None = None
+    source: str | None = None
+    notes: str | None = None
+
+
+@app.get("/api/recruiters")
+def api_list_recruiters() -> list[dict]:
+    return [dict(r) for r in list_recruiters(db())]
+
+
+@app.post("/api/recruiters")
+def api_add_recruiter(body: RecruiterIn) -> dict:
+    conn = db()
+    email = (body.email or "").strip()
+    if email:
+        existing = get_recruiter_by_email(conn, email)
+        if existing:
+            raise HTTPException(409, f"Recruiter with email {email} already exists")
+    try:
+        rid = add_recruiter(
+            conn, body.name, email=body.email, company=body.company,
+            title=body.title, linkedin_url=body.linkedin_url,
+            source=body.source, notes=body.notes,
+        )
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, "Recruiter with that email already exists")
+    return dict(get_recruiter(conn, rid))
+
+
+@app.get("/api/recruiters/{recruiter_id}")
+def api_get_recruiter(recruiter_id: int) -> dict:
+    r = get_recruiter(db(), recruiter_id)
+    if not r:
+        raise HTTPException(404, "Recruiter not found")
+    return dict(r)
+
+
+@app.patch("/api/recruiters/{recruiter_id}")
+def api_patch_recruiter(recruiter_id: int, patch: RecruiterPatch) -> dict:
+    conn = db()
+    if not get_recruiter(conn, recruiter_id):
+        raise HTTPException(404, "Recruiter not found")
+    try:
+        update_recruiter(conn, recruiter_id, **patch.model_dump(exclude_unset=True))
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, "Another recruiter already uses that email")
+    return dict(get_recruiter(conn, recruiter_id))
+
+
+@app.delete("/api/recruiters/{recruiter_id}")
+def api_delete_recruiter(recruiter_id: int) -> dict:
+    conn = db()
+    if not get_recruiter(conn, recruiter_id):
+        raise HTTPException(404, "Recruiter not found")
+    delete_recruiter(conn, recruiter_id)
+    return {"status": "deleted", "id": recruiter_id}
+
+
+@app.get("/api/recruiters/{recruiter_id}/outreach")
+def api_recruiter_outreach(recruiter_id: int) -> list[dict]:
+    conn = db()
+    if not get_recruiter(conn, recruiter_id):
+        raise HTTPException(404, "Recruiter not found")
+    return [dict(o) for o in list_outreach_for_recruiter(conn, recruiter_id)]
+
+
+# ── Outreach ──────────────────────────────────────────────────────────────────
+
+
+class OutreachIn(BaseModel):
+    recruiter_id: int
+    job_id: int | None = None
+    type: str = "cold_email"
+    subject: str | None = None
+    body: str | None = None
+    status: str = "draft"
+
+
+class OutreachPatch(BaseModel):
+    type: str | None = None
+    subject: str | None = None
+    body: str | None = None
+    status: str | None = None
+    sent_at: str | None = None
+    reply_received_at: str | None = None
+    follow_up_date: str | None = None
+    notes: str | None = None
+    job_id: int | None = None
+
+
+@app.post("/api/outreach")
+def api_add_outreach(body: OutreachIn) -> dict:
+    conn = db()
+    if not get_recruiter(conn, body.recruiter_id):
+        raise HTTPException(404, "Recruiter not found")
+    oid = add_outreach(
+        conn, body.recruiter_id, type=body.type, subject=body.subject,
+        body=body.body, job_id=body.job_id, status=body.status,
+    )
+    return dict(get_outreach(conn, oid))
+
+
+@app.patch("/api/outreach/{outreach_id}")
+def api_patch_outreach(outreach_id: int, patch: OutreachPatch) -> dict:
+    conn = db()
+    if not get_outreach(conn, outreach_id):
+        raise HTTPException(404, "Outreach not found")
+    update_outreach(conn, outreach_id, **patch.model_dump(exclude_unset=True))
+    return dict(get_outreach(conn, outreach_id))
 
 
 # ── Serve built React app (production) ───────────────────────────────────────

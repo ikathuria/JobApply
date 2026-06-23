@@ -120,13 +120,13 @@ JobApply/
 | 10. Email Notifications | ☐ todo | |
 | 11. Production Hardening | ☐ todo | |
 | 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; intern-list + newgrad on jobright JSON API (browserless, ~1.9s/source) |
-| 13. Recruiter Database | ☐ todo | `recruiters` + `outreach` tables + CRUD API |
+| 13. Recruiter Database | ✅ done | `recruiters` + `outreach` tables, CRUD + 8 API endpoints (25 tests) |
 | 14. Cold Email Generator | ☐ todo | LLM draft: cold + referral variants |
 | 15. Email Discovery & Sending | ☐ todo | SMTP probe + Hunter.io + Gmail send |
 | 16. Outreach Dashboard UI | ☐ todo | New Outreach tab in React |
 
-**In progress now:** M12 complete — scraper pivot done
-**Next up:** M13 — Recruiter & Outreach Database (`recruiters` + `outreach` tables + CRUD API)
+**In progress now:** M13 complete — recruiter + outreach DB and API done
+**Next up:** M14 — Cold Email Generator (`pipeline/email_generator.py`, LLM cold + referral drafts)
 
 ---
 
@@ -137,6 +137,7 @@ JobApply/
 - 2026-06-22 — Added cold email outreach as a core feature (M13–M16) — job boards alone are insufficient; direct recruiter outreach dramatically increases response rates for internship searches.
 - 2026-06-22 — Gmail SMTP chosen over OAuth2 for email sending — app password avoids the OAuth consent screen and is simpler for a personal tool; 500 sends/day is well within outreach volume.
 - 2026-06-22 — All emails require user review before send — no auto-send to avoid mistakes; the system is a composer + tracker, not a blast tool.
+- 2026-06-22 — `recruiters`/`outreach` FKs are declarative only; cascade-delete enforced in `delete_recruiter()` code — local sqlite doesn't set `foreign_keys=ON` and the Turso HTTP bridge skips PRAGMAs, so DB-level enforcement would behave differently per backend. Enforcing in code keeps both identical.
 - Earlier — LLM provider default changed from Gemini to Groq (llama-3.1-8b-instant) — Groq free tier has no daily quota; Gemini was hitting rate limits during heavy tailoring days.
 - Earlier — PDFs committed to git for Render access — Render free tier has no persistent disk; committing output/ is the simplest path. Revisit if output/ exceeds 100MB.
 

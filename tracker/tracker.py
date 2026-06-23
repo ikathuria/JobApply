@@ -22,6 +22,16 @@ STATUS_INTERVIEW = "interview"   # interview scheduled
 STATUS_REJECTED = "rejected"
 STATUS_OFFER = "offer"
 
+# Outreach record types + statuses (recruiters / referrals)
+OUTREACH_COLD = "cold_email"
+OUTREACH_REFERRAL = "referral"
+
+OUTREACH_DRAFT = "draft"         # generated, not yet sent
+OUTREACH_SENT = "sent"
+OUTREACH_REPLIED = "replied"
+OUTREACH_BOUNCED = "bounced"
+OUTREACH_IGNORED = "ignored"     # no reply after follow-up window
+
 
 def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path, check_same_thread=False, timeout=30)
@@ -96,6 +106,44 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         conn.commit()
     except Exception:
         pass
+
+    # ── Outreach tables (recruiters + cold-email/referral tracking) ──────────
+    # FKs are declarative only — referential integrity (cascade on recruiter
+    # delete) is enforced in delete_recruiter(), because foreign_keys=ON isn't
+    # set locally and Turso skips PRAGMAs, so DB-level enforcement would differ
+    # between backends.
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS recruiters (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            name         TEXT NOT NULL,
+            email        TEXT UNIQUE,
+            company      TEXT,
+            title        TEXT,
+            linkedin_url TEXT,
+            source       TEXT DEFAULT 'manual',
+            notes        TEXT,
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS outreach (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            recruiter_id      INTEGER NOT NULL REFERENCES recruiters(id),
+            job_id            INTEGER REFERENCES jobs(id),
+            type              TEXT DEFAULT 'cold_email',
+            subject           TEXT,
+            body              TEXT,
+            status            TEXT DEFAULT 'draft',
+            sent_at           TEXT,
+            reply_received_at TEXT,
+            follow_up_date    TEXT,
+            notes             TEXT,
+            created_at        TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_outreach_recruiter ON outreach(recruiter_id);
+        CREATE INDEX IF NOT EXISTS idx_outreach_status    ON outreach(status);
+    """)
+    conn.commit()
 
 
 def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
@@ -198,3 +246,165 @@ def already_applied(conn: sqlite3.Connection, url: str) -> bool:
         "SELECT status FROM jobs WHERE url = ?", (url,)
     ).fetchone()
     return row is not None and row["status"] == STATUS_APPLIED
+
+
+# ── Recruiters CRUD ───────────────────────────────────────────────────────────
+
+def _last_rowid(conn: sqlite3.Connection) -> int:
+    """Cross-backend last insert id (works for sqlite3 and the Turso bridge)."""
+    return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+
+def _checkpoint(conn: sqlite3.Connection) -> None:
+    conn.commit()
+    try:
+        conn.execute("PRAGMA wal_checkpoint(PASSIVE)")  # no-op on Turso
+    except Exception:
+        pass
+
+
+def add_recruiter(
+    conn: sqlite3.Connection,
+    name: str,
+    email: str | None = None,
+    company: str | None = None,
+    title: str | None = None,
+    linkedin_url: str | None = None,
+    source: str = "manual",
+    notes: str | None = None,
+) -> int:
+    """Insert a recruiter; returns the new row id. Raises IntegrityError on
+    duplicate email. Empty email is stored as NULL (allows multiple unknowns)."""
+    conn.execute(
+        """
+        INSERT INTO recruiters (name, email, company, title, linkedin_url, source, notes)
+        VALUES (:name, :email, :company, :title, :linkedin_url, :source, :notes)
+        """,
+        {
+            "name": name,
+            "email": (email or "").strip() or None,
+            "company": company,
+            "title": title,
+            "linkedin_url": linkedin_url,
+            "source": source,
+            "notes": notes,
+        },
+    )
+    _checkpoint(conn)
+    return _last_rowid(conn)
+
+
+def get_recruiter(conn: sqlite3.Connection, recruiter_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM recruiters WHERE id = ?", (recruiter_id,)
+    ).fetchone()
+
+
+def get_recruiter_by_email(conn: sqlite3.Connection, email: str) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM recruiters WHERE email = ?", ((email or "").strip(),)
+    ).fetchone()
+
+
+def list_recruiters(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    """All recruiters with an outreach count + sent count, newest first."""
+    return conn.execute(
+        """
+        SELECT r.*,
+               COUNT(o.id) AS outreach_count,
+               SUM(CASE WHEN o.status = 'sent' THEN 1 ELSE 0 END) AS sent_count
+        FROM recruiters r
+        LEFT JOIN outreach o ON o.recruiter_id = r.id
+        GROUP BY r.id
+        ORDER BY r.created_at DESC, r.id DESC
+        """
+    ).fetchall()
+
+
+_RECRUITER_FIELDS = {"name", "email", "company", "title", "linkedin_url", "source", "notes"}
+
+
+def update_recruiter(conn: sqlite3.Connection, recruiter_id: int, **fields) -> None:
+    updates = {k: v for k, v in fields.items() if k in _RECRUITER_FIELDS}
+    if not updates:
+        return
+    if "email" in updates:
+        updates["email"] = (updates["email"] or "").strip() or None
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["id"] = recruiter_id
+    conn.execute(f"UPDATE recruiters SET {set_clause} WHERE id = :id", updates)
+    _checkpoint(conn)
+
+
+def delete_recruiter(conn: sqlite3.Connection, recruiter_id: int) -> None:
+    """Delete a recruiter and all their outreach rows (manual cascade)."""
+    conn.execute("DELETE FROM outreach WHERE recruiter_id = ?", (recruiter_id,))
+    conn.execute("DELETE FROM recruiters WHERE id = ?", (recruiter_id,))
+    _checkpoint(conn)
+
+
+# ── Outreach CRUD ─────────────────────────────────────────────────────────────
+
+def add_outreach(
+    conn: sqlite3.Connection,
+    recruiter_id: int,
+    type: str = OUTREACH_COLD,
+    subject: str | None = None,
+    body: str | None = None,
+    job_id: int | None = None,
+    status: str = OUTREACH_DRAFT,
+) -> int:
+    conn.execute(
+        """
+        INSERT INTO outreach (recruiter_id, job_id, type, subject, body, status)
+        VALUES (:recruiter_id, :job_id, :type, :subject, :body, :status)
+        """,
+        {
+            "recruiter_id": recruiter_id,
+            "job_id": job_id,
+            "type": type,
+            "subject": subject,
+            "body": body,
+            "status": status,
+        },
+    )
+    _checkpoint(conn)
+    return _last_rowid(conn)
+
+
+def get_outreach(conn: sqlite3.Connection, outreach_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM outreach WHERE id = ?", (outreach_id,)
+    ).fetchone()
+
+
+def list_outreach_for_recruiter(
+    conn: sqlite3.Connection, recruiter_id: int
+) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM outreach WHERE recruiter_id = ? ORDER BY created_at DESC, id DESC",
+        (recruiter_id,),
+    ).fetchall()
+
+
+_OUTREACH_FIELDS = {
+    "type", "subject", "body", "status",
+    "sent_at", "reply_received_at", "follow_up_date", "notes", "job_id",
+}
+
+
+def update_outreach(conn: sqlite3.Connection, outreach_id: int, **fields) -> None:
+    updates = {k: v for k, v in fields.items() if k in _OUTREACH_FIELDS}
+    if not updates:
+        return
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["id"] = outreach_id
+    conn.execute(f"UPDATE outreach SET {set_clause} WHERE id = :id", updates)
+    _checkpoint(conn)
+
+
+def update_outreach_status(
+    conn: sqlite3.Connection, outreach_id: int, status: str, **fields
+) -> None:
+    """Convenience wrapper: set status plus any other outreach fields."""
+    update_outreach(conn, outreach_id, status=status, **fields)

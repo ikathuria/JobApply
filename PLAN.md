@@ -220,15 +220,17 @@ Tasks:
 
 ---
 
-## Milestone 13: Recruiter & Outreach Database
+## Milestone 13: Recruiter & Outreach Database ✅
 **Goal:** SQLite schema extended with `recruiters` and `outreach` tables; full CRUD via existing tracker pattern; API endpoints wired.
 
+> **Note:** FKs are declared but not DB-enforced (no `PRAGMA foreign_keys=ON` locally, and the Turso bridge skips PRAGMAs — enforcing in one backend but not the other would diverge). Referential integrity (cascade on recruiter delete) is enforced in `delete_recruiter()`. Blank emails store as `NULL` so multiple unknown-email recruiters coexist under the `UNIQUE` constraint.
+
 Tasks:
-- [ ] Add `recruiters` table migration in `tracker/tracker.py` (alongside existing jobs table): columns `id INTEGER PK`, `name TEXT`, `email TEXT UNIQUE`, `company TEXT`, `title TEXT`, `linkedin_url TEXT`, `source TEXT` (manual/hunter/guessed), `notes TEXT`, `created_at TEXT` — Done when: `python -c "from tracker.tracker import Tracker; t=Tracker(); t.create_tables()"` creates the table without error on a fresh DB
-- [ ] Add `outreach` table: `id INTEGER PK`, `recruiter_id INTEGER FK→recruiters`, `job_id INTEGER FK→jobs (nullable)`, `type TEXT` (cold_email/referral), `subject TEXT`, `body TEXT`, `status TEXT` (draft/sent/replied/bounced/ignored), `sent_at TEXT`, `reply_received_at TEXT`, `follow_up_date TEXT`, `notes TEXT` — Done when: table created, FK constraint tested
-- [ ] Add CRUD methods to `tracker/tracker.py`: `add_recruiter`, `get_recruiter`, `list_recruiters`, `update_recruiter`, `delete_recruiter`, `add_outreach`, `get_outreach`, `list_outreach_for_recruiter`, `update_outreach_status` — Done when: `pytest tests/test_recruiter_tracker.py` passes (write tests in same task)
-- [ ] Add API endpoints in `api/main.py`: `GET /api/recruiters`, `POST /api/recruiters`, `GET /api/recruiters/{id}`, `PATCH /api/recruiters/{id}`, `DELETE /api/recruiters/{id}`, `GET /api/recruiters/{id}/outreach`, `POST /api/outreach`, `PATCH /api/outreach/{id}` — Done when: `curl -s http://localhost:8000/api/recruiters` returns `[]` on a fresh DB
-- [ ] Gate: lint and tests pass — Done when: all green
+- [x] `recruiters` table added in `tracker/tracker.py` `_create_tables` (id, name, email UNIQUE, company, title, linkedin_url, source, notes, created_at) — created for both sqlite + Turso backends
+- [x] `outreach` table (id, recruiter_id, job_id, type, subject, body, status, sent_at, reply_received_at, follow_up_date, notes, created_at) + indexes on recruiter_id/status
+- [x] CRUD in `tracker/tracker.py`: `add/get/get_by_email/list/update/delete_recruiter`, `add/get/list_outreach_for_recruiter/update_outreach/update_outreach_status`; outreach type + status constants — `tests/test_recruiter_tracker.py` → 10 passed
+- [x] API endpoints in `api/main.py`: `GET/POST /api/recruiters`, `GET/PATCH/DELETE /api/recruiters/{id}`, `GET /api/recruiters/{id}/outreach`, `POST /api/outreach`, `PATCH /api/outreach/{id}` (409 on dup email, 404 on missing) — verified live: fresh `GET /api/recruiters` → `[]`, full create→list→outreach→delete cycle works; `tests/test_recruiter_api.py` → 7 passed
+- [x] Gate: `flake8` clean (also cleaned pre-existing nits in `api/main.py`), `pytest tests/` → 25 passed
 
 ---
 
