@@ -32,6 +32,22 @@ EXCLUDE_KEYWORDS = [
     "top secret", "must be authorized",
 ]
 
+# Signals that a role REQUIRES a doctorate. Used only when there's no sign a
+# Master's is accepted (see MASTERS_OK) — so "MS or PhD" roles are kept.
+PHD_REQUIRED = [
+    "phd required", "ph.d. required", "ph.d required", "phd is required",
+    "must have a phd", "must be a phd", "must hold a phd", "requires a phd",
+    "phd candidate", "ph.d. candidate", "doctoral candidate", "doctoral student",
+    "phd student", "ph.d. student", "pursuing a phd", "pursuing a ph.d",
+    "enrolled in a phd", "enrolled in a ph.d", "phd in ", "ph.d. in ",
+    "doctoral degree", "doctorate",
+]
+
+# If any of these appear, a Master's is welcome → never treat as PhD-only.
+MASTERS_OK = [
+    "master", "m.s.", "msc", "ms or phd", "ms/phd", "bs/ms", "m.tech", "mtech",
+]
+
 SPONSORSHIP_POSITIVE = [
     "sponsor", "opt", "cpt", "f-1", "f1 visa", "visa", "international students welcome",
 ]
@@ -44,7 +60,7 @@ def score_job(job: dict) -> float:
     """
     text = _combined_text(job)
 
-    if _is_excluded(text):
+    if _is_excluded(text) or is_phd_only(text):
         return 0.0
 
     score = 0.0
@@ -120,3 +136,11 @@ def _matches_any(text: str, keywords: list[str]) -> bool:
 
 def _is_excluded(text: str) -> bool:
     return any(kw in text for kw in EXCLUDE_KEYWORDS)
+
+
+def is_phd_only(text: str) -> bool:
+    """True if the role requires a PhD with no indication a Master's is accepted.
+    `text` should already be lowercased (e.g. from `_combined_text`)."""
+    if any(s in text for s in MASTERS_OK):
+        return False
+    return any(s in text for s in PHD_REQUIRED)
