@@ -1,3 +1,6 @@
+# NOTE: this `search` block is descriptive only — the functional keyword lists,
+# role gate, and exclusions live in src/pipeline/job_filter.py (STRONG/GOOD/
+# ROLE/EXCLUDE/SENIORITY constants). Keep this in sync for humans reading config.
 search:
   keywords:
     - "artificial intelligence"
@@ -11,9 +14,18 @@ search:
     - "RAG"
     - "computer vision"
     - "data science"
+  # Primary target since 2026-07-19: full-time new-grad AI/ML roles (grad May 2027).
+  # Internships / co-ops kept in scope for CPT during the school year.
   role_types:
+    - "new grad"
+    - "new graduate"
+    - "entry level"
+    - "early career"
+    - "university graduate"
+    - "full time"
     - "intern"
     - "internship"
+    - "co-op"
   location: "USA"
   exclude_keywords:
     - "no visa"
@@ -21,6 +33,15 @@ search:
     - "citizens only"
     - "clearance required"
     - "security clearance"
+  # Over-senior roles are soft-penalized (not excluded) in job_filter.py.
+  deprioritize_seniority:
+    - "senior"
+    - "staff"
+    - "principal"
+    - "lead"
+    - "manager"
+    - "director"
+    - "5+ years"
 
 scoring:
   weights:

@@ -305,20 +305,20 @@ Tasks:
 
 ---
 
-## Milestone 18: Retarget to Full-Time New-Grad AI Roles ☐
+## Milestone 18: Retarget to Full-Time New-Grad AI Roles ✅
 **Goal:** Shift the pipeline's primary target from summer internships to full-time new-grad AI/ML roles (CPT co-ops still welcome), matching Ishani's timeline — the internship window has largely closed (grad May 2027; possibly Dec 2026).
 
-> **The bug this fixes:** `job_filter.score_job` gates on `ROLE_KEYWORDS = [intern, internship, co-op, coop]` and returns 0.0 for anything else. The `newgrad-jobs.com` scraper already fetches full-time new-grad roles — but every one of them currently scores 0.0 and never gets tailored. The role gate, not the scraper, is the blocker.
+> **The bug this fixed:** `job_filter.score_job` gated on `ROLE_KEYWORDS = [intern, internship, co-op, coop]` and returned 0.0 for anything else. The `newgrad-jobs.com` scraper already fetched full-time new-grad roles — but every one scored 0.0 and never got tailored. The role gate, not the scraper, was the blocker. (Verified: "Machine Learning Engineer, New Grad" scored 0.0 before, 0.675 after.)
 > **Not dropping internships:** intern-list stays enabled — a Fall/Spring CPT co-op is still valuable during the school year. This is a re-prioritization (new-grad becomes first-class), not a removal.
 
 Tasks:
-- [ ] `job_filter.ROLE_KEYWORDS`: add "new grad", "new graduate", "recent graduate", "entry level", "entry-level", "university graduate", "early career", "full time", "full-time" (keep intern/co-op). New-grad + entry-level roles now pass the role gate.
-- [ ] Seniority guard: penalize over-senior full-time roles that leak in once "full time" is allowed — "senior", "staff", "principal", "lead", "manager", "director", "5+ years", "7+ years". Soft penalty (not a hard 0) so borderline "Engineer II" roles survive.
-- [ ] `config/settings.yaml`: broaden `search.role_types` (add new-grad / entry-level / full-time terms); document newgrad_jobs as the primary source.
-- [ ] Confirm `daily_tailor.yml` runs both `--source intern_list` and `--source newgrad_jobs` (newgrad primary); adjust ordering if needed.
-- [ ] `config/profile.json`: `work_authorization.expected_graduation` already `"May 2027"`; add a role-focus note if it sharpens the tailoring prompt.
-- [ ] `tests/test_job_filter.py`: new-grad / entry-level titles score > 0; over-senior role penalized; intern still scores; co-op still scores.
-- [ ] Gate: `flake8` clean, `pytest tests/` green.
+- [x] `job_filter.ROLE_KEYWORDS`: added new-grad/entry-level/early-career/full-time terms (kept intern/co-op). Plus a `_role_ok()` gate that also accepts jobs from our curated feeds (`newgrad-jobs.com`/`intern-list.com` — right role type by construction) and the scraper's `season`/roleType field, so a generic-titled new-grad role isn't zeroed.
+- [x] Seniority guard: `_is_too_senior()` — title-based (senior/staff/principal/lead/manager/director/architect…) plus multi-year experience requirements ("5+/7+ years"), with a JUNIOR_TITLE override so genuine new-grad roles that mention a senior-ish word survive. Applied as a soft `SENIORITY_PENALTY = 0.25` multiplier (sinks, not a hard 0).
+- [x] `config/settings.yaml`: broadened `search.role_types` (new-grad/entry-level/full-time) + `deprioritize_seniority` list; noted the block is descriptive and the functional lists live in `job_filter.py`.
+- [x] Confirmed `daily_tailor.yml` runs both `--source intern_list` and `--source newgrad_jobs` (both in the `all` default); the tailor step picks top-N by score across sources, so the scoring fix — not workflow ordering — is what surfaces new-grad roles. No workflow change needed.
+- [x] `config/profile.json`: left as-is — `_profile_text` (resume_tailor) only reads specific fields, so a `target_roles` field would be dead config; changing the tailoring system prompt is out of scope (would alter every resume). Noted as an optional follow-up.
+- [x] `tests/test_job_filter.py` (+6): new-grad / entry-level score > 0; feed-source acceptance; over-senior penalized-not-zeroed; multi-year-experience penalized; junior-title override; intern/co-op regression.
+- [x] Gate: `flake8` clean, `pytest tests/` → 74 passed.
 
 ---
 

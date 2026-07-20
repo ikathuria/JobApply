@@ -76,3 +76,81 @@ def test_filter_jobs_skip_phd_can_be_disabled():
     out = filter_jobs(_jobs(), min_score=0.0, skip_phd=False)
     by_url = {j["url"]: j for j in out}
     assert by_url["u2"].get("status") is None        # not tagged when disabled
+
+
+# ── M18: full-time new-grad retarget ──────────────────────────────────────────
+
+def test_new_grad_roles_score_nonzero():
+    """The core M18 fix: full-time new-grad / entry-level roles used to score
+    0.0 because the role gate only accepted intern keywords."""
+    new_grad = {
+        "title": "Machine Learning Engineer, New Grad", "company": "Acme",
+        "description": "LLM, RAG, PyTorch, deep learning.", "location": "USA",
+    }
+    entry = {
+        "title": "Entry-Level AI Engineer", "company": "Acme",
+        "description": "generative ai, langchain", "location": "USA",
+    }
+    assert score_job(new_grad) > 0.0
+    assert score_job(entry) > 0.0
+
+
+def test_newgrad_feed_source_accepted_without_keyword():
+    """A generic-titled role from our new-grad feed passes the role gate by
+    source; the same role from an unknown source (no role keyword) does not."""
+    from_feed = {
+        "title": "Software Engineer", "company": "Acme",
+        "description": "work on ML models, python, pytorch", "location": "USA",
+        "source": "newgrad-jobs.com",
+    }
+    no_feed = {**from_feed, "source": "somewhere-else.com"}
+    assert score_job(from_feed) > 0.0
+    assert score_job(no_feed) == 0.0
+
+
+def test_over_senior_role_is_penalized_not_zeroed():
+    """A senior role that leaks in via the feed is penalized (sinks) but kept;
+    a non-senior equivalent from the same feed scores higher."""
+    base_desc = "llm rag pytorch deep learning generative ai"
+    senior = {
+        "title": "Senior ML Engineer", "company": "Acme",
+        "description": base_desc, "location": "USA", "source": "newgrad-jobs.com",
+    }
+    junior = {**senior, "title": "ML Engineer, New Grad"}
+    s_senior, s_junior = score_job(senior), score_job(junior)
+    assert 0.0 < s_senior < s_junior
+
+
+def test_multi_year_experience_requirement_penalized():
+    job = {
+        "title": "ML Engineer", "company": "Acme",
+        "description": "requires 7+ years experience. llm rag pytorch generative ai",
+        "location": "USA", "source": "newgrad-jobs.com",
+    }
+    plain = {**job, "description": "llm rag pytorch generative ai"}
+    assert 0.0 < score_job(job) < score_job(plain)
+
+
+def test_junior_title_overrides_senior_word():
+    """A genuine new-grad role whose title contains a senior-ish word (e.g.
+    'Architect') is NOT penalized, because the junior signal wins."""
+    job = {
+        "title": "New Grad Solutions Architect", "company": "Acme",
+        "description": "llm rag pytorch generative ai", "location": "USA",
+    }
+    # scores as a full-strength new-grad role (no seniority multiplier)
+    assert score_job(job) > 0.5
+
+
+def test_intern_and_coop_still_score():
+    """Regression: internships and co-ops remain in scope for CPT."""
+    intern = {
+        "title": "Machine Learning Intern", "company": "Acme",
+        "description": "RAG, PyTorch.", "location": "Remote",
+    }
+    coop = {
+        "title": "AI Co-op", "company": "Acme",
+        "description": "nlp, transformers", "location": "USA",
+    }
+    assert score_job(intern) > 0.0
+    assert score_job(coop) > 0.0

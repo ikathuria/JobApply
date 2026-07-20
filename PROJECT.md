@@ -141,11 +141,11 @@ JobApply/
 | 15. Email Discovery & Sending | ✅ done | email_finder (SMTP probe + Hunter), email_sender (Gmail), send endpoint + 7-day follow-up (45 tests) |
 | 16. Outreach Dashboard UI | ✅ done | Outreach screen: recruiters, composer, send, follow-up banner, JobDrawer "Reach out" |
 | 17. Visa-Sponsorship-History Filter | ☐ todo | planned 2026-07-19 — score/skip by known H-1B sponsor (curated USCIS list); soft/boost-only |
-| 18. Retarget to Full-Time New-Grad | ☐ todo | planned 2026-07-19 — broaden role gate (new-grad/entry-level/full-time); newgrad primary; internships/co-ops kept |
+| 18. Retarget to Full-Time New-Grad | ✅ done | 2026-07-19 — broadened role gate (new-grad/entry-level/full-time + feed-source accept) + soft seniority penalty; internships/co-ops kept. New-grad roles scored 0.0 before, now surface |
 | 19. Recruiting Timeline & Reminders | ✅ code done | 2026-07-19 — Timeline dashboard view: curated per-company app windows + live open-role counts + apply/reach-out reminders. Backend + tests green (68); ⚠ `apps/web/dist` needs a rebuild+commit (Node) to deploy |
 
-**In progress now:** Strategic pivot (2026-07-19) — building **M19 (recruiting timeline & reminders)**, and implementing **M17 (sponsorship-history filter)** + **M18 (retarget to full-time new-grad AI roles)**. Rationale: the Summer-2026 internship cycle produced 2 OAs / 1 interview from 500+ applications; the levers are targeting known H-1B sponsors, shifting to full-time new-grad roles (Ishani graduates May 2027), and not missing the new-grad application wave that opens Aug–Oct 2026 — not more application volume.
-**Next up:** Warm-referral outreach to ex-AWS/Google/MS/Uber contacts (deferred ~1 yr until Ishani can start work). Optional: set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` for real sends; remaining pre-pivot milestones (M7–M11).
+**In progress now:** Strategic pivot (2026-07-19) — **M18 (retarget to full-time new-grad) and M19 (recruiting timeline & reminders) shipped**; **M17 (visa-sponsorship-history filter) is next**. Rationale: the Summer-2026 internship cycle produced 2 OAs / 1 interview from 500+ applications; the levers are targeting known H-1B sponsors, shifting to full-time new-grad roles (Ishani graduates May 2027), and not missing the new-grad application wave that opens Aug–Oct 2026 — not more application volume.
+**Next up:** M17 (sponsorship-history filter). Then warm-referral outreach to ex-AWS/Google/MS/Uber contacts (timed to each company's window via the Timeline reminders). Optional: set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` for real sends; remaining pre-pivot milestones (M7–M11).
 
 ---
 
