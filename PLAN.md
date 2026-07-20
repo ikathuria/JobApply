@@ -157,12 +157,14 @@ The pipeline is **production-ready and running daily**. The sections below track
 
 ---
 
-## Milestone 8: Import Jobs UI
+## Milestone 8: Import Jobs UI ✅
 **Goal:** Manually add a job (with applied date) from the dashboard — for jobs submitted outside the pipeline.
 
-- [ ] Add "Import Job" button in `JobsView.jsx` (or Topbar) that opens a modal — Done when: button is visible in the toolbar
-- [ ] Modal form: title, company, URL, status, date_applied, location, notes — Done when: form POSTs to existing `POST /api/jobs/import`
-- [ ] On success: close modal, refresh job list, toast confirmation — Done when: imported job appears in the correct status tab
+Already shipped (verified 2026-07-19): `JobsView.jsx` has a `+ Import` button → `ImportModal`.
+
+- [x] `+ Import` button in `JobsView.jsx` toolbar opens the modal (`showImport`)
+- [x] `ImportModal` — Single Job tab (title/company/URL/status/date_applied/location/notes) POSTs to `POST /api/jobs/import`; **plus a CSV Bulk tab** (file upload, preview, per-row progress, downloadable template) beyond the original scope
+- [x] On success: closes, refreshes the list, imported job appears in the right status tab
 
 ---
 
