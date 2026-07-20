@@ -5,6 +5,7 @@ Run: uvicorn api.main:app --reload --port 8000
 
 from __future__ import annotations
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -40,6 +41,8 @@ from tracker.tracker import (
     add_outreach, get_outreach, list_outreach_for_recruiter, update_outreach,
     update_outreach_status, list_followups_due,
     OUTREACH_COLD, OUTREACH_REFERRAL, OUTREACH_SENT,
+    add_reminder, get_reminder, list_reminders, list_reminders_due,
+    update_reminder, delete_reminder, REMINDER_APPLY,
 )
 
 app = FastAPI(title="JobApply API", version="2.0")
@@ -767,6 +770,164 @@ def api_email_finder(first: str, last: str, domain: str, probe: bool = True) -> 
     SMTP probing (probe=true) is often blocked/inconclusive — see email_finder."""
     from pipeline.email_finder import guess_emails
     return guess_emails(first, last, domain, probe=probe)
+
+
+# ── Recruiting timeline (M19) ────────────────────────────────────────────────
+
+CALENDAR_PATH = ROOT / "config" / "recruiting_calendar.json"
+
+# Job statuses that mean "a role you could still apply to" — used to count the
+# live open roles surfaced next to each calendar company.
+_APPLYABLE_STATUSES = {STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED}
+
+
+def _load_calendar() -> dict:
+    try:
+        return json.loads(CALENDAR_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"companies": []}
+
+
+def _company_window_status(comp: dict, today) -> dict:
+    """Compute a company's window status relative to `today` (a date).
+    Returns {status, days_until_open?, days_until_close?}. Status is one of
+    upcoming / rolling / open / closing_soon / closed."""
+    from datetime import date as _date
+
+    def _parse(d):
+        try:
+            return _date.fromisoformat(d) if d else None
+        except (TypeError, ValueError):
+            return None
+
+    opens = _parse(comp.get("opens"))
+    closes = _parse(comp.get("closes"))
+    rolling = bool(comp.get("rolling"))
+
+    if opens and today < opens:
+        return {"status": "upcoming", "days_until_open": (opens - today).days}
+
+    if rolling:
+        if closes and today > closes:
+            return {"status": "closed"}
+        return {"status": "rolling"}
+
+    if closes:
+        if today > closes:
+            return {"status": "closed"}
+        days_left = (closes - today).days
+        return {
+            "status": "closing_soon" if days_left <= 14 else "open",
+            "days_until_close": days_left,
+        }
+
+    return {"status": "open"}
+
+
+@app.get("/api/timeline")
+def api_timeline() -> dict:
+    """Curated per-company application windows, each annotated with computed
+    window status, live open-role count from the scraped jobs, and whether a
+    recruiter/contact already exists for that company."""
+    from datetime import date as _date
+
+    cal = _load_calendar()
+    companies = cal.get("companies", [])
+    today = _date.today()
+
+    conn = db()
+    # Pull applyable jobs + recruiter companies once, match by alias in Python.
+    job_rows = conn.execute(
+        "SELECT company, status FROM jobs WHERE status IN (?, ?, ?)",
+        (STATUS_NEW, STATUS_QUEUED, STATUS_APPROVED),
+    ).fetchall()
+    job_companies = [((r["company"] or "").lower(), r["status"]) for r in job_rows]
+    recruiter_companies = [
+        (r["company"] or "").lower()
+        for r in conn.execute("SELECT company FROM recruiters").fetchall()
+    ]
+
+    out = []
+    for comp in companies:
+        aliases = [a.lower() for a in comp.get("aliases", []) if a] or [comp.get("name", "").lower()]
+        open_roles = sum(
+            1 for (jc, st) in job_companies
+            if jc and any(a in jc for a in aliases) and st in _APPLYABLE_STATUSES
+        )
+        has_contact = any(
+            rc and any(a in rc for a in aliases) for rc in recruiter_companies
+        )
+        merged = {**comp, **_company_window_status(comp, today),
+                  "open_roles": open_roles, "has_contact": has_contact}
+        out.append(merged)
+
+    return {
+        "cycle": cal.get("cycle", ""),
+        "note": cal.get("note", ""),
+        "generated": cal.get("generated", ""),
+        "today": today.isoformat(),
+        "companies": out,
+    }
+
+
+# ── Reminders (M19) ──────────────────────────────────────────────────────────
+
+
+class ReminderIn(BaseModel):
+    company: str
+    kind: str = "apply"          # "apply" | "reach_out"
+    due_date: str | None = None
+    note: str | None = None
+
+
+class ReminderPatch(BaseModel):
+    company: str | None = None
+    kind: str | None = None
+    due_date: str | None = None
+    done: int | None = None
+    note: str | None = None
+
+
+@app.get("/api/reminders")
+def api_list_reminders(include_done: bool = True) -> list[dict]:
+    return [dict(r) for r in list_reminders(db(), include_done=include_done)]
+
+
+@app.get("/api/reminders/due")
+def api_reminders_due() -> list[dict]:
+    """Open reminders due on/before today, for the banner."""
+    from datetime import date as _date
+    return [dict(r) for r in list_reminders_due(db(), _date.today().isoformat())]
+
+
+@app.post("/api/reminders")
+def api_add_reminder(body: ReminderIn) -> dict:
+    conn = db()
+    if not body.company.strip():
+        raise HTTPException(400, "company is required")
+    rid = add_reminder(
+        conn, body.company.strip(), kind=body.kind or REMINDER_APPLY,
+        due_date=body.due_date, note=body.note,
+    )
+    return dict(get_reminder(conn, rid))
+
+
+@app.patch("/api/reminders/{reminder_id}")
+def api_patch_reminder(reminder_id: int, patch: ReminderPatch) -> dict:
+    conn = db()
+    if not get_reminder(conn, reminder_id):
+        raise HTTPException(404, "Reminder not found")
+    update_reminder(conn, reminder_id, **patch.model_dump(exclude_unset=True))
+    return dict(get_reminder(conn, reminder_id))
+
+
+@app.delete("/api/reminders/{reminder_id}")
+def api_delete_reminder(reminder_id: int) -> dict:
+    conn = db()
+    if not get_reminder(conn, reminder_id):
+        raise HTTPException(404, "Reminder not found")
+    delete_reminder(conn, reminder_id)
+    return {"status": "deleted", "id": reminder_id}
 
 
 # ── Serve built React app (production) ───────────────────────────────────────

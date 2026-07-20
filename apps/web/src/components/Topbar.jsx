@@ -3,6 +3,7 @@ export default function Topbar({ screen }) {
     dashboard: 'Command Center',
     jobs:      'Job Pipeline',
     outreach:  'Recruiter Outreach',
+    timeline:  'Recruiting Timeline',
     analytics: 'Analytics',
     settings:  'Settings',
   }

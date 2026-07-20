@@ -60,4 +60,12 @@ export const api = {
   followups:        ()          => req('GET',    '/outreach/followups'),
   emailFinder:      (first, last, domain, probe=false) =>
                        req('GET', '/email-finder?' + new URLSearchParams({ first, last, domain, probe })),
+
+  // ── Recruiting timeline + reminders (M19) ──
+  timeline:         ()          => req('GET',    '/timeline'),
+  reminders:        ()          => req('GET',    '/reminders'),
+  remindersDue:     ()          => req('GET',    '/reminders/due'),
+  addReminder:      (data)      => req('POST',   '/reminders', data),
+  patchReminder:    (id, data)  => req('PATCH',  `/reminders/${id}`, data),
+  deleteReminder:   (id)        => req('DELETE', `/reminders/${id}`),
 }

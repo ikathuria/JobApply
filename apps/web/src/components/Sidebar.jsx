@@ -41,13 +41,22 @@ function IconMail() {
     </svg>
   )
 }
+function IconCalendar() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="12" height="11" rx="1.5" />
+      <path d="M2 6.5H14M5.5 1.5V4M10.5 1.5V4" />
+    </svg>
+  )
+}
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,   tone: 'blue'   },
-  { id: 'jobs',      label: 'Jobs',       Icon: IconLayers, tone: 'purple', hasBadge: true },
-  { id: 'outreach',  label: 'Outreach',   Icon: IconMail,   tone: 'blue'   },
-  { id: 'analytics', label: 'Analytics',  Icon: IconChart,  tone: 'teal'   },
-  { id: 'settings',  label: 'Settings',   Icon: IconGear,   tone: null     },
+  { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,     tone: 'blue'   },
+  { id: 'jobs',      label: 'Jobs',       Icon: IconLayers,   tone: 'purple', hasBadge: true },
+  { id: 'outreach',  label: 'Outreach',   Icon: IconMail,     tone: 'blue'   },
+  { id: 'timeline',  label: 'Timeline',   Icon: IconCalendar, tone: 'teal'   },
+  { id: 'analytics', label: 'Analytics',  Icon: IconChart,    tone: 'teal'   },
+  { id: 'settings',  label: 'Settings',   Icon: IconGear,     tone: null     },
 ]
 
 const STATUS_ROWS = [

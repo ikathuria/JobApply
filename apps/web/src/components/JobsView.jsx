@@ -898,7 +898,7 @@ function normalizeLocation(loc) {
   return s
 }
 
-export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats, onRefresh, triggerRefresh }) {
+export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats, onRefresh, triggerRefresh, initialSearch }) {
   const { dark } = useContext(ThemeCtx)
   const T = dark ? DARK : LIGHT
 
@@ -1013,6 +1013,13 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     setDateFrom('')
     setDateTo('')
   }, [tab])
+
+  // Deep-link from the Timeline view: seed the search with a company name.
+  // Defined after the tab-reset effect so it wins when both fire on the same
+  // navigation. Empty values are ignored so normal navigation isn't clobbered.
+  useEffect(() => {
+    if (initialSearch) setSearch(initialSearch)
+  }, [initialSearch])
 
   // Unique sorted location options derived from current tab's jobs
   const locationOptions = useMemo(() => {

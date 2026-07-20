@@ -10,6 +10,7 @@ import DashboardView from './components/DashboardView.jsx'
 import AnalyticsView from './components/AnalyticsView.jsx'
 import SettingsView from './components/SettingsView.jsx'
 import OutreachView from './components/OutreachView.jsx'
+import TimelineView from './components/TimelineView.jsx'
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('ja_state') || '{}') } catch { return {} }
@@ -26,6 +27,7 @@ export default function App() {
   const [tab, setTabRaw]       = useState(stored.tab || 'new')
   const [selectedJob, setSelectedJob] = useState(null)
   const [reachOutJob, setReachOutJob] = useState(null)
+  const [jobsSearch, setJobsSearch]   = useState('')
   const [stats, setStats]      = useState(null)
   const [refreshKey, setRefreshKey]  = useState(0)
 
@@ -44,6 +46,20 @@ export default function App() {
   }
 
   const onRefresh = useCallback(() => setRefreshKey(k => k + 1), [])
+
+  // Deep-link from the Timeline view into the Jobs "All" tab, filtered to a company.
+  const openJobsForCompany = company => {
+    setJobsSearch(company || '')
+    setTabRaw('all')
+    setScreenRaw('jobs')
+    saveState({ dark, screen: 'jobs', tab: 'all' })
+    setSelectedJob(null)
+  }
+  // Reach out about a company from the Timeline (company-level, no specific job).
+  const reachOutForCompany = company => {
+    setReachOutJob({ id: null, company, title: 'new-grad roles' })
+    setScreen('outreach')
+  }
 
   useEffect(() => {
     api.stats().then(setStats).catch(() => {})
@@ -95,6 +111,7 @@ export default function App() {
                     stats={stats}
                     onRefresh={refreshKey}
                     triggerRefresh={onRefresh}
+                    initialSearch={jobsSearch}
                   />
                 </div>
                 {selectedJob && (
@@ -114,6 +131,15 @@ export default function App() {
                 <OutreachView
                   reachOutJob={reachOutJob}
                   clearReachOut={() => setReachOutJob(null)}
+                />
+              </div>
+            )}
+
+            {screen === 'timeline' && (
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <TimelineView
+                  onReachOut={reachOutForCompany}
+                  onOpenRoles={openJobsForCompany}
                 />
               </div>
             )}

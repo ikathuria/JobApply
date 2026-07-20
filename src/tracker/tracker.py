@@ -32,6 +32,10 @@ OUTREACH_REPLIED = "replied"
 OUTREACH_BOUNCED = "bounced"
 OUTREACH_IGNORED = "ignored"     # no reply after follow-up window
 
+# Reminder kinds (recruiting-timeline nudges — M19)
+REMINDER_APPLY = "apply"         # apply while a company's window is open
+REMINDER_REACH_OUT = "reach_out"  # line up a referral / email a contact
+
 
 def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path, check_same_thread=False, timeout=30)
@@ -142,6 +146,26 @@ def _create_tables(conn: sqlite3.Connection) -> None:
 
         CREATE INDEX IF NOT EXISTS idx_outreach_recruiter ON outreach(recruiter_id);
         CREATE INDEX IF NOT EXISTS idx_outreach_status    ON outreach(status);
+    """)
+    conn.commit()
+
+    # ── Reminders (recruiting-timeline nudges — M19) ─────────────────────────
+    # A reminder is a company-scoped nudge to apply or reach out by a date, timed
+    # to that company's application window. `company` is a free-text label (not a
+    # FK) so it works for calendar companies that aren't yet rows anywhere.
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS reminders (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            company    TEXT NOT NULL,
+            kind       TEXT DEFAULT 'apply',
+            due_date   TEXT,
+            done       INTEGER DEFAULT 0,
+            note       TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_reminders_due  ON reminders(due_date);
+        CREATE INDEX IF NOT EXISTS idx_reminders_done ON reminders(done);
     """)
     conn.commit()
 
@@ -428,3 +452,80 @@ def list_followups_due(conn: sqlite3.Connection, today: str) -> list[sqlite3.Row
         """,
         (today,),
     ).fetchall()
+
+
+# ── Reminders CRUD (recruiting-timeline nudges — M19) ─────────────────────────
+
+def add_reminder(
+    conn: sqlite3.Connection,
+    company: str,
+    kind: str = REMINDER_APPLY,
+    due_date: str | None = None,
+    note: str | None = None,
+) -> int:
+    """Insert a reminder; returns the new row id."""
+    conn.execute(
+        """
+        INSERT INTO reminders (company, kind, due_date, note)
+        VALUES (:company, :kind, :due_date, :note)
+        """,
+        {
+            "company": company,
+            "kind": kind or REMINDER_APPLY,
+            "due_date": (due_date or "").strip() or None,
+            "note": note,
+        },
+    )
+    _checkpoint(conn)
+    return _last_rowid(conn)
+
+
+def get_reminder(conn: sqlite3.Connection, reminder_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM reminders WHERE id = ?", (reminder_id,)
+    ).fetchone()
+
+
+def list_reminders(conn: sqlite3.Connection, include_done: bool = True) -> list[sqlite3.Row]:
+    """All reminders, soonest due first. Not-yet-done ones sort ahead of done."""
+    query = "SELECT * FROM reminders"
+    if not include_done:
+        query += " WHERE done = 0"
+    query += " ORDER BY done ASC, COALESCE(due_date, '9999-12-31') ASC, id ASC"
+    return conn.execute(query).fetchall()
+
+
+def list_reminders_due(conn: sqlite3.Connection, today: str) -> list[sqlite3.Row]:
+    """Open (not done) reminders whose due date is on or before `today` — powers
+    the reminder banner."""
+    return conn.execute(
+        """
+        SELECT * FROM reminders
+        WHERE done = 0
+          AND due_date IS NOT NULL
+          AND due_date <> ''
+          AND due_date <= ?
+        ORDER BY due_date ASC, id ASC
+        """,
+        (today,),
+    ).fetchall()
+
+
+_REMINDER_FIELDS = {"company", "kind", "due_date", "done", "note"}
+
+
+def update_reminder(conn: sqlite3.Connection, reminder_id: int, **fields) -> None:
+    updates = {k: v for k, v in fields.items() if k in _REMINDER_FIELDS}
+    if not updates:
+        return
+    if "done" in updates:
+        updates["done"] = 1 if updates["done"] else 0
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["id"] = reminder_id
+    conn.execute(f"UPDATE reminders SET {set_clause} WHERE id = :id", updates)
+    _checkpoint(conn)
+
+
+def delete_reminder(conn: sqlite3.Connection, reminder_id: int) -> None:
+    conn.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
+    _checkpoint(conn)

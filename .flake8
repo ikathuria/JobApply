@@ -6,4 +6,4 @@ max-line-length = 120
 # E402: module-level imports after sys.path.insert in api/main.py (intentional).
 # E701: compact one-line `if cond: return ...` dispatch style (api/turso.py).
 extend-ignore = E221,E272,W503,W504,E741,E203,E402,E701
-exclude = .git,__pycache__,apps,output,logs,.pytest_cache,build,*.egg-info
+exclude = .git,__pycache__,apps,output,logs,.pytest_cache,build,*.egg-info,.venv,venv

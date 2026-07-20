@@ -1,6 +1,6 @@
 # JobApply
 
-> Fully-automated AI internship pipeline: scrape → score → tailor resume per JD → cold email recruiters → review in React dashboard → auto-fill ATS forms → track outcomes.
+> Fully-automated AI/ML job pipeline (full-time new-grad + internship/co-op): scrape → score → tailor resume per JD → warm/cold email recruiters → review in React dashboard → auto-fill ATS forms → track outcomes.
 
 ---
 
@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **Market** | Personal tool — no commercial intent; built for Ishani's Summer 2026 AI/ML internship search |
+| **Market** | Personal tool — no commercial intent; built for Ishani's AI/ML job search (F-1 international student, MS Applied AI @ Purdue NW, grad May 2027 / possibly Dec 2026). Now targeting **full-time new-grad AI/ML roles** first, with internships/co-ops (CPT) still in scope |
 | **Feasibility** | Medium — core pipeline is complete; remaining work is polish, ATS coverage, and quality |
 | **Free to build** | Mostly — Render free tier for hosting; Groq free tier for LLM; Turso free tier for cloud DB |
 | **Monetization** | Portfolio project |
@@ -287,6 +287,61 @@ Tasks:
 
 ---
 
+## Milestone 17: Visa-Sponsorship-History Filter ☐
+**Goal:** Stop spending applications on employers who won't sponsor. Score (and optionally hard-filter) each job by whether its company has a real H-1B sponsorship history, so sponsor-friendly roles rise to the top and known non-sponsors can be skipped.
+
+> **Why (2026-07-19):** Ishani is an F-1 international student. The largest structural drag on her Summer-2026 cycle (500+ applications → 2 OAs → 1 interview) was applications hitting the "will you now or in the future require sponsorship?" auto-reject wall. Targeting known sponsors is a higher-leverage lever than raw application volume.
+> **Data source:** public USCIS H-1B Employer Data Hub / MyVisaJobs top-sponsor lists — baked into a curated, refreshable JSON of normalized company names. Not a live API call, so the daily path stays offline + fast like the rest of it.
+> **Soft by default:** boost-only. Unknown companies are NOT zeroed out (a small or new employer may still sponsor); a strict `require_known_sponsor` flag is available for when Ishani wants to be aggressive.
+
+Tasks:
+- [ ] `config/h1b_sponsors.json` — curated set of known H-1B sponsor company names (normalized lowercase), seeded from public USCIS/MyVisaJobs data + all target MNCs (Google, Amazon, Microsoft, Meta, Apple, Nvidia, …). Schema allows an optional approval count/year for future ranking.
+- [ ] `src/pipeline/sponsorship.py` — `is_known_sponsor(company) -> bool` (loads JSON once; normalizes: lowercase, strip Inc/LLC/Corp/commas/punctuation; substring + alias match) and `sponsor_score(company) -> float` (0–1 signal).
+- [ ] Wire into `job_filter.score_job`: replace the keyword-only `sponsorship_friendly` (0.10) component with a company-history ∨ JD-keyword signal, so a known sponsor is boosted even when the JD says nothing about visas.
+- [ ] Optional hard filter: `filter_jobs(..., require_sponsor=False)` — when True, tag non-sponsor companies `status="skipped"` (same reversible pattern as `skip_phd`). Config flag `filters.require_known_sponsor: false` in `settings.yaml`.
+- [ ] `scripts/refresh_h1b_sponsors.py` — rebuild `h1b_sponsors.json` from the USCIS H-1B Employer Data Hub CSV (documented; run periodically, e.g. yearly). `--dry-run` preview.
+- [ ] `tests/test_sponsorship.py` — known sponsor boosts; unknown stays neutral (not zeroed); normalization ("Amazon.com, Inc." → amazon); `require_sponsor=True` tags non-sponsors skipped.
+- [ ] Gate: `flake8` clean, `pytest tests/` green.
+
+---
+
+## Milestone 18: Retarget to Full-Time New-Grad AI Roles ☐
+**Goal:** Shift the pipeline's primary target from summer internships to full-time new-grad AI/ML roles (CPT co-ops still welcome), matching Ishani's timeline — the internship window has largely closed (grad May 2027; possibly Dec 2026).
+
+> **The bug this fixes:** `job_filter.score_job` gates on `ROLE_KEYWORDS = [intern, internship, co-op, coop]` and returns 0.0 for anything else. The `newgrad-jobs.com` scraper already fetches full-time new-grad roles — but every one of them currently scores 0.0 and never gets tailored. The role gate, not the scraper, is the blocker.
+> **Not dropping internships:** intern-list stays enabled — a Fall/Spring CPT co-op is still valuable during the school year. This is a re-prioritization (new-grad becomes first-class), not a removal.
+
+Tasks:
+- [ ] `job_filter.ROLE_KEYWORDS`: add "new grad", "new graduate", "recent graduate", "entry level", "entry-level", "university graduate", "early career", "full time", "full-time" (keep intern/co-op). New-grad + entry-level roles now pass the role gate.
+- [ ] Seniority guard: penalize over-senior full-time roles that leak in once "full time" is allowed — "senior", "staff", "principal", "lead", "manager", "director", "5+ years", "7+ years". Soft penalty (not a hard 0) so borderline "Engineer II" roles survive.
+- [ ] `config/settings.yaml`: broaden `search.role_types` (add new-grad / entry-level / full-time terms); document newgrad_jobs as the primary source.
+- [ ] Confirm `daily_tailor.yml` runs both `--source intern_list` and `--source newgrad_jobs` (newgrad primary); adjust ordering if needed.
+- [ ] `config/profile.json`: `work_authorization.expected_graduation` already `"May 2027"`; add a role-focus note if it sharpens the tailoring prompt.
+- [ ] `tests/test_job_filter.py`: new-grad / entry-level titles score > 0; over-senior role penalized; intern still scores; co-op still scores.
+- [ ] Gate: `flake8` clean, `pytest tests/` green.
+
+---
+
+## Milestone 19: Recruiting Timeline & Reminders ☐
+**Goal:** A dashboard **"Timeline"** view showing, per target company, its new-grad application window cross-referenced with live open roles from the scraped DB, plus reminders (apply-by + reach-out) timed to each company's window.
+
+> **Why (2026-07-19):** For a May-2027 grad, the full-time new-grad cycle opens **Aug–Oct 2026** (now) on rolling admissions — apply-day-one matters. Ishani needs a single place that says "who's open, who's about to open, what's actually posted, and who to ping for a referral" so she doesn't miss the wave. Research: big tech opens Aug–Oct (Google's window is a tight ~2 weeks in mid-Oct), AI labs (Anthropic/OpenAI) + quant recruit rolling/earliest.
+> **Referral timing (decided):** reach-out reminders fire on each company's **application window**, not her mid-2027 start date — a referral only helps while attached to a live application. This revises the earlier "defer warm outreach ~1 yr" note *for timing of the nudge* (she still chooses when to actually send).
+> **"Actual dates" scope:** curated window dates per cycle (approximate — big tech is mostly rolling, so hard per-req deadlines rarely exist publicly) **+** live open-role counts from the scraped `jobs` table give ground truth on what's genuinely posted right now. Google's ~2-week window is the notable hard-close.
+
+Tasks:
+- [x] `config/recruiting_calendar.json` — 23 curated companies for the 2027 new-grad cycle: `name`, `aliases`, `opens`/`closes` (ISO dates or `rolling: true`), `program`, `sponsor`, `priority`, `tier`, `notes`, `careers_url`. Seeded from web research (big tech, AI labs, quant). Cycle-specific + refreshable.
+- [x] `reminders` table in `tracker.py` (id, company, kind [`apply`|`reach_out`], due_date, done, note, created_at) + CRUD (`add_reminder`, `list_reminders`, `list_reminders_due`, `update_reminder`, `delete_reminder`) following the outreach/`list_followups_due` pattern.
+- [x] `GET /api/timeline` — for each calendar company: window + computed status (`open` / `closing_soon` / `upcoming` / `closed`, or `rolling`), **live open-role count** (jobs matching an alias with an applyable status: new/queued/approved), and whether a recruiter/contact exists for it. Reads `config/recruiting_calendar.json` via `ROOT`.
+- [x] Reminders endpoints: `GET /api/reminders`, `GET /api/reminders/due`, `POST /api/reminders`, `PATCH /api/reminders/{id}` (toggle done), `DELETE /api/reminders/{id}`. Match existing api/main.py Pydantic + error patterns.
+- [x] `apps/web/src/components/TimelineView.jsx` — company cards grouped by status (**Open now → Upcoming → Closed**), sorted by priority → open-roles → name; sponsor + contact badges, live open-role count (click → Jobs "All" tab filtered by company via `initialSearch`), `program`/`notes`, careers link, and per-company **"Remind: apply"** / **"Remind: referral"** (toggle, default due date from the window) + **"Reach out"** (jumps to Outreach prefilled with the company).
+- [x] 6th `Sidebar` nav item ("Timeline", calendar icon) + `App.jsx` `screen === 'timeline'` branch + `Topbar` title + `api.js` methods (`timeline`, `reminders`, `remindersDue`, `addReminder`, `patchReminder`, `deleteReminder`).
+- [x] Reminder banner (reuses the follow-up-banner pattern) on the Timeline view: reminders due on/before today, dismissable by clicking (marks done).
+- [x] `tests/test_reminders.py` (5) + `tests/test_timeline_api.py` (9) — reminders CRUD + due filter; timeline status computation (open/upcoming/closed/rolling/closing_soon) and open-role counts (incl. excluding rejected/skipped). Seed the calendar + jobs.
+- [~] Gate: `flake8` clean ✅, `pytest tests/` → 68 passed ✅, live-server smoke test of `/api/timeline` + reminders CRUD ✅. `npm run build` NOT run locally (no Node on this machine) — CI `web-build` verifies compile; **`apps/web/dist` still needs a rebuild + commit on a Node machine before the Timeline tab shows on the deployed Render app.**
+
+---
+
 ## Claude Code Commands
 
 **Resume from any point:**
@@ -319,3 +374,6 @@ claude "Read PLAN.md. Without building anything new, test everything marked done
 - **Email discovery: SMTP probing first, Hunter.io optional** — SMTP RCPT probing is free and works ~50–60% of the time for common domains. Hunter.io (25 free/month) is reserved for high-priority targets. Manual entry is the primary UI path for precise control.
 - **Referral vs cold email are separate LLM prompts** — cold targets recruiters/HR; referral targets engineers/PMs at the company. Different tone, different ask, same send infrastructure.
 - **No auto-send** — all emails go through a draft-review-send flow in the UI. The system never sends without user confirmation.
+- **Strategic pivot to full-time new-grad (2026-07-19, M18)** — Ishani graduates May 2027 (possibly Dec 2026); the Summer-2026 internship cycle is over. Full-time new-grad AI/ML roles become the primary target; internships/co-ops stay in scope for CPT during the school year. The `newgrad-jobs.com` scraper already existed — the blocker was the filter's role gate zeroing every non-intern role.
+- **Sponsorship-history filter is soft/boost-only (2026-07-19, M17)** — the biggest structural drag on the 500-app cycle was the "requires sponsorship?" auto-reject. Boosting known H-1B sponsors (curated USCIS/MyVisaJobs list) tilts odds better than raw volume. Unknown companies are NOT zeroed — a small/new employer may still sponsor. A strict `require_known_sponsor` flag is opt-in.
+- **Outreach keeps both warm + cold; warm deferred (~1 yr)** — Ishani is on good terms with ex-AWS colleagues (some now at Google/MS/Uber) but won't reach out yet since she can't start work for ~a year. The module already supports both warm-referral and cold prompts; the timing is a manual call, not a code change. Referrals can be re-warmed a few months before availability.
