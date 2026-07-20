@@ -22,6 +22,13 @@ def _config() -> dict:
     return _config_cache
 
 
+def reload_config() -> None:
+    """Drop the cached llm config so the next call re-reads settings.yaml.
+    Called after the Settings UI writes new values (M7)."""
+    global _config_cache
+    _config_cache = None
+
+
 def get_provider_model() -> str:
     """A 'provider:model' label for the currently configured LLM (for logging /
     storing which model produced a given output)."""

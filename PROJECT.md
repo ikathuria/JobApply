@@ -132,7 +132,7 @@ JobApply/
 | 4. Review Dashboard | ✅ done | 5 views in React |
 | 5. CI/CD Automation | ✅ done | Daily GHA at 4 PM CDT |
 | 6. Auto-Apply | ◐ partial | Greenhouse/LinkedIn/Lever done; Workday/Ashby/SmartRecruiters pending |
-| 7. Settings Persistence | ☐ todo | |
+| 7. Settings Persistence | ✅ done | 2026-07-19 — GET/POST /api/settings (LLM provider/model, min_score, sponsor filter, source toggles) → settings.yaml + llm cache reload; SettingsView API-bound |
 | 8. Import Jobs UI | ✅ done | verified 2026-07-19 — `+ Import` → ImportModal (Single Job + CSV Bulk), wired to POST /api/jobs/import |
 | 9. Interview Prep Section | ✅ done | 2026-07-19 — LLM prep packs per interview (snapshot, topics, behavioral/technical/system-design Q banks, questions-to-ask, checklist); dedicated dashboard tab, stored + regenerable. JobDrawer tab deferred |
 | 10. Email Notifications | ☐ todo | |

@@ -13,6 +13,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
@@ -1002,6 +1003,89 @@ def api_delete_prep(job_id: int) -> dict:
         raise HTTPException(404, "No prep to delete")
     delete_prep(conn, job_id)
     return {"status": "deleted", "job_id": job_id}
+
+
+# ── Settings persistence (M7) ─────────────────────────────────────────────────
+# Reads/writes the functional keys in config/settings.yaml (LLM provider/models,
+# min score, sponsor filter, source toggles). API keys are NOT here — they are
+# environment variables. NOTE: writing reformats the YAML (comments are dropped).
+
+SETTINGS_PATH = ROOT / "config" / "settings.yaml"
+_EDITABLE_SOURCES = ("intern_list", "newgrad_jobs")
+_LLM_PROVIDERS = ("groq", "gemini", "anthropic")
+
+
+def _read_settings_file() -> dict:
+    try:
+        return yaml.safe_load(SETTINGS_PATH.read_text(encoding="utf-8")) or {}
+    except (OSError, ValueError):
+        return {}
+
+
+@app.get("/api/settings")
+def api_get_settings() -> dict:
+    cfg = _read_settings_file()
+    llm = cfg.get("llm", {})
+    sources = cfg.get("sources", {})
+    return {
+        "llm": {
+            "provider": llm.get("provider", "groq"),
+            "groq_model": llm.get("groq_model", ""),
+            "gemini_model": llm.get("gemini_model", ""),
+            "anthropic_model": llm.get("anthropic_model", ""),
+        },
+        "scoring": {"min_score": cfg.get("scoring", {}).get("min_score", 0.0)},
+        "filters": {"require_known_sponsor": bool(cfg.get("filters", {}).get("require_known_sponsor", False))},
+        "sources": {s: bool(sources.get(s, {}).get("enabled", False)) for s in _EDITABLE_SOURCES},
+    }
+
+
+class SettingsPatch(BaseModel):
+    llm: dict | None = None
+    scoring: dict | None = None
+    filters: dict | None = None
+    sources: dict | None = None
+
+
+@app.post("/api/settings")
+def api_save_settings(body: SettingsPatch) -> dict:
+    cfg = _read_settings_file()
+
+    if body.llm:
+        llm = cfg.setdefault("llm", {})
+        for k in ("provider", "groq_model", "gemini_model", "anthropic_model"):
+            if body.llm.get(k) is not None:
+                llm[k] = body.llm[k]
+    if body.scoring and body.scoring.get("min_score") is not None:
+        cfg.setdefault("scoring", {})["min_score"] = float(body.scoring["min_score"])
+    if body.filters and "require_known_sponsor" in body.filters:
+        cfg.setdefault("filters", {})["require_known_sponsor"] = bool(body.filters["require_known_sponsor"])
+    if body.sources:
+        sources = cfg.setdefault("sources", {})
+        for s in _EDITABLE_SOURCES:
+            if s in body.sources:
+                sources.setdefault(s, {})["enabled"] = bool(body.sources[s])
+
+    provider = cfg.get("llm", {}).get("provider", "groq")
+    if provider not in _LLM_PROVIDERS:
+        raise HTTPException(400, f"Unknown LLM provider '{provider}' (use one of {_LLM_PROVIDERS})")
+
+    try:
+        SETTINGS_PATH.write_text(
+            yaml.safe_dump(cfg, sort_keys=False, default_flow_style=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+    except OSError as e:
+        raise HTTPException(500, f"Could not write settings: {e}")
+
+    # Drop the LLM config cache so the change takes effect on the next tailor call.
+    try:
+        from pipeline.llm_client import reload_config
+        reload_config()
+    except Exception:
+        pass
+
+    return api_get_settings()
 
 
 # ── Serve built React app (production) ───────────────────────────────────────

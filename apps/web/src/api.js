@@ -74,4 +74,8 @@ export const api = {
   getPrep:          (id)        => req('GET',    `/jobs/${id}/prep`),
   generatePrep:     (id)        => req('POST',   `/jobs/${id}/prep`),
   deletePrep:       (id)        => req('DELETE', `/jobs/${id}/prep`),
+
+  // ── Settings (M7) ──
+  getSettings:      ()          => req('GET',    '/settings'),
+  saveSettings:     (data)      => req('POST',   '/settings', data),
 }

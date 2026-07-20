@@ -147,13 +147,16 @@ The pipeline is **production-ready and running daily**. The sections below track
 
 ---
 
-## Milestone 7: Settings Persistence
+## Milestone 7: Settings Persistence ✅
 **Goal:** Settings saved in the UI actually take effect.
 
-- [ ] Add `GET /api/settings` + `POST /api/settings` endpoints in `api/main.py` — Done when: endpoints return and accept a JSON object matching `config/settings.yaml` keys
-- [ ] Persist settings to `config/settings.yaml` on POST (read → merge → write) — Done when: changing min score in UI and reloading reflects in scoring
-- [ ] Wire `SettingsView.jsx` save button to `POST /api/settings` — Done when: clicking Save shows success toast and the new values are returned by GET on reload
-- [ ] Reload `_config_cache` in `llm_client.py` after settings change — Done when: switching LLM provider from the UI takes effect on next tailor run
+> Scope: the functional keys that live in `settings.yaml` — LLM provider/model, `scoring.min_score`, `filters.require_known_sponsor`, and source toggles (`intern_list`/`newgrad_jobs`). API keys are intentionally NOT editable (they're env vars); profile stays in `profile.json`. Caveat: `yaml.safe_dump` on save drops the file's comments (PyYAML can't preserve them) — acceptable for a personal tool.
+
+- [x] `GET /api/settings` + `POST /api/settings` in `api/main.py` — GET returns the curated subset; POST deep-merges into `settings.yaml` (read → merge → write, preserving unrelated keys + key order), validates the provider (400 on unknown).
+- [x] Persist to `config/settings.yaml` on POST; reloads `llm_client` config cache so a provider/model change takes effect on the next `/api/tailor` call.
+- [x] `reload_config()` added to `llm_client.py`; called after each save.
+- [x] `SettingsView.jsx` rewritten from cosmetic to API-bound: loads on mount, real controls (provider select, model, min score, sponsor filter, source checkboxes), Save → POST → toast, Reload button. Removed the misleading fake profile/API-key inputs.
+- [x] `tests/test_settings_api.py` (3): GET shape; save merges/persists/preserves unrelated keys; unknown provider → 400. 93 pass, flake8 clean, build compiles, live GET verified.
 
 ---
 
