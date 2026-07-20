@@ -48,8 +48,14 @@ scoring:
     keyword_match: 0.4
     role_relevance: 0.3
     recency: 0.2
-    sponsorship_friendly: 0.1
+    sponsorship_friendly: 0.1   # known H-1B sponsor (company history) OR JD visa keywords
   min_score: 0.0   # keep all listings; score used only for sorting
+
+filters:
+  # Soft by default: known H-1B sponsors (config/h1b_sponsors.json) get a scoring
+  # boost, but unknown companies are NOT excluded (they may still sponsor).
+  # Flip to true to hard-skip non-sponsor companies at scrape time (M17).
+  require_known_sponsor: false
 
 sources:
   intern_list:

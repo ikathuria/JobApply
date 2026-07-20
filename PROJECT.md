@@ -57,7 +57,7 @@ JobApply/
 │  │  ├─ cover_letter.py         # LLM cover letter generation
 │  │  ├─ pdf_generator.py        # ReportLab PDF rendering
 │  │  ├─ job_filter.py           # Keyword scoring + sponsorship + PhD/seniority filters
-│  │  ├─ sponsorship.py          # H-1B sponsor lookup + score (M17, planned)
+│  │  ├─ sponsorship.py          # H-1B sponsor lookup + score (M17)
 │  │  ├─ jobright_enricher.py    # Enriches Jobright aggregator URLs
 │  │  ├─ email_generator.py      # LLM cold email + referral ask generation (M14)
 │  │  ├─ email_finder.py         # SMTP probe + Hunter.io email discovery (M15)
@@ -88,7 +88,7 @@ JobApply/
 ├─ config/
 │  ├─ settings.yaml              # Runtime config (sources, scoring, filters, LLM)
 │  ├─ profile.json               # Ishani's resume data (base for tailoring)
-│  ├─ h1b_sponsors.json          # Curated known H-1B sponsors (M17, planned)
+│  ├─ h1b_sponsors.json          # Curated known H-1B sponsors (M17)
 │  └─ recruiting_calendar.json   # Curated per-company application windows (M19)
 ├─ scripts/                      # ops utilities (Turso reseed/pull, cleanup, enrich, refresh_h1b_sponsors)
 ├─ output/resumes/               # LLM-generated PDFs committed here for Render
@@ -140,7 +140,7 @@ JobApply/
 | 14. Cold Email Generator | ✅ done | LLM cold + referral drafts; `POST /api/outreach/draft` (33 tests) |
 | 15. Email Discovery & Sending | ✅ done | email_finder (SMTP probe + Hunter), email_sender (Gmail), send endpoint + 7-day follow-up (45 tests) |
 | 16. Outreach Dashboard UI | ✅ done | Outreach screen: recruiters, composer, send, follow-up banner, JobDrawer "Reach out" |
-| 17. Visa-Sponsorship-History Filter | ☐ todo | planned 2026-07-19 — score/skip by known H-1B sponsor (curated USCIS list); soft/boost-only |
+| 17. Visa-Sponsorship-History Filter | ✅ done | 2026-07-19 — boost known H-1B sponsors (~130 curated, token-subset match); opt-in require_sponsor hard filter; refresh script |
 | 18. Retarget to Full-Time New-Grad | ✅ done | 2026-07-19 — broadened role gate (new-grad/entry-level/full-time + feed-source accept) + soft seniority penalty; internships/co-ops kept. New-grad roles scored 0.0 before, now surface |
 | 19. Recruiting Timeline & Reminders | ✅ code done | 2026-07-19 — Timeline dashboard view: curated per-company app windows + live open-role counts + apply/reach-out reminders. Backend + tests green (68); ⚠ `apps/web/dist` needs a rebuild+commit (Node) to deploy |
 
@@ -154,7 +154,7 @@ JobApply/
 - 2026-07-19 — Interview Prep is now a full section (M9, planned) — the M17–M19 pivot is about landing more interviews; converting them is the next bottleneck (last cycle: 1 interview from 500+ apps). Upgraded the old thin "prep sheet button" stub into a dedicated dashboard section that generates + stores a tailored prep pack per interview (company/role snapshot, topics to review, behavioral/technical/system-design question banks with talking points from her real experience, questions to ask, logistics) from the JD + company + profile — grounded, never fabricated, same discipline as resume tailoring. Not built yet; planned after M17.
 - 2026-07-19 — Recruiting Timeline & Reminders (M19) — for a May-2027 grad, the full-time new-grad cycle opens Aug–Oct 2026 (now) on rolling admissions, and Google's window is a tight ~2 weeks. Added a Timeline dashboard view combining a curated per-company application calendar (`config/recruiting_calendar.json`, cycle-specific + refreshable) with live open-role counts from the scraped `jobs` table, plus apply/reach-out reminders. Reach-out reminders fire on each company's application window (referrals help at application time), which revises the timing — but not the substance — of the earlier "defer warm outreach ~1 yr" decision. Curated windows are approximate (big tech is mostly rolling; hard per-req deadlines rarely publish); the live open-role counts give ground truth.
 - 2026-07-19 — Strategic pivot to full-time new-grad AI/ML roles (M18) — Ishani graduates May 2027 (possibly Dec 2026); the Summer-2026 internship cycle is over, so full-time new-grad roles become the primary target. The `newgrad-jobs.com` scraper already existed, but `job_filter`'s role gate accepted only intern keywords and scored every new-grad role 0.0 — so they were scraped and silently discarded. Broadening the gate (with a seniority guard) unlocks them. Internships/co-ops kept for CPT during the school year — a re-prioritization, not a removal.
-- 2026-07-19 — Added a visa-sponsorship-history filter (M17) — the biggest structural drag on the 500-application Summer-2026 cycle (2 OAs, 1 interview) was the "will you require sponsorship?" auto-reject. Scoring jobs by whether the company is a known H-1B sponsor (curated from public USCIS H-1B Employer Data Hub / MyVisaJobs data) tilts the odds better than raw volume. Soft/boost-only by default (unknown companies are not zeroed, since small/new employers may still sponsor); a strict `require_known_sponsor` flag is opt-in. Kept as an offline JSON, not a live API call, so the daily path stays fast.
+- 2026-07-19 — Added a visa-sponsorship-history filter (M17) — the biggest structural drag on the 500-application Summer-2026 cycle (2 OAs, 1 interview) was the "will you require sponsorship?" auto-reject. Scoring jobs by whether the company is a known H-1B sponsor (curated from public USCIS H-1B Employer Data Hub / MyVisaJobs data) tilts the odds better than raw volume. Soft/boost-only by default (unknown companies are not zeroed, since small/new employers may still sponsor); a strict `require_known_sponsor` flag is opt-in (wired from settings.yaml through run_pipeline). Kept as an offline JSON, not a live API call, so the daily path stays fast. Matching uses token-subset (not raw substring) so "Amazon Web Services" hits "Amazon" without "Metabolic Labs" hitting "Meta".
 - 2026-07-19 — Outreach keeps both warm + cold email; warm-referral outreach deferred ~1 year — Ishani is on good terms with ex-AWS colleagues (some now at Google/Microsoft/Uber) but can't start work for ~a year, so she won't reach out yet. The module already supports both warm-referral and cold prompts; timing is a manual decision, not a code change. Referrals can be re-warmed a few months before availability.
 - 2026-06-22 — LinkedIn + Handshake scrapers paused; replaced by newgrad-jobs.com — LinkedIn automation is fragile and risks account bans. Can be re-enabled in GHA by removing `if: false`.
 - 2026-06-22 — intern-list + newgrad scrapers rewritten from Playwright to `requests` against jobright.ai's `swan/mini-sites/list` JSON API — ~1.9s vs 30–60s per source, no browser flakiness, and CI dropped the Chromium install (whole daily path is now browserless). Risk: undocumented internal endpoint could change; mitigated by it serving anonymously and a clean fallback to the git-tagged Playwright version if needed.

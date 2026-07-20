@@ -148,6 +148,7 @@ def run_pipeline(config: dict, source: str | None = None) -> None:
 
     conn = _open_db()
     min_score = config.get("scoring", {}).get("min_score", 0.3)
+    require_sponsor = config.get("filters", {}).get("require_known_sponsor", False)
 
     raw_jobs = run_discovery(config, source)
     if not raw_jobs:
@@ -156,7 +157,7 @@ def run_pipeline(config: dict, source: str | None = None) -> None:
         return
 
     jobs = deduplicate(raw_jobs)
-    filtered = filter_jobs(jobs, min_score=min_score)
+    filtered = filter_jobs(jobs, min_score=min_score, require_sponsor=require_sponsor)
     inserted, skipped = upsert_jobs(conn, filtered)
 
     stats = get_stats(conn)

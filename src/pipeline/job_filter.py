@@ -5,6 +5,8 @@ No LLM needed here — pure keyword/heuristic scoring for Phase 1.
 
 import logging
 
+from pipeline.sponsorship import is_known_sponsor
+
 logger = logging.getLogger(__name__)
 
 # Keywords strongly matching Ishani's profile
@@ -109,8 +111,10 @@ def score_job(job: dict) -> float:
     good_hits = sum(1 for kw in GOOD_MATCH_KEYWORDS if kw in text)
     score += min(good_hits / 4, 1.0) * 0.30
 
-    # Sponsorship-friendly signals boost (0–0.10)
-    if _matches_any(text, SPONSORSHIP_POSITIVE):
+    # Sponsorship boost (0–0.10) — a known H-1B sponsor (company history) OR an
+    # explicit visa-friendly signal in the JD. History matters more than the JD
+    # rarely mentioning visas, so either lights the boost.
+    if is_known_sponsor(job.get("company", "")) or _matches_any(text, SPONSORSHIP_POSITIVE):
         score += 0.10
 
     # Recency bonus (0–0.15) — prefer recently scraped
@@ -124,7 +128,12 @@ def score_job(job: dict) -> float:
     return round(min(score, 1.0), 3)
 
 
-def filter_jobs(jobs: list[dict], min_score: float = 0.0, skip_phd: bool = True) -> list[dict]:
+def filter_jobs(
+    jobs: list[dict],
+    min_score: float = 0.0,
+    skip_phd: bool = True,
+    require_sponsor: bool = False,
+) -> list[dict]:
     """
     Score all jobs, attach score, filter below threshold, sort by score desc.
     min_score=0.0 keeps all listings (score still computed for ranking).
@@ -132,9 +141,14 @@ def filter_jobs(jobs: list[dict], min_score: float = 0.0, skip_phd: bool = True)
     When skip_phd is True (default), jobs that require a PhD (and don't accept a
     Master's) are tagged with status "skipped" so they enter the DB out of the
     active pipeline rather than as "new". "skipped" matches tracker.STATUS_SKIPPED.
+
+    When require_sponsor is True (opt-in), jobs whose company is NOT a known H-1B
+    sponsor are also tagged "skipped". Off by default — the sponsorship signal is
+    a soft scoring boost, since an unknown company may still sponsor.
     """
     scored = []
     n_phd = 0
+    n_nonsponsor = 0
     for job in jobs:
         text = _combined_text(job)
         s = score_job(job)
@@ -143,12 +157,16 @@ def filter_jobs(jobs: list[dict], min_score: float = 0.0, skip_phd: bool = True)
             if skip_phd and is_phd_only(text):
                 job["status"] = "skipped"
                 n_phd += 1
+            elif require_sponsor and not is_known_sponsor(job.get("company", "")):
+                job["status"] = "skipped"
+                n_nonsponsor += 1
             scored.append(job)
 
     scored.sort(key=lambda j: j["score"], reverse=True)
     logger.info(
         f"Filtered {len(scored)} / {len(jobs)} jobs above score {min_score}"
         + (f"; {n_phd} PhD-only tagged skipped" if n_phd else "")
+        + (f"; {n_nonsponsor} non-sponsor tagged skipped" if n_nonsponsor else "")
     )
     return scored
 

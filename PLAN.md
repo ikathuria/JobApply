@@ -302,7 +302,7 @@ Tasks:
 
 ---
 
-## Milestone 17: Visa-Sponsorship-History Filter ☐
+## Milestone 17: Visa-Sponsorship-History Filter ✅
 **Goal:** Stop spending applications on employers who won't sponsor. Score (and optionally hard-filter) each job by whether its company has a real H-1B sponsorship history, so sponsor-friendly roles rise to the top and known non-sponsors can be skipped.
 
 > **Why (2026-07-19):** Ishani is an F-1 international student. The largest structural drag on her Summer-2026 cycle (500+ applications → 2 OAs → 1 interview) was applications hitting the "will you now or in the future require sponsorship?" auto-reject wall. Targeting known sponsors is a higher-leverage lever than raw application volume.
@@ -310,13 +310,13 @@ Tasks:
 > **Soft by default:** boost-only. Unknown companies are NOT zeroed out (a small or new employer may still sponsor); a strict `require_known_sponsor` flag is available for when Ishani wants to be aggressive.
 
 Tasks:
-- [ ] `config/h1b_sponsors.json` — curated set of known H-1B sponsor company names (normalized lowercase), seeded from public USCIS/MyVisaJobs data + all target MNCs (Google, Amazon, Microsoft, Meta, Apple, Nvidia, …). Schema allows an optional approval count/year for future ranking.
-- [ ] `src/pipeline/sponsorship.py` — `is_known_sponsor(company) -> bool` (loads JSON once; normalizes: lowercase, strip Inc/LLC/Corp/commas/punctuation; substring + alias match) and `sponsor_score(company) -> float` (0–1 signal).
-- [ ] Wire into `job_filter.score_job`: replace the keyword-only `sponsorship_friendly` (0.10) component with a company-history ∨ JD-keyword signal, so a known sponsor is boosted even when the JD says nothing about visas.
-- [ ] Optional hard filter: `filter_jobs(..., require_sponsor=False)` — when True, tag non-sponsor companies `status="skipped"` (same reversible pattern as `skip_phd`). Config flag `filters.require_known_sponsor: false` in `settings.yaml`.
-- [ ] `scripts/refresh_h1b_sponsors.py` — rebuild `h1b_sponsors.json` from the USCIS H-1B Employer Data Hub CSV (documented; run periodically, e.g. yearly). `--dry-run` preview.
-- [ ] `tests/test_sponsorship.py` — known sponsor boosts; unknown stays neutral (not zeroed); normalization ("Amazon.com, Inc." → amazon); `require_sponsor=True` tags non-sponsors skipped.
-- [ ] Gate: `flake8` clean, `pytest tests/` green.
+- [x] `config/h1b_sponsors.json` — ~130 curated known H-1B sponsors (big tech, AI labs, quant, top-volume IT-services, plus all Timeline target companies). Names normalized at load; list is refreshable.
+- [x] `src/pipeline/sponsorship.py` — `is_known_sponsor(company) -> bool` (loads JSON once via `lru_cache`; normalizes lowercase + strips punctuation/suffixes; exact or **token-subset** match so "Amazon Web Services" hits "Amazon" but "Metabolic Labs" does NOT hit "Meta") and `sponsor_score(company) -> float`.
+- [x] Wired into `job_filter.score_job`: the `sponsorship_friendly` (0.10) boost now fires on a known-sponsor company **OR** a JD visa keyword, so a known sponsor is boosted even when the JD says nothing about visas.
+- [x] Opt-in hard filter: `filter_jobs(..., require_sponsor=False)` — when True, tags non-sponsor companies `status="skipped"` (same reversible pattern as `skip_phd`). Wired through `main.py run_pipeline` from `filters.require_known_sponsor` in `settings.yaml` (default false).
+- [x] `scripts/refresh_h1b_sponsors.py` — rebuilds `h1b_sponsors.json` from the USCIS H-1B Employer Data Hub CSV (`--csv`, `--min-approvals`, `--dry-run`; unions with curated entries). Network-free; download the CSV yourself.
+- [x] `tests/test_sponsorship.py` (9) — exact + suffix + token-subset matching; no substring false positive; unknown stays neutral; scoring boost; `require_sponsor=True` tags non-sponsors skipped; off by default.
+- [x] Gate: `flake8` clean, `pytest tests/` → 83 passed.
 
 ---
 
