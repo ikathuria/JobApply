@@ -4,10 +4,13 @@ services:
     runtime: python
     region: ohio        # us-east-2 — closest to Purdue / West Lafayette
     plan: free
+    # NOTE: no frontend build here. apps/web/dist is pre-built and committed to
+    # the repo, and Render's python runtime has no Node/npm. FastAPI serves the
+    # committed dist directly. (Rebuild dist locally with `npm run build` and
+    # commit it when the UI changes.)
     buildCommand: |
       pip install -r requirements.txt
       pip install -e . --no-deps
-      cd apps/web && npm ci && npm run build
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
 
