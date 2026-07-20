@@ -58,3 +58,16 @@ def test_save_rejects_unknown_provider(settings_file):
     with pytest.raises(HTTPException) as exc:
         M.api_save_settings(M.SettingsPatch(llm={"provider": "bogus"}))
     assert exc.value.status_code == 400
+
+
+def test_get_includes_notification_defaults(settings_file):
+    s = M.api_get_settings()
+    assert s["notifications"] == {"on_offer": False, "on_interview": False, "email_to": ""}
+
+
+def test_save_notifications_merges_and_trims(settings_file):
+    out = M.api_save_settings(M.SettingsPatch(
+        notifications={"on_offer": True, "email_to": "  me@x.com  "}))
+    assert out["notifications"]["on_offer"] is True
+    assert out["notifications"]["email_to"] == "me@x.com"          # trimmed
+    assert out["notifications"]["on_interview"] is False           # untouched

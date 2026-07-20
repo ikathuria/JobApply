@@ -108,6 +108,31 @@ export default function SettingsView() {
         <div style={{ fontSize: 11, color: T.muted }}>LinkedIn / Handshake are paused in code; profile data lives in config/profile.json.</div>
       </div>
 
+      {/* Notifications */}
+      <SectionLabel style={{ marginTop: 24 }}>Email notifications</SectionLabel>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+        {[
+          ['on_offer', 'Email me when a job reaches Offer'],
+          ['on_interview', 'Email me when a job reaches Interview'],
+        ].map(([key, label]) => (
+          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: T.text }}>
+            <input type="checkbox" checked={!!s.notifications[key]}
+              onChange={e => setS({ ...s, notifications: { ...s.notifications, [key]: e.target.checked } })}
+              style={{ width: 15, height: 15, accentColor: T.accent }} />
+            {label}
+          </label>
+        ))}
+      </div>
+      <div style={{ marginBottom: 6 }}>
+        <div style={rowLabel}>Notify email (optional)</div>
+        <Input value={s.notifications.email_to}
+          onChange={v => setS({ ...s, notifications: { ...s.notifications, email_to: v } })}
+          placeholder="defaults to GMAIL_ADDRESS" />
+      </div>
+      <div style={{ fontSize: 11, color: T.muted, marginBottom: 24 }}>
+        Sent via your Gmail (GMAIL_ADDRESS / GMAIL_APP_PASSWORD). No-op if those aren't set.
+      </div>
+
       <div style={{ display: 'flex', gap: 10 }}>
         <Btn variant="primary" onClick={save} disabled={saving}>
           {saving ? <Spinner size={14} color="#fff" /> : 'Save Settings'}

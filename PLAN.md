@@ -195,13 +195,16 @@ Tasks:
 
 ---
 
-## Milestone 10: Email Notifications
+## Milestone 10: Email Notifications ✅
 **Goal:** Get an email when a job reaches `offer` status (or other key transitions).
 
-- [ ] Choose delivery: Resend free tier (100 emails/day) — add `RESEND_API_KEY` to `.env.example` and `render.yaml`
-- [ ] Add `_notify_offer(job)` helper in `api/main.py` using Resend SDK — Done when: POSTing to Resend sends an email to `ishani@kathuria.net`
-- [ ] Call `_notify_offer` in `api_patch_job` when `new_status == 'offer'` — Done when: patching a job to offer triggers the email
-- [ ] Wire Settings UI toggle "Send email notification on new offer" to `POST /api/settings` — Done when: disabling the toggle skips the send
+> **Decision (2026-07-19):** used the existing **Gmail SMTP sender** (`pipeline/email_sender.py`) instead of Resend — the infra + `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` env vars already exist and are tested, so no new dependency, account, or `RESEND_API_KEY`. Graceful no-op when Gmail creds are absent (`send_email` returns False).
+
+- [x] Delivery via existing Gmail sender (no new env var; reuses `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD`).
+- [x] `_maybe_notify_status(job, status)` in `api/main.py` — builds a subject/body and sends via `email_sender.send_email`; gated by the settings toggle; recipient = `notifications.email_to` or `GMAIL_ADDRESS`.
+- [x] Hooked into `api_patch_job` on a genuine transition into a milestone status (`offer`/`interview`), wrapped so a send failure never breaks the patch.
+- [x] Settings: `notifications.{on_offer, on_interview, email_to}` in GET/POST + an "Email notifications" section in `SettingsView.jsx` (two toggles + recipient). Extended beyond offer to also cover **interview** (the pivot's whole point).
+- [x] `tests/test_notifications.py` (4) + settings notification tests (2): offer→email, interview toggle-off→no email, unchanged-status→no email, non-milestone→no email; GET defaults + save merge/trim. 102 pass, flake8 clean, build compiles.
 
 ---
 

@@ -313,6 +313,38 @@ class JobPatch(BaseModel):
     source_url: str | None = None
 
 
+# Status → the settings toggle that gates a notification email on that transition.
+_NOTIFY_STATUS = {"offer": "on_offer", "interview": "on_interview"}
+
+
+def _maybe_notify_status(job: dict, new_status: str) -> None:
+    """Email a notification when a job reaches a milestone status (offer/interview),
+    if the matching toggle is on. Reuses the Gmail sender; no-op without creds (M10)."""
+    key = _NOTIFY_STATUS.get(new_status)
+    if not key:
+        return
+    notif = _read_settings_file().get("notifications", {})
+    if not notif.get(key):
+        return
+    to = (notif.get("email_to") or os.environ.get("GMAIL_ADDRESS") or "").strip()
+    if not to:
+        logger.warning("Status notification skipped — set notifications.email_to or GMAIL_ADDRESS")
+        return
+    company = job.get("company") or "a company"
+    title = job.get("title") or "a role"
+    subject = f"[JobApply] {company} → {new_status.upper()}: {title}"
+    body = (
+        f"Status update: {title} @ {company} moved to {new_status.upper()}.\n\n"
+        f"URL: {job.get('url', '')}\n"
+    )
+    try:
+        from pipeline.email_sender import send_email
+        ok = send_email(to, subject, body)
+        logger.info(f"Status notification for job {job.get('id')} → {new_status}: sent={ok}")
+    except Exception as e:
+        logger.warning(f"Status notification failed: {e}")
+
+
 @app.patch("/api/jobs/{job_id}")
 def api_patch_job(job_id: int, patch: JobPatch) -> dict:
     conn = db()
@@ -327,6 +359,14 @@ def api_patch_job(job_id: int, patch: JobPatch) -> dict:
     update_status(conn, job_id, new_status, **kwargs)
 
     updated = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+
+    # Notify on a genuine transition into a milestone status (never breaks the patch).
+    if patch.status and patch.status != current["status"]:
+        try:
+            _maybe_notify_status(dict(updated), new_status)
+        except Exception as e:
+            logger.warning(f"Notification hook error: {e}")
+
     return dict(updated)
 
 
@@ -1060,6 +1100,7 @@ def api_get_settings() -> dict:
     cfg = _read_settings_file()
     llm = cfg.get("llm", {})
     sources = cfg.get("sources", {})
+    notif = cfg.get("notifications", {})
     return {
         "llm": {
             "provider": llm.get("provider", "groq"),
@@ -1070,6 +1111,11 @@ def api_get_settings() -> dict:
         "scoring": {"min_score": cfg.get("scoring", {}).get("min_score", 0.0)},
         "filters": {"require_known_sponsor": bool(cfg.get("filters", {}).get("require_known_sponsor", False))},
         "sources": {s: bool(sources.get(s, {}).get("enabled", False)) for s in _EDITABLE_SOURCES},
+        "notifications": {
+            "on_offer": bool(notif.get("on_offer", False)),
+            "on_interview": bool(notif.get("on_interview", False)),
+            "email_to": notif.get("email_to", "") or "",
+        },
     }
 
 
@@ -1078,6 +1124,7 @@ class SettingsPatch(BaseModel):
     scoring: dict | None = None
     filters: dict | None = None
     sources: dict | None = None
+    notifications: dict | None = None
 
 
 @app.post("/api/settings")
@@ -1098,6 +1145,13 @@ def api_save_settings(body: SettingsPatch) -> dict:
         for s in _EDITABLE_SOURCES:
             if s in body.sources:
                 sources.setdefault(s, {})["enabled"] = bool(body.sources[s])
+    if body.notifications:
+        n = cfg.setdefault("notifications", {})
+        for k in ("on_offer", "on_interview"):
+            if k in body.notifications:
+                n[k] = bool(body.notifications[k])
+        if "email_to" in body.notifications:
+            n["email_to"] = (body.notifications["email_to"] or "").strip()
 
     provider = cfg.get("llm", {}).get("provider", "groq")
     if provider not in _LLM_PROVIDERS:
