@@ -132,7 +132,7 @@ JobApply/
 | 6. Auto-Apply | ◐ partial | Greenhouse/LinkedIn/Lever done; Workday/Ashby/SmartRecruiters pending |
 | 7. Settings Persistence | ☐ todo | |
 | 8. Import Jobs UI | ☐ todo | |
-| 9. Interview Prep Module | ☐ todo | |
+| 9. Interview Prep Section | ☐ planned | 2026-07-19 — upgraded from stub to a full section: LLM prep packs per interview (JD + company + profile), dedicated dashboard tab, stored + regenerable |
 | 10. Email Notifications | ☐ todo | |
 | 11. Production Hardening | ☐ todo | |
 | 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; intern-list + newgrad on jobright JSON API (browserless, ~1.9s/source) |
@@ -145,12 +145,13 @@ JobApply/
 | 19. Recruiting Timeline & Reminders | ✅ code done | 2026-07-19 — Timeline dashboard view: curated per-company app windows + live open-role counts + apply/reach-out reminders. Backend + tests green (68); ⚠ `apps/web/dist` needs a rebuild+commit (Node) to deploy |
 
 **In progress now:** Strategic pivot (2026-07-19) — **M18 (retarget to full-time new-grad) and M19 (recruiting timeline & reminders) shipped**; **M17 (visa-sponsorship-history filter) is next**. Rationale: the Summer-2026 internship cycle produced 2 OAs / 1 interview from 500+ applications; the levers are targeting known H-1B sponsors, shifting to full-time new-grad roles (Ishani graduates May 2027), and not missing the new-grad application wave that opens Aug–Oct 2026 — not more application volume.
-**Next up:** M17 (sponsorship-history filter). Then warm-referral outreach to ex-AWS/Google/MS/Uber contacts (timed to each company's window via the Timeline reminders). Optional: set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` for real sends; remaining pre-pivot milestones (M7–M11).
+**Next up:** M17 (sponsorship-history filter), then M9 (interview-prep section — convert the interviews the pivot lands). Warm-referral outreach to ex-AWS/Google/MS/Uber contacts is timed to each company's window via the Timeline reminders. Optional: set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` for real sends; remaining pre-pivot milestones (M7, M8, M10, M11).
 
 ---
 
 ## Decision log
 
+- 2026-07-19 — Interview Prep is now a full section (M9, planned) — the M17–M19 pivot is about landing more interviews; converting them is the next bottleneck (last cycle: 1 interview from 500+ apps). Upgraded the old thin "prep sheet button" stub into a dedicated dashboard section that generates + stores a tailored prep pack per interview (company/role snapshot, topics to review, behavioral/technical/system-design question banks with talking points from her real experience, questions to ask, logistics) from the JD + company + profile — grounded, never fabricated, same discipline as resume tailoring. Not built yet; planned after M17.
 - 2026-07-19 — Recruiting Timeline & Reminders (M19) — for a May-2027 grad, the full-time new-grad cycle opens Aug–Oct 2026 (now) on rolling admissions, and Google's window is a tight ~2 weeks. Added a Timeline dashboard view combining a curated per-company application calendar (`config/recruiting_calendar.json`, cycle-specific + refreshable) with live open-role counts from the scraped `jobs` table, plus apply/reach-out reminders. Reach-out reminders fire on each company's application window (referrals help at application time), which revises the timing — but not the substance — of the earlier "defer warm outreach ~1 yr" decision. Curated windows are approximate (big tech is mostly rolling; hard per-req deadlines rarely publish); the live open-role counts give ground truth.
 - 2026-07-19 — Strategic pivot to full-time new-grad AI/ML roles (M18) — Ishani graduates May 2027 (possibly Dec 2026); the Summer-2026 internship cycle is over, so full-time new-grad roles become the primary target. The `newgrad-jobs.com` scraper already existed, but `job_filter`'s role gate accepted only intern keywords and scored every new-grad role 0.0 — so they were scraped and silently discarded. Broadening the gate (with a seniority guard) unlocks them. Internships/co-ops kept for CPT during the school year — a re-prioritization, not a removal.
 - 2026-07-19 — Added a visa-sponsorship-history filter (M17) — the biggest structural drag on the 500-application Summer-2026 cycle (2 OAs, 1 interview) was the "will you require sponsorship?" auto-reject. Scoring jobs by whether the company is a known H-1B sponsor (curated from public USCIS H-1B Employer Data Hub / MyVisaJobs data) tilts the odds better than raw volume. Soft/boost-only by default (unknown companies are not zeroed, since small/new employers may still sponsor); a strict `require_known_sponsor` flag is opt-in. Kept as an offline JSON, not a live API call, so the daily path stays fast.
