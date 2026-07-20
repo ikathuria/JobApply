@@ -11,6 +11,7 @@ import AnalyticsView from './components/AnalyticsView.jsx'
 import SettingsView from './components/SettingsView.jsx'
 import OutreachView from './components/OutreachView.jsx'
 import TimelineView from './components/TimelineView.jsx'
+import PrepView from './components/PrepView.jsx'
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem('ja_state') || '{}') } catch { return {} }
@@ -141,6 +142,12 @@ export default function App() {
                   onReachOut={reachOutForCompany}
                   onOpenRoles={openJobsForCompany}
                 />
+              </div>
+            )}
+
+            {screen === 'prep' && (
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <PrepView />
               </div>
             )}
 

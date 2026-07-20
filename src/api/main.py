@@ -43,6 +43,7 @@ from tracker.tracker import (
     OUTREACH_COLD, OUTREACH_REFERRAL, OUTREACH_SENT,
     add_reminder, get_reminder, list_reminders, list_reminders_due,
     update_reminder, delete_reminder, REMINDER_APPLY,
+    upsert_prep, get_prep, delete_prep, list_prep_jobs,
 )
 
 app = FastAPI(title="JobApply API", version="2.0")
@@ -928,6 +929,79 @@ def api_delete_reminder(reminder_id: int) -> dict:
         raise HTTPException(404, "Reminder not found")
     delete_reminder(conn, reminder_id)
     return {"status": "deleted", "id": reminder_id}
+
+
+# ── Interview prep (M9) ───────────────────────────────────────────────────────
+
+
+@app.get("/api/prep")
+def api_list_prep_jobs() -> list[dict]:
+    """Jobs at an interview stage (oa / interview) with a has_prep flag."""
+    return [dict(r) for r in list_prep_jobs(db())]
+
+
+@app.get("/api/jobs/{job_id}/prep")
+def api_get_prep(job_id: int) -> dict:
+    """The stored interview-prep pack for a job (404 if none generated yet)."""
+    row = get_prep(db(), job_id)
+    if not row:
+        raise HTTPException(404, "No prep generated yet")
+    try:
+        content = json.loads(row["content"]) if row["content"] else {}
+    except ValueError:
+        content = {}
+    return {"job_id": job_id, "content": content,
+            "model": row["model"], "updated_at": row["updated_at"]}
+
+
+@app.post("/api/jobs/{job_id}/prep")
+def api_generate_prep(job_id: int) -> dict:
+    """Generate (or regenerate) an interview-prep pack for a job and store it."""
+    conn = db()
+    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Job not found")
+    job = dict(row)
+
+    # Prefer the stored description; fall back to fetching the full JD if thin.
+    jd_text = job.get("description") or ""
+    if len(jd_text) < 200 and job.get("url"):
+        try:
+            from pipeline.jd_fetcher import fetch_jd
+            fetched = fetch_jd(job["url"])
+            if fetched:
+                jd_text = fetched
+        except Exception:
+            pass  # stored description is enough to proceed
+
+    try:
+        from pipeline.interview_prep import generate_prep
+        from pipeline.llm_client import get_provider_model
+        pack = generate_prep(job, jd_text)
+    except (ImportError, ModuleNotFoundError) as e:
+        raise HTTPException(503, f"Interview-prep module unavailable: {e}")
+    except Exception as e:
+        raise HTTPException(500, f"Prep generation failed: {e}")
+
+    if not pack:
+        raise HTTPException(500, "Prep generation failed — check the LLM API key")
+
+    model = None
+    try:
+        model = get_provider_model()
+    except Exception:
+        pass
+    upsert_prep(conn, job_id, json.dumps(pack), model=model)
+    return {"job_id": job_id, "content": pack, "model": model}
+
+
+@app.delete("/api/jobs/{job_id}/prep")
+def api_delete_prep(job_id: int) -> dict:
+    conn = db()
+    if not get_prep(conn, job_id):
+        raise HTTPException(404, "No prep to delete")
+    delete_prep(conn, job_id)
+    return {"status": "deleted", "job_id": job_id}
 
 
 # ── Serve built React app (production) ───────────────────────────────────────

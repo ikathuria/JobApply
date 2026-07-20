@@ -169,6 +169,21 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
+    # ── Interview prep packs (one per job — M9) ──────────────────────────────
+    # `content` holds the LLM-generated prep pack as a JSON string. UNIQUE(job_id)
+    # so a job has at most one pack (regenerated in place via upsert_prep).
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS interview_prep (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id     INTEGER UNIQUE NOT NULL REFERENCES jobs(id),
+            content    TEXT,
+            model      TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now'))
+        );
+    """)
+    conn.commit()
+
 
 def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
     """
@@ -529,3 +544,55 @@ def update_reminder(conn: sqlite3.Connection, reminder_id: int, **fields) -> Non
 def delete_reminder(conn: sqlite3.Connection, reminder_id: int) -> None:
     conn.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
     _checkpoint(conn)
+
+
+# ── Interview prep CRUD (one pack per job — M9) ───────────────────────────────
+
+def upsert_prep(
+    conn: sqlite3.Connection, job_id: int, content: str, model: str | None = None
+) -> None:
+    """Insert or replace a job's interview-prep pack (`content` is a JSON string)."""
+    now = datetime.utcnow().isoformat()
+    existing = conn.execute(
+        "SELECT id FROM interview_prep WHERE job_id = ?", (job_id,)
+    ).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE interview_prep SET content = ?, model = ?, updated_at = ? WHERE job_id = ?",
+            (content, model, now, job_id),
+        )
+    else:
+        conn.execute(
+            "INSERT INTO interview_prep (job_id, content, model) VALUES (?, ?, ?)",
+            (job_id, content, model),
+        )
+    _checkpoint(conn)
+
+
+def get_prep(conn: sqlite3.Connection, job_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM interview_prep WHERE job_id = ?", (job_id,)
+    ).fetchone()
+
+
+def delete_prep(conn: sqlite3.Connection, job_id: int) -> None:
+    conn.execute("DELETE FROM interview_prep WHERE job_id = ?", (job_id,))
+    _checkpoint(conn)
+
+
+def list_prep_jobs(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    """Jobs at an interview stage (oa / interview), each flagged with whether a
+    prep pack exists — powers the Interview Prep section."""
+    return conn.execute(
+        """
+        SELECT j.id, j.title, j.company, j.location, j.status, j.interview_date,
+               (p.id IS NOT NULL) AS has_prep, p.updated_at AS prep_updated_at
+        FROM jobs j
+        LEFT JOIN interview_prep p ON p.job_id = j.id
+        WHERE j.status IN ('oa', 'interview')
+        ORDER BY
+            CASE j.status WHEN 'interview' THEN 0 ELSE 1 END,
+            COALESCE(j.interview_date, '9999-12-31') ASC,
+            j.id DESC
+        """
+    ).fetchall()

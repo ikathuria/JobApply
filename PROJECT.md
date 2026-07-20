@@ -61,9 +61,10 @@ JobApply/
 │  │  ├─ jobright_enricher.py    # Enriches Jobright aggregator URLs
 │  │  ├─ email_generator.py      # LLM cold email + referral ask generation (M14)
 │  │  ├─ email_finder.py         # SMTP probe + Hunter.io email discovery (M15)
-│  │  └─ email_sender.py         # Gmail SMTP send (M15)
+│  │  ├─ email_sender.py         # Gmail SMTP send (M15)
+│  │  └─ interview_prep.py       # LLM interview-prep pack generator (M9)
 │  ├─ tracker/
-│  │  └─ tracker.py              # SQLite CRUD; jobs + recruiters + outreach + reminders (M19) tables
+│  │  └─ tracker.py              # SQLite CRUD; jobs + recruiters + outreach + reminders + interview_prep tables
 │  ├─ api/
 │  │  ├─ main.py                 # FastAPI: all REST endpoints; serves apps/web/dist
 │  │  └─ turso.py                # Turso HTTP bridge
@@ -78,9 +79,10 @@ JobApply/
 │        ├─ api.js               # fetch client for all /api endpoints
 │        ├─ theme.js             # design tokens (warm paper/ink palette)
 │        └─ components/
-│           ├─ Sidebar.jsx       # nav (Dashboard/Jobs/Outreach/Timeline/Analytics/Settings)
+│           ├─ Sidebar.jsx       # nav (Dashboard/Jobs/Outreach/Timeline/Interview Prep/Analytics/Settings)
 │           ├─ DashboardView.jsx / JobsView.jsx / AnalyticsView.jsx
 │           ├─ TimelineView.jsx  # Recruiting calendar + open-role counts + reminders (M19)
+│           ├─ PrepView.jsx      # Interview-prep packs per interview-stage job (M9)
 │           ├─ OutreachView.jsx  # Recruiter mgmt + composer + follow-up banner (M16)
 │           ├─ SettingsView.jsx  # Settings (UI only until M7)
 │           ├─ JobDrawer.jsx     # Full job detail panel + "Reach out"
@@ -132,7 +134,7 @@ JobApply/
 | 6. Auto-Apply | ◐ partial | Greenhouse/LinkedIn/Lever done; Workday/Ashby/SmartRecruiters pending |
 | 7. Settings Persistence | ☐ todo | |
 | 8. Import Jobs UI | ☐ todo | |
-| 9. Interview Prep Section | ☐ planned | 2026-07-19 — upgraded from stub to a full section: LLM prep packs per interview (JD + company + profile), dedicated dashboard tab, stored + regenerable |
+| 9. Interview Prep Section | ✅ done | 2026-07-19 — LLM prep packs per interview (snapshot, topics, behavioral/technical/system-design Q banks, questions-to-ask, checklist); dedicated dashboard tab, stored + regenerable. JobDrawer tab deferred |
 | 10. Email Notifications | ☐ todo | |
 | 11. Production Hardening | ☐ todo | |
 | 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; intern-list + newgrad on jobright JSON API (browserless, ~1.9s/source) |
@@ -144,8 +146,8 @@ JobApply/
 | 18. Retarget to Full-Time New-Grad | ✅ done | 2026-07-19 — broadened role gate (new-grad/entry-level/full-time + feed-source accept) + soft seniority penalty; internships/co-ops kept. New-grad roles scored 0.0 before, now surface |
 | 19. Recruiting Timeline & Reminders | ✅ code done | 2026-07-19 — Timeline dashboard view: curated per-company app windows + live open-role counts + apply/reach-out reminders. Backend + tests green (68); ⚠ `apps/web/dist` needs a rebuild+commit (Node) to deploy |
 
-**In progress now:** Strategic pivot (2026-07-19) — **M18 (retarget to full-time new-grad) and M19 (recruiting timeline & reminders) shipped**; **M17 (visa-sponsorship-history filter) is next**. Rationale: the Summer-2026 internship cycle produced 2 OAs / 1 interview from 500+ applications; the levers are targeting known H-1B sponsors, shifting to full-time new-grad roles (Ishani graduates May 2027), and not missing the new-grad application wave that opens Aug–Oct 2026 — not more application volume.
-**Next up:** M17 (sponsorship-history filter), then M9 (interview-prep section — convert the interviews the pivot lands). Warm-referral outreach to ex-AWS/Google/MS/Uber contacts is timed to each company's window via the Timeline reminders. Optional: set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` for real sends; remaining pre-pivot milestones (M7, M8, M10, M11).
+**In progress now:** Autonomous milestone run (2026-07-19) — **M17 (sponsorship filter), M18 (new-grad retarget), M19 (timeline & reminders), and M9 (interview-prep section) all shipped.** Working through the remaining pre-pivot milestones (M8 verify, M7, M11, M10).
+**Next up:** M8 (import UI — likely already built), M7 (settings persistence), M11 (health + logging), M10 (email notifications). Warm-referral outreach to ex-AWS/Google/MS/Uber contacts is timed to each company's window via the Timeline reminders. Optional: set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` for real sends.
 
 ---
 

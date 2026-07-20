@@ -68,4 +68,10 @@ export const api = {
   addReminder:      (data)      => req('POST',   '/reminders', data),
   patchReminder:    (id, data)  => req('PATCH',  `/reminders/${id}`, data),
   deleteReminder:   (id)        => req('DELETE', `/reminders/${id}`),
+
+  // ── Interview prep (M9) ──
+  prepJobs:         ()          => req('GET',    '/prep'),
+  getPrep:          (id)        => req('GET',    `/jobs/${id}/prep`),
+  generatePrep:     (id)        => req('POST',   `/jobs/${id}/prep`),
+  deletePrep:       (id)        => req('DELETE', `/jobs/${id}/prep`),
 }

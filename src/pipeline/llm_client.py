@@ -22,6 +22,15 @@ def _config() -> dict:
     return _config_cache
 
 
+def get_provider_model() -> str:
+    """A 'provider:model' label for the currently configured LLM (for logging /
+    storing which model produced a given output)."""
+    cfg = _config()
+    provider = cfg.get("provider", "gemini").lower()
+    model = cfg.get(f"{provider}_model", "")
+    return f"{provider}:{model}" if model else provider
+
+
 def complete(system_prompt: str, user_message: str, max_tokens: int = 2000) -> str:
     """
     Send a system + user message to the configured LLM.

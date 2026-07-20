@@ -49,12 +49,21 @@ function IconCalendar() {
     </svg>
   )
 }
+function IconPrep() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 1.8A4.2 4.2 0 0 0 5.4 9.2c0.5 0.5 0.85 1 0.95 1.8h3.3c0.1-0.8 0.45-1.3 0.95-1.8A4.2 4.2 0 0 0 8 1.8Z" />
+      <path d="M6.3 13h3.4M6.8 14.5h2.4" />
+    </svg>
+  )
+}
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,     tone: 'blue'   },
   { id: 'jobs',      label: 'Jobs',       Icon: IconLayers,   tone: 'purple', hasBadge: true },
   { id: 'outreach',  label: 'Outreach',   Icon: IconMail,     tone: 'blue'   },
   { id: 'timeline',  label: 'Timeline',   Icon: IconCalendar, tone: 'teal'   },
+  { id: 'prep',      label: 'Interview Prep', Icon: IconPrep,  tone: 'purple' },
   { id: 'analytics', label: 'Analytics',  Icon: IconChart,    tone: 'teal'   },
   { id: 'settings',  label: 'Settings',   Icon: IconGear,     tone: null     },
 ]

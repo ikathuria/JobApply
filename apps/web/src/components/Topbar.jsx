@@ -4,6 +4,7 @@ export default function Topbar({ screen }) {
     jobs:      'Job Pipeline',
     outreach:  'Recruiter Outreach',
     timeline:  'Recruiting Timeline',
+    prep:      'Interview Prep',
     analytics: 'Analytics',
     settings:  'Settings',
   }
