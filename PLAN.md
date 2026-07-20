@@ -205,13 +205,14 @@ Tasks:
 
 ---
 
-## Milestone 11: Production Hardening
+## Milestone 11: Production Hardening ◐ (code done; live Render verify needs the user)
 **Goal:** Render deployment is stable, PDFs are accessible from the deployed URL.
 
-- [ ] Verify `render.yaml` deploys cleanly: `npm ci && npm run build` succeeds, `uvicorn` starts, `/api/stats` returns 200 — Done when: `curl https://<render-url>/api/stats` returns JSON
-- [ ] Fix cross-machine PDF path resolution: `_resolve_resume_path` in `api/main.py` already handles relative/absolute but `output/resumes/` must be committed — Done when: `/api/jobs/{id}/resume` returns a PDF on Render for GHA-generated jobs
-- [ ] Add startup log that prints DB backend (sqlite vs Turso) and PDF count — Done when: visible in Render logs on deploy
-- [ ] Add `GET /api/health` endpoint returning `{status: "ok", db: "turso"|"sqlite", jobs: N}` — Done when: Render health check can use this instead of `/api/stats`
+- [x] `GET /api/health` → `{status: "ok", db: "turso"|"sqlite", jobs: N}` (lightweight; no rejection-stage aggregation like `/api/stats`). `render.yaml` `healthCheckPath` switched to `/api/health`.
+- [x] Startup log (lifespan handler, via uvicorn's logger) prints DB backend + committed resume-PDF count + whether the web dist is present. Verified locally: `JobApply API up — db=sqlite, resume PDFs=300, web dist=yes`.
+- [x] Cross-machine PDF path resolution — `_resolve_resume_path` already handles absolute/relative/`output/resumes/`-suffix/basename fallbacks; `output/resumes/` is committed. (Pre-existing; confirmed.)
+- [x] `tests/test_health_api.py` (3): ok/sqlite, turso backend label, job count. 96 pass, flake8 clean.
+- [ ] Verify the live Render deploy end-to-end (`curl https://<render-url>/api/health` → 200; a GHA-generated resume PDF loads from the deployed URL) — **needs the user** (requires the Render URL / dashboard access).
 
 ---
 

@@ -6,11 +6,13 @@ Run: uvicorn api.main:app --reload --port 8000
 from __future__ import annotations
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
 import sqlite3
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import yaml
@@ -47,7 +49,23 @@ from tracker.tracker import (
     upsert_prep, get_prep, delete_prep, list_prep_jobs,
 )
 
-app = FastAPI(title="JobApply API", version="2.0")
+# Use uvicorn's configured logger so startup lines actually appear in its output
+# (a bare app logger doesn't propagate to uvicorn's handlers).
+logger = logging.getLogger("uvicorn.error")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Log the DB backend + committed PDF count on startup (M11)."""
+    backend = "turso" if os.environ.get("TURSO_DATABASE_URL") else "sqlite"
+    out_dir = Path(os.environ.get("OUTPUT_DIR", str(ROOT / "output" / "resumes")))
+    pdfs = len(list(out_dir.rglob("resume.pdf"))) if out_dir.exists() else 0
+    dist = (ROOT / "apps" / "web" / "dist").exists()
+    logger.info(f"JobApply API up — db={backend}, resume PDFs={pdfs}, web dist={'yes' if dist else 'no'}")
+    yield
+
+
+app = FastAPI(title="JobApply API", version="2.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -93,6 +111,21 @@ def db():
         else:
             _conn = init_db(DB_PATH)         # local: plain sqlite3
     return _conn
+
+
+# ── Health ────────────────────────────────────────────────────────────────────
+
+
+@app.get("/api/health")
+def api_health() -> dict:
+    """Lightweight liveness + backend probe for Render health checks (M11)."""
+    backend = "turso" if os.environ.get("TURSO_DATABASE_URL") else "sqlite"
+    jobs = None
+    try:
+        jobs = db().execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+    except Exception:
+        pass
+    return {"status": "ok", "db": backend, "jobs": jobs}
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────

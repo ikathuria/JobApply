@@ -136,7 +136,7 @@ JobApply/
 | 8. Import Jobs UI | ✅ done | verified 2026-07-19 — `+ Import` → ImportModal (Single Job + CSV Bulk), wired to POST /api/jobs/import |
 | 9. Interview Prep Section | ✅ done | 2026-07-19 — LLM prep packs per interview (snapshot, topics, behavioral/technical/system-design Q banks, questions-to-ask, checklist); dedicated dashboard tab, stored + regenerable. JobDrawer tab deferred |
 | 10. Email Notifications | ☐ todo | |
-| 11. Production Hardening | ☐ todo | |
+| 11. Production Hardening | ◐ code done | 2026-07-19 — /api/health + startup logging + PDF-path resolution done; live Render deploy verification needs the user |
 | 12. Scraper Pivot | ✅ done | LinkedIn/Handshake paused; intern-list + newgrad on jobright JSON API (browserless, ~1.9s/source) |
 | 13. Recruiter Database | ✅ done | `recruiters` + `outreach` tables, CRUD + 8 API endpoints (25 tests) |
 | 14. Cold Email Generator | ✅ done | LLM cold + referral drafts; `POST /api/outreach/draft` (33 tests) |
