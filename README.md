@@ -486,9 +486,20 @@ Click any row to open the drawer:
 | Review / Edit / Stats | ✅ | ✅ |
 | CSV import | ✅ | ✅ |
 
-### Deploy to Render
+### Running it (local-only — the default)
 
-The repo includes `render.yaml` for one-click deploys:
+JobApply runs **locally** — it's a personal single-user tool, so there's no hosted deployment. The data pipeline stays hands-off in the cloud (free): **GitHub Actions** scrapes + tailors daily into **Turso** and commits the PDFs. On your machine:
+
+```bash
+git pull                 # grab the day's new resume PDFs
+make local               # serve the dashboard + API at http://localhost:8000
+```
+
+`make local` reads the live database from `.env` (Turso if `TURSO_DATABASE_URL` is set, else local SQLite). Put your Turso credentials in `.env` to see the data the daily workflow collects.
+
+### Deploy to Render (optional — not currently used)
+
+The repo keeps `render.yaml` in case you ever want a hosted deploy, but the project is run locally. If you do deploy, note the build command is pip-only (the frontend `dist` is pre-built and committed):
 
 1. Go to [render.com](https://render.com) → **New → Web Service**
 2. Connect the GitHub repo — Render auto-detects `render.yaml`

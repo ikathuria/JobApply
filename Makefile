@@ -1,4 +1,4 @@
-.PHONY: dev api web install build prod
+.PHONY: dev api web install build prod local
 
 # Dev: open two cmd windows (Windows) running both servers
 dev:
@@ -21,6 +21,12 @@ build:
 # Production: build React then serve everything from FastAPI
 prod: build
 	uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# Local-only (the way this project runs): serve the committed build + API on
+# localhost, reading the live DB from .env (Turso if set, else local SQLite).
+# No rebuild. GitHub Actions keeps the data fresh; `git pull` grabs new PDFs.
+local:
+	uvicorn api.main:app --port 8000
 
 # Install all dependencies (Python + Node)
 install:
