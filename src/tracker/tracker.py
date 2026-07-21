@@ -346,6 +346,47 @@ def get_recruiter_by_email(conn: sqlite3.Connection, email: str) -> sqlite3.Row 
     ).fetchone()
 
 
+def get_recruiter_by_linkedin(conn: sqlite3.Connection, linkedin_url: str) -> sqlite3.Row | None:
+    url = (linkedin_url or "").strip()
+    if not url:
+        return None
+    return conn.execute(
+        "SELECT * FROM recruiters WHERE linkedin_url = ?", (url,)
+    ).fetchone()
+
+
+def recruiter_exists(
+    conn: sqlite3.Connection, linkedin_url: str | None = None,
+    name: str | None = None, company: str | None = None,
+) -> bool:
+    """Best-effort dedup for scraped recruiters: matches on profile URL first,
+    then falls back to a case-insensitive name+company pair."""
+    if linkedin_url and get_recruiter_by_linkedin(conn, linkedin_url):
+        return True
+    if name and company:
+        row = conn.execute(
+            "SELECT 1 FROM recruiters WHERE lower(name) = lower(?) "
+            "AND lower(COALESCE(company, '')) = lower(?) LIMIT 1",
+            (name.strip(), company.strip()),
+        ).fetchone()
+        if row:
+            return True
+    return False
+
+
+def get_target_companies(conn: sqlite3.Connection, statuses: tuple[str, ...] | None = None) -> list[str]:
+    """Distinct, non-empty company names from the jobs table — the firms you're
+    targeting — optionally limited to jobs in the given statuses."""
+    query = "SELECT DISTINCT company FROM jobs WHERE COALESCE(company, '') <> ''"
+    params: list = []
+    if statuses:
+        placeholders = ", ".join("?" for _ in statuses)
+        query += f" AND status IN ({placeholders})"
+        params.extend(statuses)
+    query += " ORDER BY company"
+    return [row["company"].strip() for row in conn.execute(query, params).fetchall()]
+
+
 def list_recruiters(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     """All recruiters with an outreach count + sent count, newest first."""
     return conn.execute(

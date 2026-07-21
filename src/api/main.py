@@ -840,11 +840,15 @@ def api_outreach_followups() -> list[dict]:
 
 
 @app.get("/api/email-finder")
-def api_email_finder(first: str, last: str, domain: str, probe: bool = True) -> list[str]:
-    """Best-effort recruiter email guesses for a name + company domain, ranked.
-    SMTP probing (probe=true) is often blocked/inconclusive — see email_finder."""
+def api_email_finder(
+    first: str, last: str, domain: str = "", probe: bool = True,
+    linkedin_url: str | None = None,
+) -> list[str]:
+    """Best-effort recruiter email guesses, ranked. A LinkedIn URL alone works
+    (Prospeo resolves it login-free); a domain enables verification + pattern
+    inference. SMTP probing (probe=true) is often blocked/inconclusive."""
     from pipeline.email_finder import guess_emails
-    return guess_emails(first, last, domain, probe=probe)
+    return guess_emails(first, last, domain, probe=probe, linkedin_url=linkedin_url)
 
 
 # ── Recruiting timeline (M19) ────────────────────────────────────────────────

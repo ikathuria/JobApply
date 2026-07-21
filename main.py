@@ -13,6 +13,8 @@ Usage:
   python main.py --source linkedin        # PAUSED (disabled in config)
   python main.py --tailor                 # tailor top unreviewed jobs
   python main.py --tailor --limit 5       # tailor top N jobs
+  python main.py --recruiters             # scrape LinkedIn recruiters for DB companies
+  python main.py --recruiters --limit 10  # cap companies scraped this run
   python main.py --apply                  # apply to approved jobs (you confirm each)
   python main.py --apply --dry-run        # fill forms + screenshot, never submit
   python main.py --apply --limit 5        # apply to top N approved jobs
@@ -36,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from tracker.tracker import (
     init_db, upsert_jobs, get_jobs, get_stats, update_status,
+    add_recruiter, recruiter_exists, get_target_companies,
     STATUS_NEW, STATUS_QUEUED, STATUS_SKIPPED, DB_PATH,
 )
 
@@ -176,6 +179,109 @@ def run_pipeline(config: dict, source: str | None = None) -> None:
         for i, job in enumerate(new_jobs, 1):
             print(f"  {i:>2}. [{job['score']:.2f}] {job['title']} @ {job['company'] or 'N/A'}")
             print(f"       {job['url']}")
+    print()
+    conn.close()
+
+
+# -- Recruiter discovery -------------------------------------------------------
+
+def _split_name(full: str) -> tuple[str, str]:
+    """Split a display name into (first, last). Single-token names get a blank last."""
+    parts = (full or "").strip().split()
+    if not parts:
+        return "", ""
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], parts[-1]
+
+
+def run_scrape_recruiters(config: dict, limit: int | None = None, guess_emails: bool = False) -> None:
+    """Separate scraping job: find recruiters on LinkedIn for the companies in
+    your jobs DB, and store them (names/titles/profile URLs). With guess_emails,
+    resolve emails login-free from each LinkedIn URL (Prospeo) + the finder
+    waterfall; otherwise resolve later via the UI's guess-email action."""
+    from scrapers.linkedin_recruiter_scraper import scrape_linkedin_recruiters_sync
+
+    rcfg = config.get("recruiters", {})
+    if not rcfg.get("enabled", True):
+        print("Recruiter scraping is disabled in config (recruiters.enabled: false).")
+        return
+
+    conn = _open_db()
+    statuses = tuple(rcfg.get("from_statuses") or ())
+    companies = get_target_companies(conn, statuses=statuses or None)
+    if not companies:
+        # Fall back to every company we know about if no outreach-stage jobs yet.
+        companies = get_target_companies(conn)
+    cap = limit or rcfg.get("max_companies", 25)
+    companies = companies[:cap]
+
+    if not companies:
+        print("No target companies found in DB — run discovery first.")
+        conn.close()
+        return
+
+    print(f"\n-- Scraping recruiters for {len(companies)} companies ----------")
+    for c in companies:
+        print(f"   - {c}")
+
+    recruiters = scrape_linkedin_recruiters_sync(
+        companies=companies,
+        titles=rcfg.get("titles"),
+        max_per_company=rcfg.get("max_per_company", 8),
+        headless=_CI_HEADLESS,   # headed locally, headless in GHA
+        pace_seconds=rcfg.get("pace_seconds", 5.0),
+    )
+
+    finder = None
+    if guess_emails:
+        from pipeline.email_finder import guess_emails as finder
+
+    added = 0
+    duplicate = 0
+    emailed = 0
+    for r in recruiters:
+        if recruiter_exists(conn, linkedin_url=r.get("linkedin_url"),
+                            name=r.get("name"), company=r.get("company")):
+            duplicate += 1
+            continue
+
+        email = None
+        if finder:
+            first, last = _split_name(r.get("name", ""))
+            try:
+                # LinkedIn URL alone resolves login-free via Prospeo; no domain needed.
+                guesses = finder(first, last, linkedin_url=r.get("linkedin_url"))
+                email = guesses[0] if guesses else None
+            except Exception as e:
+                logger.warning(f"Email lookup failed for {r.get('name')!r}: {e}")
+
+        try:
+            add_recruiter(
+                conn,
+                name=r["name"],
+                email=email,
+                company=r.get("company"),
+                title=r.get("title"),
+                linkedin_url=r.get("linkedin_url"),
+                source=r.get("source", "linkedin_people"),
+            )
+            added += 1
+            if email:
+                emailed += 1
+        except Exception as e:
+            # Most likely a UNIQUE-email collision with an existing recruiter.
+            logger.warning(f"Could not add recruiter {r.get('name')!r}: {e}")
+
+    print("\n-- Recruiter scraping complete -----------------")
+    print(f"  Contacts found   : {len(recruiters)}")
+    print(f"  New in DB        : {added}")
+    print(f"  Already known    : {duplicate}")
+    if guess_emails:
+        print(f"  Emails resolved  : {emailed}")
+    else:
+        print("\n  Next: resolve emails from the UI (Outreach → guess email), or "
+              "re-run with --guess-emails (set PROSPEO_API_KEY / HUNTER_API_KEY).")
     print()
     conn.close()
 
@@ -474,6 +580,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
     parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "linkedin", "handshake"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
+    parser.add_argument("--recruiters", action="store_true",
+                        help="Scrape LinkedIn recruiters for the companies in your jobs DB")
+    parser.add_argument("--guess-emails", action="store_true",
+                        help="With --recruiters: resolve emails (Prospeo by LinkedIn URL + finder waterfall)")
     parser.add_argument("--apply",   action="store_true", help="Apply to approved jobs (you confirm each submit)")
     parser.add_argument("--dry-run", action="store_true", help="Fill forms + screenshot, never submit")
     parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
@@ -489,6 +599,13 @@ def main() -> None:
         run_enrich_ready(limit=args.limit)
     elif args.resolve_priority_links:
         run_resolve_priority_links(limit=args.limit)
+    elif args.recruiters:
+        config = load_config()
+        run_scrape_recruiters(
+            config,
+            limit=args.limit if "--limit" in sys.argv else None,
+            guess_emails=args.guess_emails,
+        )
     elif args.tailor:
         run_tailor(limit=args.limit)
     elif args.apply:

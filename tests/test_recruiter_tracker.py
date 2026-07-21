@@ -58,6 +58,40 @@ def test_get_recruiter_by_email(conn):
     assert T.get_recruiter_by_email(conn, "missing@x.com") is None
 
 
+def test_get_recruiter_by_linkedin(conn):
+    url = "https://www.linkedin.com/in/jane-doe"
+    T.add_recruiter(conn, "Jane Doe", linkedin_url=url, company="Acme")
+    assert T.get_recruiter_by_linkedin(conn, url)["name"] == "Jane Doe"
+    assert T.get_recruiter_by_linkedin(conn, "https://www.linkedin.com/in/nobody") is None
+    assert T.get_recruiter_by_linkedin(conn, "") is None
+
+
+def test_recruiter_exists_dedup(conn):
+    url = "https://www.linkedin.com/in/sam-recruiter"
+    T.add_recruiter(conn, "Sam Recruiter", linkedin_url=url, company="Acme")
+    # matches on profile URL
+    assert T.recruiter_exists(conn, linkedin_url=url)
+    # matches on case-insensitive name+company even with a different/empty URL
+    assert T.recruiter_exists(conn, name="sam recruiter", company="acme")
+    # no match
+    assert not T.recruiter_exists(conn, name="Sam Recruiter", company="Other Co")
+    assert not T.recruiter_exists(conn, linkedin_url="https://www.linkedin.com/in/new")
+
+
+def test_get_target_companies(conn):
+    T.upsert_jobs(conn, [
+        {"title": "AI Intern", "company": "Acme", "url": "u1", "status": "approved"},
+        {"title": "ML Intern", "company": "Beta", "url": "u2", "status": "queued"},
+        {"title": "DS Intern", "company": "Acme", "url": "u3", "status": "new"},
+        {"title": "No Co",     "company": "",     "url": "u4", "status": "new"},
+    ])
+    # distinct, blank-company dropped
+    assert T.get_target_companies(conn) == ["Acme", "Beta"]
+    # status-filtered
+    assert T.get_target_companies(conn, statuses=("approved",)) == ["Acme"]
+    assert set(T.get_target_companies(conn, statuses=("approved", "queued"))) == {"Acme", "Beta"}
+
+
 def test_update_recruiter(conn):
     rid = T.add_recruiter(conn, "Old Name")
     T.update_recruiter(conn, rid, name="New Name", title="Sr Recruiter", notes="warm lead")

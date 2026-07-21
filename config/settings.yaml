@@ -81,6 +81,33 @@ sources:
       - "machine learning intern"
     max_jobs: 80
 
+recruiters:
+  # Separate scraping job: find recruiters on LinkedIn People search for the
+  # companies already in your jobs DB. Names/titles/profile URLs only — emails are
+  # resolved separately (UI "guess email", or `--recruiters --guess-emails`).
+  #
+  # Email enrichment uses a free-tier provider waterfall; set whichever keys you
+  # have in .env (all optional, each no-ops without its key):
+  #   PROSPEO_API_KEY              — 100 free credits; LinkedIn-URL -> email (login-free)
+  #   HUNTER_API_KEY               — ~50/mo; finder + company-pattern inference
+  #   TOMBA_API_KEY + TOMBA_SECRET — 25/mo; name+domain finder
+  #   REACHER_URL [+ REACHER_API_KEY] — self-hosted verifier (Gmail/MS-aware)
+  enabled: true
+  # Which job statuses to pull target companies from (outreach-worthy by default).
+  from_statuses:
+    - "approved"
+    - "queued"
+  max_companies: 25         # cap per run to stay under LinkedIn search throttling
+  max_per_company: 8
+  pace_seconds: 5.0         # delay between companies
+  titles:
+    - "recruiter"
+    - "technical recruiter"
+    - "talent acquisition"
+    - "university recruiter"
+    - "campus recruiter"
+    - "sourcer"
+
 linkedin:
   email: ""      # fill in .env as LINKEDIN_EMAIL
   password: ""   # fill in .env as LINKEDIN_PASSWORD
