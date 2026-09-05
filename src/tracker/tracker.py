@@ -5,12 +5,19 @@ Stores every discovered job and tracks application status per listing.
 
 import sqlite3
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 DB_PATH = Path(__file__).parent / "applications.db"
+
+
+def _utcnow_iso() -> str:
+    """UTC timestamp as a naive ISO string (identical format to the old
+    ``datetime.utcnow().isoformat()``, without the removal-scheduled call)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+
 
 STATUS_NEW = "new"               # discovered, not yet reviewed
 STATUS_QUEUED = "queued"         # tailored, awaiting human review
@@ -221,7 +228,7 @@ def upsert_jobs(conn: sqlite3.Connection, jobs: list[dict]) -> tuple[int, int]:
                     "status": job.get("status") or STATUS_NEW,
                     "easy_apply": 1 if job.get("easy_apply") else 0,
                     "description": job.get("description", ""),
-                    "date_scraped": job.get("date_scraped", datetime.utcnow().isoformat()),
+                    "date_scraped": job.get("date_scraped", _utcnow_iso()),
                     "salary_range": job.get("salary_range") or job.get("salary", ""),
                 },
             )
@@ -263,7 +270,7 @@ def update_status(conn: sqlite3.Connection, job_id: int, status: str, **kwargs) 
         # direct-edit fields
         "title", "company", "location", "url", "source_url", "score", "description",
     }
-    updates = {"status": status, "updated_at": datetime.utcnow().isoformat()}
+    updates = {"status": status, "updated_at": _utcnow_iso()}
     updates.update({k: v for k, v in kwargs.items() if k in allowed})
 
     set_clause = ", ".join(f"{k} = :{k}" for k in updates)
@@ -593,7 +600,7 @@ def upsert_prep(
     conn: sqlite3.Connection, job_id: int, content: str, model: str | None = None
 ) -> None:
     """Insert or replace a job's interview-prep pack (`content` is a JSON string)."""
-    now = datetime.utcnow().isoformat()
+    now = _utcnow_iso()
     existing = conn.execute(
         "SELECT id FROM interview_prep WHERE job_id = ?", (job_id,)
     ).fetchone()

@@ -2,7 +2,7 @@
 
 > Living context map. Any LLM or human should be able to read this file alone and understand what the project is, how it's built, and where things are. **Keep it in sync** whenever the stack, structure, conventions, or status changes.
 
-_Last updated: 2026-07-19_
+_Last updated: 2026-09-05_
 
 ---
 
@@ -70,8 +70,9 @@ JobApply/
 │  │  └─ turso.py                # Turso HTTP bridge
 │  └─ auto_apply/
 │     ├─ apply_runner.py         # ATS detection + human-confirm loop
+│     ├─ form_utils.py           # shared fill/upload/answer helpers (truthful sponsorship logic)
 │     ├─ greenhouse_apply.py / linkedin_apply.py / lever_apply.py   # ✅ done
-│     └─ (workday/ashby/smartrecruiters pending)
+│     └─ ashby_apply.py / smartrecruiters_apply.py / workday_apply.py  # ✅ done (best-effort)
 ├─ apps/
 │  └─ web/                       # React frontend (own package.json) — served by FastAPI
 │     └─ src/
@@ -131,7 +132,7 @@ JobApply/
 | 3. Resume Tailoring | ✅ done | Groq default; 50+ PDFs generated |
 | 4. Review Dashboard | ✅ done | 5 views in React |
 | 5. CI/CD Automation | ✅ done | Daily GHA at 4 PM CDT |
-| 6. Auto-Apply | ◐ partial | Greenhouse/LinkedIn/Lever done; Workday/Ashby/SmartRecruiters pending |
+| 6. Auto-Apply | ✅ done | 2026-09-05 — Ashby + SmartRecruiters + Workday handlers added; shared `form_utils.py` (fill/upload/answer + truthful full-time sponsorship answer); Greenhouse/Lever refactored onto it; runner dispatch + submit selectors wired; fake-DOM tests (29). Workday is best-effort (fills the identity step, never creates an account or auto-submits). Untested against live ATS DOMs — same caveat as the original handlers |
 | 7. Settings Persistence | ✅ done | 2026-07-19 — GET/POST /api/settings (LLM provider/model, min_score, sponsor filter, source toggles) → settings.yaml + llm cache reload; SettingsView API-bound |
 | 8. Import Jobs UI | ✅ done | verified 2026-07-19 — `+ Import` → ImportModal (Single Job + CSV Bulk), wired to POST /api/jobs/import |
 | 9. Interview Prep Section | ✅ done | 2026-07-19 — LLM prep packs per interview (snapshot, topics, behavioral/technical/system-design Q banks, questions-to-ask, checklist); dedicated dashboard tab, stored + regenerable. JobDrawer tab deferred |
@@ -146,13 +147,16 @@ JobApply/
 | 18. Retarget to Full-Time New-Grad | ✅ done | 2026-07-19 — broadened role gate (new-grad/entry-level/full-time + feed-source accept) + soft seniority penalty; internships/co-ops kept. New-grad roles scored 0.0 before, now surface |
 | 19. Recruiting Timeline & Reminders | ✅ code done | 2026-07-19 — Timeline dashboard view: curated per-company app windows + live open-role counts + apply/reach-out reminders. Backend + tests green (68); ⚠ `apps/web/dist` needs a rebuild+commit (Node) to deploy |
 
-**In progress now:** Autonomous milestone run (2026-07-19) complete — **M7, M8, M9, M10, M11 (code), M17, M18, M19 all shipped.** Only remaining item is verifying the live Render deploy (M11's last box), which needs the Render URL / dashboard.
-**Next up (needs Ishani):** (1) verify the live Render deploy (`curl <render-url>/api/health`); (2) set `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` to enable real outreach sends + notifications; (3) warm-referral outreach to ex-AWS/Google/MS/Uber contacts, timed to each company's window via the Timeline reminders; (4) optionally run `scripts/refresh_h1b_sponsors.py` against the USCIS CSV.
+**In progress now:** Autonomous run (2026-09-05) — **M6 auto-apply finished** (all ATS handlers), email sending generalized from Gmail-only to any SMTP mailbox, test suite made hermetic (no longer leaks the local `.env`), and all `datetime.utcnow()` deprecations removed. Full tree is flake8-clean; **147 pytest pass** (was 113 + 1 failing); web build green. M11's Render box is moot (Render dropped — see 2026-07-21 decision).
+**Next up (needs Ishani):** (1) put your mailbox password in `.env` as `SMTP_PASSWORD` (host/port/user already set) to enable real outreach sends + notifications — everything else is wired and no-ops safely without it; (2) run `python main.py --apply --dry-run` against a few approved jobs to sanity-check the auto-fill selectors on the ATSes you actually hit, then `--apply` for real (headed, confirms each submit); (3) warm-referral outreach to ex-AWS/Google/MS/Uber contacts, timed to each company's window via the Timeline reminders; (4) optionally run `scripts/refresh_h1b_sponsors.py` against the USCIS CSV.
 
 ---
 
 ## Decision log
 
+- 2026-09-05 — Finished M6 auto-apply (Ashby/SmartRecruiters/Workday) + extracted `form_utils.py` — the three "recognized but unsupported" ATSes now have handlers. Ashby and SmartRecruiters are single-page React forms (like Greenhouse/Lever), so they get full field-fill + resume upload + screening-question handlers. Workday is deliberately best-effort: it's a multi-step wizard that requires a per-employer account, and creating accounts is out of scope for an automated tool — so the handler detects a sign-in/create-account gate and stops (telling the user to log in manually and re-run), and otherwise fills only the "My Information" identity step; it never auto-advances steps or submits. All shared logic (field fill, resume upload, Yes/No answering, common screening questions) moved into `form_utils.py`, and Greenhouse/Lever were refactored onto it to kill the duplication. **Correctness fix folded in:** the old handlers answered "do you require sponsorship?" from `requires_sponsorship_internship` (False) — but after the M18 full-time pivot the truthful answer is `requires_sponsorship_fulltime` (True); answering "no" on a full-time role could get an offer rescinded. `form_utils.requires_sponsorship()` now answers YES whenever sponsorship is needed for either path (and defaults to YES when the flags are absent). Playwright imports were made lazy/optional so the whole `auto_apply` package imports without it (tests + CI don't need a browser); added 29 fake-DOM tests. Caveat unchanged from the originals: selectors are best-effort and unverified against live ATS DOMs — the human-confirm loop and `--dry-run` are the safety net.
+- 2026-09-05 — Email sending generalized from Gmail-only to any SMTP mailbox — Ishani sends from a `kathuria.net` mailbox, not Gmail, so `email_sender.py` now reads `SMTP_HOST/PORT/USER/PASSWORD/FROM/SECURITY` (auto-picking SSL vs STARTTLS from the port) and falls back to the legacy `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` when those are unset. Best-effort behavior (log + return False, never raise) is unchanged, so the send path still no-ops safely without creds. Notification recipient resolution and the send-error message were updated to match. Only manual step left for real sends: set `SMTP_PASSWORD` in `.env`.
+- 2026-09-05 — Test suite made hermetic + `datetime.utcnow()` removed — `api.main` calls `load_dotenv()` at import, which injected the developer's real `.env` (SMTP_USER etc.) into `os.environ` during collection and broke `test_email_sender` (it resolved the real From address, not the mocked Gmail one). Added `tests/conftest.py` that strips credential-bearing vars once at session start, and rewrote the email-sender tests to be self-contained + cover the new SSL/STARTTLS paths. Separately, replaced every `datetime.utcnow()` (deprecated, removal-scheduled) with `datetime.now(timezone.utc)` — preserving the exact naive ISO string format where values are stored, to avoid any date-comparison drift. Result: 147 tests pass, zero project deprecation warnings, flake8-clean.
 - 2026-07-21 — CI tailoring paused (`daily_tailor.yml` tailor step `if: false`) — discovery + enrich still run daily and populate Turso; resume tailoring is done on demand locally (`python main.py --tailor`) for now. Also fixed a latent bug found while pausing: the default LLM provider is `groq` (settings.yaml) and the `GROQ_API_KEY` secret exists, but the workflow only ever mapped `GOOGLE_API_KEY` into the tailor step — so CI tailoring couldn't authenticate and was failing silently (masked by `continue-on-error`). Added `GROQ_API_KEY` to the step's env so re-enabling is a single flip of `if: false` → `true`.
 - 2026-07-21 — JobApply is local-only; Render deployment dropped — it's a personal single-user tool, so cloud hosting adds cost + ops (the Render build kept breaking on stale/blueprint-drifted config) for no real benefit. New model: **GitHub Actions + Turso stay** as the free, hands-off 24/7 data pipeline (daily scrape/tailor → Turso, PDFs committed to git); the **dashboard runs locally** via `make local` (FastAPI serves the committed dist + API, reading Turso from `.env`). `git pull` grabs the day's new PDFs. Zero code change — the app already reads Turso when `.env` is set and falls back to SQLite otherwise. Manual actions for Ishani: suspend/delete the Render service in its dashboard; create a local `.env` with `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`. `render.yaml` kept in-repo (now correct) in case cloud deploy is ever wanted again.
 - 2026-07-19 — Email notifications reuse the Gmail sender, not Resend (M10) — the plan sketched Resend, but `pipeline/email_sender.py` (Gmail SMTP) already exists, is tested, and its `GMAIL_ADDRESS`/`GMAIL_APP_PASSWORD` env vars are wired. Reusing it avoids a new dependency, account, and secret. Notifications fire on `offer`/`interview` transitions (gated by settings toggles, default off), and no-op gracefully without creds. Extended past the original offer-only scope to also cover interviews, since landing interviews is the whole point of the pivot.

@@ -326,9 +326,14 @@ def _maybe_notify_status(job: dict, new_status: str) -> None:
     notif = _read_settings_file().get("notifications", {})
     if not notif.get(key):
         return
-    to = (notif.get("email_to") or os.environ.get("GMAIL_ADDRESS") or "").strip()
+    to = (
+        notif.get("email_to")
+        or os.environ.get("SMTP_USER")
+        or os.environ.get("GMAIL_ADDRESS")
+        or ""
+    ).strip()
     if not to:
-        logger.warning("Status notification skipped — set notifications.email_to or GMAIL_ADDRESS")
+        logger.warning("Status notification skipped — set notifications.email_to or SMTP_USER")
         return
     company = job.get("company") or "a company"
     title = job.get("title") or "a role"
@@ -806,7 +811,7 @@ def api_draft_outreach(body: OutreachDraft) -> dict:
 def api_send_outreach(outreach_id: int) -> dict:
     """Send a draft outreach email via Gmail SMTP, then mark it sent and set a
     7-day follow-up reminder."""
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
 
     conn = db()
     o = get_outreach(conn, outreach_id)
@@ -823,9 +828,13 @@ def api_send_outreach(outreach_id: int) -> dict:
         raise HTTPException(503, f"Email sender unavailable: {e}")
 
     if not send_email(to, o["subject"] or "", o["body"] or ""):
-        raise HTTPException(502, "Email send failed — check GMAIL_ADDRESS / GMAIL_APP_PASSWORD")
+        raise HTTPException(
+            502,
+            "Email send failed — check SMTP_USER / SMTP_PASSWORD "
+            "(or GMAIL_ADDRESS / GMAIL_APP_PASSWORD) and SMTP_HOST/SMTP_PORT.",
+        )
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     sent_at = now.isoformat()
     follow_up = (now + timedelta(days=7)).date().isoformat()
     update_outreach_status(conn, outreach_id, OUTREACH_SENT, sent_at=sent_at, follow_up_date=follow_up)

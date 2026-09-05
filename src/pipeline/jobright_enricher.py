@@ -12,7 +12,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from html import unescape
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
@@ -302,7 +302,7 @@ def _detect_closed_reason(html: str, soup: BeautifulSoup, valid_through: str) ->
     if valid_through:
         try:
             expiry = datetime.fromisoformat(valid_through.replace("Z", "+00:00"))
-            if expiry.date() < datetime.utcnow().date():
+            if expiry.date() < datetime.now(timezone.utc).date():
                 return f"validThrough passed on {expiry.date().isoformat()}"
         except ValueError:
             pass

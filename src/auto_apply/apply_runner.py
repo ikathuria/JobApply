@@ -18,7 +18,11 @@ from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright, Page
+
+try:  # Page is only a type hint at import; sync_playwright is imported lazily.
+    from playwright.sync_api import Page
+except ImportError:  # pragma: no cover
+    Page = object  # type: ignore
 
 from tracker.tracker import (
     init_db, get_jobs, update_status,
@@ -57,7 +61,10 @@ ATS_PATTERNS = {
     "rippling.com":           "rippling",
 }
 
-UNSUPPORTED_ATS = {"workday", "ashby", "smartrecruiters", "icims", "taleo", "jobvite", "rippling"}
+# Handled by a dedicated auto-fill module below.
+SUPPORTED_ATS = {"linkedin", "greenhouse", "lever", "ashby", "smartrecruiters", "workday"}
+# Recognized but no handler — user fills manually in the headed browser.
+UNSUPPORTED_ATS = {"icims", "taleo", "jobvite", "rippling"}
 
 
 def _get_db():
@@ -156,6 +163,10 @@ def _submit_form(page: Page, ats: str) -> bool:
         "linkedin":   ["button[aria-label='Submit application']"],
         "greenhouse": ["#submit_app", "button[type='submit']", "input[type='submit']"],
         "lever":      ["button[data-qa='btn-submit']", "button[type='submit']"],
+        "ashby":      ["button[type='submit']", "button:has-text('Submit Application')"],
+        "smartrecruiters": ["button[data-test='form-submit']", "button[type='submit']"],
+        # Workday is a multi-step wizard — never auto-submit; user advances it.
+        "workday":    [],
     }
     for sel in selectors.get(ats, ["button[type='submit']", "input[type='submit']"]):
         btn = page.query_selector(sel)
@@ -193,6 +204,8 @@ def run_apply(limit: int = 10, dry_run: bool = False) -> None:
 
     linkedin_logged_in = False
     applied = skipped = errors = 0
+
+    from playwright.sync_api import sync_playwright  # lazy: only needed to run
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=False, slow_mo=80)
@@ -245,6 +258,18 @@ def run_apply(limit: int = 10, dry_run: bool = False) -> None:
                 elif ats == "lever":
                     from auto_apply.lever_apply import apply as lv_apply
                     filled = lv_apply(page, profile, resume_path, cover_letter)
+
+                elif ats == "ashby":
+                    from auto_apply.ashby_apply import apply as ashby_apply
+                    filled = ashby_apply(page, profile, resume_path, cover_letter)
+
+                elif ats == "smartrecruiters":
+                    from auto_apply.smartrecruiters_apply import apply as sr_apply
+                    filled = sr_apply(page, profile, resume_path, cover_letter)
+
+                elif ats == "workday":
+                    from auto_apply.workday_apply import apply as wd_apply
+                    filled = wd_apply(page, profile, resume_path, cover_letter)
 
                 elif ats in UNSUPPORTED_ATS:
                     print(f"     [!] {ats.capitalize()} ATS — no automated handler. Fill manually in the browser.")

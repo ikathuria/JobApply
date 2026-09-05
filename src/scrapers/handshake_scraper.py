@@ -12,7 +12,7 @@ import asyncio
 import logging
 import os
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone
 
 from playwright.async_api import async_playwright, Page, TimeoutError as PWTimeout
 
@@ -199,7 +199,7 @@ async def _extract_cards(page: Page, seen: set[str], limit: int) -> list[dict]:
 
     Canonical job URL: https://app.joinhandshake.com/jobs/{id}
     """
-    date_scraped = datetime.utcnow().isoformat()
+    date_scraped = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
     raw: list[dict] = await page.evaluate("""
         () => {

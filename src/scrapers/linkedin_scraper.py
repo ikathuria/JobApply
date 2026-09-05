@@ -7,7 +7,7 @@ Operates as a real browser session — not raw scraping.
 import asyncio
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from playwright.async_api import async_playwright, Page, TimeoutError as PWTimeout
 
@@ -165,7 +165,7 @@ async def _search_jobs(
     logger.info(f"Job search landed on: {current_url}")
 
     jobs = []
-    date_scraped = datetime.utcnow().isoformat()
+    date_scraped = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
     seen_urls = set()
     stall_count = 0
 

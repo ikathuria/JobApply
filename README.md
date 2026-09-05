@@ -267,6 +267,14 @@ HANDSHAKE_PASSWORD=yourpassword
 
 # Optional — Claude fallback for LLM tailoring
 ANTHROPIC_API_KEY=your_anthropic_key
+
+# Optional — outreach email + status notifications (any SMTP mailbox)
+SMTP_HOST=smtp.gmail.com     # e.g. mail.yourdomain.com; Gmail: smtp.gmail.com
+SMTP_PORT=465                # 465 = SSL, 587 = STARTTLS
+SMTP_USER=you@example.com    # full address / login
+SMTP_PASSWORD=your_password  # mailbox password (Gmail: a 16-char App Password)
+# SMTP_FROM=you@example.com  # optional; defaults to SMTP_USER
+# Legacy Gmail vars (GMAIL_ADDRESS / GMAIL_APP_PASSWORD) are still honored.
 ```
 
 When `TURSO_DATABASE_URL` is absent the pipeline falls back to a local `tracker/applications.db` SQLite file automatically.
