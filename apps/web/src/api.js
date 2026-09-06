@@ -78,4 +78,14 @@ export const api = {
   // ── Settings (M7) ──
   getSettings:      ()          => req('GET',    '/settings'),
   saveSettings:     (data)      => req('POST',   '/settings', data),
+
+  // ── ATS keyword match (M21) ──
+  atsMatch:         (id)        => req('GET',    `/jobs/${id}/ats-match`),
+
+  // ── Application follow-ups (M22) ──
+  appFollowups:     (days=7)    => req('GET',    '/applications/followups?' + new URLSearchParams({ days })),
+  appFollowupDraft: (id)        => req('GET',    `/applications/${id}/followup-draft`),
+
+  // ── Funnel analytics (M25) ──
+  funnel:           ()          => req('GET',    '/analytics/funnel'),
 }

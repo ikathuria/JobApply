@@ -1,11 +1,17 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
+import { api } from '../api.js'
 
 export default function AnalyticsView({ stats }) {
   const { dark } = useContext(ThemeCtx)
   const T = dark ? DARK : LIGHT
   const s = stats || {}
+
+  const [funnelData, setFunnelData] = useState(null)
+  useEffect(() => {
+    api.funnel().then(setFunnelData).catch(() => setFunnelData(null))
+  }, [])
 
   // "Applied" = everyone who actually submitted — includes later rejected/OA/interview/offer
   const totalApplied = (s.total_applied ?? 0) ||
@@ -263,6 +269,67 @@ export default function AnalyticsView({ stats }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Source & sponsorship response rates (M25) ───────────────────────── */}
+      {funnelData && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
+          {/* Response rate by known-sponsor status — the core thesis of the pivot */}
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Response by Sponsor Status</div>
+            <div style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>
+              Of applications sent, how many advanced (OA / interview / offer) — split by whether the company is a known H-1B sponsor
+            </div>
+            {[
+              { key: 'sponsor', label: 'Known H-1B sponsor', color: '#10B981' },
+              { key: 'unknown', label: 'Unknown / not listed', color: '#6B7280' },
+            ].map(({ key, label, color }) => {
+              const d = funnelData.by_sponsor?.[key] || { applied: 0, responded: 0 }
+              const rate = d.applied ? Math.round((d.responded / d.applied) * 100) : 0
+              return (
+                <div key={key} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: T.muted }}>{label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color, fontFamily: 'JetBrains Mono, monospace' }}>
+                      {rate}% ({d.responded}/{d.applied})
+                    </span>
+                  </div>
+                  <div style={{ height: 6, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: `${rate}%`, height: '100%', background: color, borderRadius: 4 }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Applications by source */}
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Pipeline by Source</div>
+            <div style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>Total listings discovered per source</div>
+            {Object.entries(funnelData.by_source || {})
+              .map(([src, counts]) => [src, Object.values(counts).reduce((a, b) => a + b, 0)])
+              .sort((a, b) => b[1] - a[1])
+              .map(([src, total]) => {
+                const max = Math.max(...Object.values(funnelData.by_source).map(c => Object.values(c).reduce((a, b) => a + b, 0)), 1)
+                return (
+                  <div key={src} style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                      <div style={{ fontSize: 11, color: T.muted, width: 130, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src}</div>
+                      <div style={{ flex: 1, height: 18, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ width: `${(total / max) * 100}%`, height: '100%', background: T.accent, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8, minWidth: 24 }}>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>{total}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            <div style={{ fontSize: 11, color: T.muted, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.border}` }}>
+              Overall response rate: <strong style={{ color: T.text }}>{Math.round((funnelData.response_rate || 0) * 100)}%</strong>
+              {'  ·  '}Interview rate: <strong style={{ color: T.text }}>{Math.round((funnelData.interview_rate || 0) * 100)}%</strong>
+            </div>
           </div>
         </div>
       )}

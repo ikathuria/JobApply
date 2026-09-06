@@ -1,0 +1,49 @@
+name: Weekly Digest
+
+# Emails a weekly summary (new high-score jobs, roles to review, applications
+# due for follow-up, outreach follow-ups, upcoming application windows).
+#
+# Opt-in: it only sends if the SMTP secrets below are set (SMTP_USER +
+# SMTP_PASSWORD, or the legacy GMAIL_* pair). Without them the job runs and
+# no-ops gracefully. Reads the shared DB from Turso like the daily workflow.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'   # Mondays 14:00 UTC (9 AM CDT)
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+
+      - name: Send weekly digest
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:   ${{ secrets.TURSO_AUTH_TOKEN }}
+          SMTP_HOST:          ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:          ${{ secrets.SMTP_PORT }}
+          SMTP_USER:          ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:      ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM:          ${{ secrets.SMTP_FROM }}
+          GMAIL_ADDRESS:      ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python main.py --digest

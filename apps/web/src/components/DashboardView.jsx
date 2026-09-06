@@ -62,12 +62,14 @@ function MatchCard({ job, onClick }) {
 export default function DashboardView({ stats, setTab, onSelectJob, onRefresh }) {
   const [topJobs, setTopJobs] = useState([])
   const [focus, setFocus]     = useState([])
+  const [followups, setFollowups] = useState([])
 
   useEffect(() => {
     api.jobs({ sort: 'score', limit: 6, min_score: 0 })
       .then(r => setTopJobs(r.jobs.filter(j => !['rejected','skipped'].includes(j.status)).slice(0, 4)))
       .catch(() => {})
     api.focus().then(setFocus).catch(() => {})
+    api.appFollowups(7).then(setFollowups).catch(() => setFollowups([]))
   }, [onRefresh])
 
   const s = stats || {}
@@ -138,6 +140,34 @@ export default function DashboardView({ stats, setTab, onSelectJob, onRefresh })
         <StatCard tone="pink"   label="In Pipeline"      value={inPipeline}      sub="OA + interview" />
         <StatCard tone="teal"   label="Offers"           value={s.offer ?? 0}    sub="received" />
       </div>
+
+      {/* Applications due for follow-up (M22) */}
+      {followups.length > 0 && (
+        <div style={{ marginBottom: 20, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 12, padding: '16px 20px' }}>
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
+                ⏰ {followups.length} application{followups.length !== 1 ? 's' : ''} to follow up
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>No response in 7+ days — a short nudge can help</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {followups.slice(0, 6).map(j => (
+              <div key={j.id}
+                onClick={() => onSelectJob({ id: j.id, _needsFetch: true })}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'rgba(255,255,255,0.5)', borderRadius: 8, cursor: 'pointer' }}>
+                <span style={{ fontSize: 12, color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {j.title} <span style={{ color: 'var(--ink-3)' }}>@ {j.company || 'N/A'}</span>
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309', flexShrink: 0, fontFamily: 'JetBrains Mono, monospace' }}>
+                  {j.days_since_applied != null ? `${j.days_since_applied}d` : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top matches */}
       {topJobs.length > 0 && (

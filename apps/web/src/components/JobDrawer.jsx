@@ -214,6 +214,21 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const [editForm, setEditForm] = useState(null)
   const [editSaving, setEditSaving] = useState(false)
   const [editMsg, setEditMsg] = useState('')
+  const [ats, setAts] = useState(null)
+  const [atsLoading, setAtsLoading] = useState(false)
+
+  // Lazily compute the ATS keyword match when viewing a job with a description.
+  useEffect(() => {
+    setAts(null)
+    if (activeTab !== 'overview' || !job?.id || !(job.description || '').trim()) return
+    let cancelled = false
+    setAtsLoading(true)
+    api.atsMatch(job.id)
+      .then(r => { if (!cancelled) setAts(r) })
+      .catch(() => { if (!cancelled) setAts(null) })
+      .finally(() => { if (!cancelled) setAtsLoading(false) })
+    return () => { cancelled = true }
+  }, [activeTab, job?.id, job?.description])
 
   useEffect(() => {
     if (!initialJob) return
@@ -604,6 +619,44 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                   {jdExpanded ? 'Show less' : 'Show more'}
                 </button>
               </FormSection>
+
+              {(job.description || '').trim() && (
+                <FormSection title="ATS keyword match"
+                  sub="JD skill keywords found in your materials — add the missing ones before applying"
+                  T={T} dark={dark}>
+                  {atsLoading && <div style={{ fontSize: 12, color: T.muted }}>Analyzing…</div>}
+                  {ats && ats.score != null && (() => {
+                    const pct = Math.round(ats.score * 100)
+                    const col = pct >= 70 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444'
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                          <div style={{ flex: 1, height: 8, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: col, borderRadius: 4 }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: col, fontFamily: 'JetBrains Mono, monospace' }}>{pct}%</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: T.muted, marginBottom: 6 }}>
+                          {ats.matched.length}/{ats.jd_keywords.length} keywords matched
+                        </div>
+                        {ats.missing.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: T.text, marginBottom: 5 }}>Missing:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                              {ats.missing.map(k => (
+                                <span key={k} style={{ fontSize: 10, fontWeight: 700, color: '#EF4444', background: dark ? '#3B1D1D' : '#FEE2E2', border: `1px solid ${dark ? '#5B2A2A' : '#FECACA'}`, borderRadius: 5, padding: '2px 7px' }}>{k}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                  {ats && ats.score == null && (
+                    <div style={{ fontSize: 11, color: T.muted }}>{ats.note || 'No keywords detected in the description.'}</div>
+                  )}
+                </FormSection>
+              )}
 
               <Divider />
 
