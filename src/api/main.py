@@ -313,41 +313,11 @@ class JobPatch(BaseModel):
     source_url: str | None = None
 
 
-# Status → the settings toggle that gates a notification email on that transition.
-_NOTIFY_STATUS = {"offer": "on_offer", "interview": "on_interview"}
-
-
 def _maybe_notify_status(job: dict, new_status: str) -> None:
-    """Email a notification when a job reaches a milestone status (offer/interview),
-    if the matching toggle is on. Reuses the Gmail sender; no-op without creds (M10)."""
-    key = _NOTIFY_STATUS.get(new_status)
-    if not key:
-        return
-    notif = _read_settings_file().get("notifications", {})
-    if not notif.get(key):
-        return
-    to = (
-        notif.get("email_to")
-        or os.environ.get("SMTP_USER")
-        or os.environ.get("GMAIL_ADDRESS")
-        or ""
-    ).strip()
-    if not to:
-        logger.warning("Status notification skipped — set notifications.email_to or SMTP_USER")
-        return
-    company = job.get("company") or "a company"
-    title = job.get("title") or "a role"
-    subject = f"[JobApply] {company} → {new_status.upper()}: {title}"
-    body = (
-        f"Status update: {title} @ {company} moved to {new_status.upper()}.\n\n"
-        f"URL: {job.get('url', '')}\n"
-    )
-    try:
-        from pipeline.email_sender import send_email
-        ok = send_email(to, subject, body)
-        logger.info(f"Status notification for job {job.get('id')} → {new_status}: sent={ok}")
-    except Exception as e:
-        logger.warning(f"Status notification failed: {e}")
+    """Email a notification when a job reaches a milestone status (offer/interview/oa),
+    if the matching toggle is on. Reuses the SMTP sender; no-op without creds (M10)."""
+    from pipeline.notifications import notify_status_change
+    notify_status_change(job, new_status, _read_settings_file())
 
 
 @app.patch("/api/jobs/{job_id}")
@@ -1186,6 +1156,124 @@ def api_save_settings(body: SettingsPatch) -> dict:
         pass
 
     return api_get_settings()
+
+
+# ── ATS keyword match (M21) ──────────────────────────────────────────────────
+
+
+@app.get("/api/jobs/{job_id}/ats-match")
+def api_ats_match(job_id: int) -> dict:
+    """Which skill keywords the JD asks for vs. what's in the candidate's
+    materials — a match % + the missing keywords to add before applying."""
+    conn = db()
+    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Job not found")
+    job = dict(row)
+    if not (job.get("description") or "").strip():
+        return {"score": None, "matched": [], "missing": [], "jd_keywords": [],
+                "note": "No job description on file — enrich the job first."}
+    from pipeline.ats_match import match_for_job
+    return match_for_job(job)
+
+
+# ── Application follow-ups (M22) ─────────────────────────────────────────────
+
+
+@app.get("/api/applications/followups")
+def api_application_followups(days: int = 7) -> list[dict]:
+    """Applications still at 'applied' with no response in `days`+ days."""
+    from pipeline.followups import stale_applications
+    return [
+        {
+            "id": j["id"], "title": j.get("title"), "company": j.get("company"),
+            "url": j.get("url"), "date_applied": j.get("date_applied"),
+            "days_since_applied": j.get("days_since_applied"),
+            "recruiter": j.get("recruiter"),
+        }
+        for j in stale_applications(db(), days=days)
+    ]
+
+
+@app.get("/api/applications/{job_id}/followup-draft")
+def api_application_followup_draft(job_id: int) -> dict:
+    """A ready-to-edit follow-up email (subject + body) for an application."""
+    conn = db()
+    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Job not found")
+    profile = {}
+    try:
+        profile = json.loads((ROOT / "config" / "profile.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    from pipeline.followups import draft_followup
+    return draft_followup(dict(row), profile)
+
+
+# ── Funnel analytics (M25) ───────────────────────────────────────────────────
+
+_FUNNEL_ORDER = ["new", "queued", "approved", "applied", "oa", "interview", "offer"]
+
+
+@app.get("/api/analytics/funnel")
+def api_funnel() -> dict:
+    """Pipeline funnel counts, response/interview rates, and breakdowns by source
+    and by known-sponsor status."""
+    from pipeline.sponsorship import is_known_sponsor
+
+    conn = db()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT status, source, company FROM jobs").fetchall()]
+
+    by_status: dict[str, int] = {}
+    by_source: dict[str, dict[str, int]] = {}
+    sponsor = {"sponsor": {"applied": 0, "responded": 0},
+               "unknown": {"applied": 0, "responded": 0}}
+
+    # "reached" = ever got at least this far (statuses are terminal, so count the
+    # furthest state each job is in and roll forward for the funnel view).
+    reached = {s: 0 for s in _FUNNEL_ORDER}
+    applied_plus = {"applied", "oa", "interview", "offer"}
+    responded_states = {"oa", "interview", "offer"}
+    rejected = 0
+
+    for j in rows:
+        st = j.get("status") or "new"
+        by_status[st] = by_status.get(st, 0) + 1
+        src = j.get("source") or "unknown"
+        by_source.setdefault(src, {}).setdefault(st, 0)
+        by_source[src][st] += 1
+        if st == "rejected":
+            rejected += 1
+
+        rank = _FUNNEL_ORDER.index(st) if st in _FUNNEL_ORDER else -1
+        for i, s in enumerate(_FUNNEL_ORDER):
+            if rank >= i:
+                reached[s] += 1
+
+        if st in applied_plus:
+            bucket = "sponsor" if is_known_sponsor(j.get("company") or "") else "unknown"
+            sponsor[bucket]["applied"] += 1
+            if st in responded_states:
+                sponsor[bucket]["responded"] += 1
+
+    applied_total = reached["applied"]
+    responded = sum(by_status.get(s, 0) for s in responded_states)
+    interviews = by_status.get("interview", 0) + by_status.get("offer", 0)
+    response_rate = round(responded / applied_total, 3) if applied_total else 0.0
+    interview_rate = round(interviews / applied_total, 3) if applied_total else 0.0
+
+    return {
+        "by_status": by_status,
+        "funnel": [{"stage": s, "count": reached[s]} for s in _FUNNEL_ORDER],
+        "rejected": rejected,
+        "applied_total": applied_total,
+        "response_rate": response_rate,
+        "interview_rate": interview_rate,
+        "by_source": by_source,
+        "by_sponsor": sponsor,
+    }
 
 
 # ── Serve built React app (production) ───────────────────────────────────────

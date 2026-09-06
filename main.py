@@ -570,6 +570,45 @@ def show_stats() -> None:
     conn.close()
 
 
+def run_scan_inbox(limit: int = 40) -> None:
+    """Read recruiter replies over IMAP and auto-advance job statuses (M20)."""
+    from pipeline.inbox_scan import scan_inbox, print_summary
+    conn = _open_db()
+    try:
+        print_summary(scan_inbox(conn, limit=limit))
+    finally:
+        conn.close()
+
+
+def run_digest() -> None:
+    """Compose + email the weekly digest (M23)."""
+    from pipeline.digest import send_digest
+    conn = _open_db()
+    try:
+        ok = send_digest(conn)
+        print("Digest sent." if ok else
+              "Digest not sent — check SMTP creds / notifications.email_to.")
+    finally:
+        conn.close()
+
+
+def run_dedup() -> None:
+    """Detect + skip duplicate NEW listings across sources (M24)."""
+    from pipeline.dedup import dedup_new_jobs
+    conn = _open_db()
+    try:
+        groups = dedup_new_jobs(conn)
+        skipped = sum(len(g) - 1 for g in groups)
+        print(f"\n-- Dedup: {len(groups)} duplicate group(s), skipped {skipped} listing(s) --")
+        for g in groups[:15]:
+            kept = g[0]
+            print(f"  keep [{kept['score']:.2f}] {kept['title']} @ {kept['company']} "
+                  f"(+{len(g) - 1} dup)")
+        print()
+    finally:
+        conn.close()
+
+
 # -- Entry point ---------------------------------------------------------------
 
 def _slug(text: str) -> str:
@@ -591,6 +630,12 @@ def main() -> None:
     parser.add_argument("--enrich-ready", action="store_true", help="Refresh ready jobs from Jobright detail pages")
     parser.add_argument("--resolve-priority-links", action="store_true",
                         help="Resolve employer URLs for approved and top ready jobs")
+    parser.add_argument("--scan-inbox", action="store_true",
+                        help="Read recruiter replies over IMAP and auto-advance job statuses")
+    parser.add_argument("--digest", action="store_true",
+                        help="Email a weekly summary (new jobs, reviews, follow-ups, windows)")
+    parser.add_argument("--dedup", action="store_true",
+                        help="Detect duplicate NEW listings across sources and skip the extras")
     args = parser.parse_args()
 
     if args.stats:
@@ -611,6 +656,12 @@ def main() -> None:
     elif args.apply:
         from auto_apply.apply_runner import run_apply
         run_apply(limit=args.limit, dry_run=args.dry_run)
+    elif args.scan_inbox:
+        run_scan_inbox(limit=args.limit if "--limit" in sys.argv else 40)
+    elif args.digest:
+        run_digest()
+    elif args.dedup:
+        run_dedup()
     else:
         config = load_config()
         run_pipeline(config, source=args.source)
