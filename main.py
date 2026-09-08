@@ -585,12 +585,13 @@ def show_stats() -> None:
     conn.close()
 
 
-def run_scan_inbox(limit: int = 40) -> None:
-    """Read recruiter replies over IMAP and auto-advance job statuses (M20)."""
+def run_scan_inbox(limit: int = 60, ingest: bool = False) -> None:
+    """Read recruiter replies over IMAP and auto-advance job statuses (M20).
+    With ingest=True, also reconstruct applications from the 'job apps' folder."""
     from pipeline.inbox_scan import scan_inbox, print_summary
     conn = _open_db()
     try:
-        print_summary(scan_inbox(conn, limit=limit))
+        print_summary(scan_inbox(conn, limit=limit, ingest=ingest))
     finally:
         conn.close()
 
@@ -647,6 +648,9 @@ def main() -> None:
                         help="Resolve employer URLs for approved and top ready jobs")
     parser.add_argument("--scan-inbox", action="store_true",
                         help="Read recruiter replies over IMAP and auto-advance job statuses")
+    parser.add_argument("--ingest", action="store_true",
+                        help="With --scan-inbox: also create tracked applications from the "
+                             "'job apps' folder (reconstruct the funnel from email)")
     parser.add_argument("--digest", action="store_true",
                         help="Email a weekly summary (new jobs, reviews, follow-ups, windows)")
     parser.add_argument("--dedup", action="store_true",
@@ -672,7 +676,7 @@ def main() -> None:
         from auto_apply.apply_runner import run_apply
         run_apply(limit=args.limit, dry_run=args.dry_run)
     elif args.scan_inbox:
-        run_scan_inbox(limit=args.limit if "--limit" in sys.argv else 40)
+        run_scan_inbox(limit=args.limit if "--limit" in sys.argv else 60, ingest=args.ingest)
     elif args.digest:
         run_digest()
     elif args.dedup:

@@ -21,8 +21,9 @@ _CATEGORIES = {
     "interview": [
         "schedule an interview", "schedule a call", "phone screen", "phone interview",
         "technical interview", "onsite interview", "video interview", "hiring manager",
-        "next round", "next steps", "your availability", "book a time", "meet with",
+        "next round", "your availability", "book a time", "meet with", "meet the team",
         "interview with", "recruiter call", "interview invitation", "set up a call",
+        "would like to interview", "invite you to interview", "schedule time",
     ],
     "oa": [
         "online assessment", "coding assessment", "coding challenge", "coding test",
@@ -42,40 +43,38 @@ _CATEGORIES = {
 # Tie-break priority when two categories score equally.
 _PRIORITY = ["offer", "rejection", "interview", "oa"]
 
-# Confirmation/no-op signals — treated as `other` even if other keywords appear.
+# Application-confirmation signals → category "applied" (an application was
+# submitted). Checked only when no stronger response category scores, so a
+# genuine interview/OA/rejection still wins over a boilerplate confirmation.
 _CONFIRMATION = [
-    "thank you for applying", "application received", "we received your application",
-    "thanks for applying", "successfully submitted",
+    "thank you for applying", "thanks for applying", "application received",
+    "we received your application", "we've received your application",
+    "successfully submitted", "your application was sent to", "your application to",
+    "we got your resume", "application has been received", "thanks for your application",
+    "received your application", "your application for", "applying to",
 ]
 
 
 def classify(subject: str, body: str) -> str:
-    """Return one of: offer, interview, oa, rejection, other."""
+    """Return one of: applied, offer, interview, oa, rejection, other."""
     text = f"{subject or ''}\n{body or ''}".lower()
-
-    # A pure "we got your application" confirmation with no stronger signal is noise.
-    if any(c in text for c in _CONFIRMATION):
-        strong = any(
-            kw in text
-            for cat in ("offer", "interview", "oa", "rejection")
-            for kw in _CATEGORIES[cat]
-        )
-        if not strong:
-            return "other"
 
     scores = {
         cat: sum(1 for kw in kws if kw in text)
         for cat, kws in _CATEGORIES.items()
     }
     best = max(scores.values())
-    if best == 0:
-        return "other"
-    winners = [cat for cat, s in scores.items() if s == best]
-    if len(winners) == 1:
-        return winners[0]
-    for cat in _PRIORITY:
-        if cat in winners:
-            return cat
+    if best > 0:
+        winners = [cat for cat, s in scores.items() if s == best]
+        if len(winners) == 1:
+            return winners[0]
+        for cat in _PRIORITY:
+            if cat in winners:
+                return cat
+
+    # No response signal — is this a submission confirmation?
+    if any(c in text for c in _CONFIRMATION):
+        return "applied"
     return "other"
 
 
@@ -135,6 +134,9 @@ def decide_transition(current_status: str, category: str) -> str | None:
     """
     if category == "rejection":
         return "rejected" if current_status in _ACTIVE_FOR_REJECTION else None
+    if category == "applied":
+        cur = STATUS_RANK.get(current_status, -1)
+        return "applied" if cur < STATUS_RANK["applied"] else None
     if category in ("oa", "interview", "offer"):
         cur = STATUS_RANK.get(current_status, -1)
         new = STATUS_RANK.get(category, -1)

@@ -11,7 +11,9 @@ from pipeline import reply_classifier as rc
     ("Coding challenge", "Please complete the online assessment on HackerRank.", "oa"),
     ("Your application", "Unfortunately, we have decided to move forward with other candidates.", "rejection"),
     ("Great news", "We are excited to offer you the position.", "offer"),
-    ("Thanks for applying", "We received your application and will be in touch.", "other"),
+    ("Thanks for applying", "We received your application and will be in touch.", "applied"),
+    ("Ishani, your application was sent to WiCi AI", "See how you compare to others.", "applied"),
+    ("Your application to AI/ML Engineer at HCLTech", "Thanks for applying.", "applied"),
     ("Newsletter", "Check out our latest blog posts.", "other"),
 ])
 def test_classify(subject, body, expected):

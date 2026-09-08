@@ -97,13 +97,15 @@ def _body_text(msg: email.message.Message) -> str:
         return ""
 
 
-def fetch_recent(limit: int = 40, days: int = 30) -> list[dict]:
+def fetch_recent(limit: int = 40, days: int = 30, mailbox: str | None = None) -> list[dict]:
     """Fetch up to ``limit`` messages from the last ``days`` days.
 
     Returns a list of ``{from, subject, body, date}`` dicts (newest first).
-    Returns [] on any error or missing credentials.
+    Returns [] on any error or missing credentials. ``mailbox`` overrides the
+    configured folder (used to scan several folders in one run).
     """
-    host, port, user, password, mailbox = _config()
+    host, port, user, password, cfg_mailbox = _config()
+    mailbox = mailbox or cfg_mailbox
     if not user or not password:
         logger.error("IMAP credentials not set — set IMAP_USER / IMAP_PASSWORD "
                      "(or reuse SMTP_USER / SMTP_PASSWORD).")
