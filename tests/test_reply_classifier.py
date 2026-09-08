@@ -7,7 +7,12 @@ from pipeline import reply_classifier as rc
 
 @pytest.mark.parametrize("subject,body,expected", [
     ("Interview invitation", "Let's schedule a phone screen — your availability?", "interview"),
-    ("Next steps", "The hiring manager would like to meet with you.", "interview"),
+    ("Interview request", "The hiring manager would like to meet with you.", "interview"),
+    # Confirmation whose BODY describes the process must NOT read as an interview.
+    ("Thank you for your application to Veolia",
+     "Your application will be reviewed by the hiring manager; if selected you'll interview with the team.",
+     "applied"),
+    ("Thanks for applying to NoGood", "Our process includes a video interview stage.", "applied"),
     ("Coding challenge", "Please complete the online assessment on HackerRank.", "oa"),
     ("Your application", "Unfortunately, we have decided to move forward with other candidates.", "rejection"),
     ("Great news", "We are excited to offer you the position.", "offer"),

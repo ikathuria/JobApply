@@ -123,6 +123,19 @@ def test_ingest_is_idempotent(conn, monkeypatch):
     assert len(rows) == 1  # no duplicate on re-run
 
 
+def test_ingest_attaches_email_content(conn, monkeypatch):
+    _msgs(monkeypatch, [{
+        "from": "jobs-noreply@linkedin.com",
+        "subject": "Your application to ML Engineer at Ramp",
+        "body": "Thanks for applying! We received your resume for the ML Engineer role.",
+        "date": "2026-09-01",
+    }])
+    inbox_scan.scan_inbox(conn, notify=False, ingest=True, folders=["X"])
+    desc = conn.execute("SELECT description FROM jobs WHERE company='Ramp'").fetchone()["description"]
+    assert "Your application to ML Engineer at Ramp" in desc
+    assert "received your resume" in desc
+
+
 def test_non_ingest_does_not_create(conn, monkeypatch):
     _msgs(monkeypatch, [{
         "from": "no-reply@akunacapital.com", "subject": "Next Steps with Akuna Capital: HackerRank",

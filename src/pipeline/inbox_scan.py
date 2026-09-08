@@ -62,6 +62,32 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")[:60]
 
 
+def _email_snippet(msg: dict) -> str:
+    """A compact, readable record of one email for the job's description."""
+    body = (msg.get("body") or "").strip()
+    body = re.sub(r"[ \t]+\n", "\n", body)
+    body = re.sub(r"\n{3,}", "\n\n", body)[:2000]
+    date = (msg.get("date") or "")[:10]
+    header = f"── {date} · {msg.get('subject', '(no subject)')}".strip()
+    return f"{header}\nFrom: {msg.get('from', '')}\n\n{body}".strip()
+
+
+def _attach_email(conn, job: dict, msg: dict) -> None:
+    """Append this email to the job's description (email-sourced jobs only), so
+    the tracked application carries the actual message. Idempotent per subject."""
+    if job.get("source") != "email":
+        return  # never clobber a scraped job's real JD
+    subject = (msg.get("subject") or "").strip()
+    existing = job.get("description") or ""
+    if subject and subject in existing:
+        return  # already attached on a previous message / run
+    snippet = _email_snippet(msg)
+    new_desc = (existing + "\n\n" + snippet).strip() if existing else snippet
+    new_desc = new_desc[:12000]
+    update_status(conn, job["id"], job.get("status"), description=new_desc)
+    job["description"] = new_desc
+
+
 def _jobs(conn, statuses) -> list[dict]:
     if statuses is None:
         rows = conn.execute("SELECT * FROM jobs WHERE COALESCE(company,'') <> ''").fetchall()
@@ -156,6 +182,9 @@ def scan_inbox(conn, limit: int = 60, days: int = 60, notify: bool = True,
                                          "subject": msg.get("subject", ""),
                                          "category": category})
             continue
+
+        # Keep the actual email on the tracked application (email-sourced only).
+        _attach_email(conn, job, msg)
 
         new_status = rc.decide_transition(job.get("status"), category)
         if not new_status:

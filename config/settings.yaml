@@ -1,145 +1,115 @@
-# NOTE: this `search` block is descriptive only — the functional keyword lists,
-# role gate, and exclusions live in src/pipeline/job_filter.py (STRONG/GOOD/
-# ROLE/EXCLUDE/SENIORITY constants). Keep this in sync for humans reading config.
 search:
   keywords:
-    - "artificial intelligence"
-    - "machine learning"
-    - "AI"
-    - "ML"
-    - "LLM"
-    - "deep learning"
-    - "NLP"
-    - "generative AI"
-    - "RAG"
-    - "computer vision"
-    - "data science"
-  # Primary target since 2026-07-19: full-time new-grad AI/ML roles (grad May 2027).
-  # Internships / co-ops kept in scope for CPT during the school year.
+  - artificial intelligence
+  - machine learning
+  - AI
+  - ML
+  - LLM
+  - deep learning
+  - NLP
+  - generative AI
+  - RAG
+  - computer vision
+  - data science
   role_types:
-    - "new grad"
-    - "new graduate"
-    - "entry level"
-    - "early career"
-    - "university graduate"
-    - "full time"
-    - "intern"
-    - "internship"
-    - "co-op"
-  location: "USA"
+  - new grad
+  - new graduate
+  - entry level
+  - early career
+  - university graduate
+  - full time
+  - intern
+  - internship
+  - co-op
+  location: USA
   exclude_keywords:
-    - "no visa"
-    - "no sponsorship"
-    - "citizens only"
-    - "clearance required"
-    - "security clearance"
-  # Over-senior roles are soft-penalized (not excluded) in job_filter.py.
+  - no visa
+  - no sponsorship
+  - citizens only
+  - clearance required
+  - security clearance
   deprioritize_seniority:
-    - "senior"
-    - "staff"
-    - "principal"
-    - "lead"
-    - "manager"
-    - "director"
-    - "5+ years"
-
+  - senior
+  - staff
+  - principal
+  - lead
+  - manager
+  - director
+  - 5+ years
 scoring:
   weights:
     keyword_match: 0.4
     role_relevance: 0.3
     recency: 0.2
-    sponsorship_friendly: 0.1   # known H-1B sponsor (company history) OR JD visa keywords
-  min_score: 0.0   # keep all listings; score used only for sorting
-
+    sponsorship_friendly: 0.1
+  min_score: 0.0
 filters:
-  # Soft by default: known H-1B sponsors (config/h1b_sponsors.json) get a scoring
-  # boost, but unknown companies are NOT excluded (they may still sponsor).
-  # Flip to true to hard-skip non-sponsor companies at scrape time (M17).
-  require_known_sponsor: false
-
+  require_known_sponsor: true
 sources:
   intern_list:
-    url: "https://www.intern-list.com/?k=aiml"
+    url: https://www.intern-list.com/?k=aiml
     enabled: true
   newgrad_jobs:
-    url: "https://www.newgrad-jobs.com/?k=aiml"
+    url: https://www.newgrad-jobs.com/?k=aiml
     enabled: true
-  # Google Careers — browserless (parses the server-rendered results HTML).
-  # Fans out over queries x locations x target_levels. India needs no H-1B
-  # sponsorship for Ishani (Indian citizen), so it's kept alongside the US.
   google_careers:
     enabled: true
     queries:
-      - "machine learning"
-      - "artificial intelligence"
+    - machine learning
+    - artificial intelligence
     locations:
-      - "United States"
-      - "India"
-    target_levels:      # EARLY | INTERN_AND_APPRENTICE | MID | ADVANCED
-      - "EARLY"
-      - "INTERN_AND_APPRENTICE"
+    - United States
+    - India
+    target_levels:
+    - EARLY
+    - INTERN_AND_APPRENTICE
     max_per_query: 200
-  # LinkedIn + Handshake PAUSED 2026-06-22 — fragile browser automation,
-  # account-ban risk. Code + secrets retained; set enabled: true to re-enable.
   linkedin:
     enabled: false
-    search_query: "AI ML internship"
+    search_query: AI ML internship
     easy_apply_only: true
     max_jobs: 60
   handshake:
     enabled: false
     queries:
-      - "intern"
-      - "software intern"
-      - "data intern"
-      - "AI intern"
-      - "machine learning intern"
+    - intern
+    - software intern
+    - data intern
+    - AI intern
+    - machine learning intern
     max_jobs: 80
-
 recruiters:
-  # Separate scraping job: find recruiters on LinkedIn People search for the
-  # companies already in your jobs DB. Names/titles/profile URLs only — emails are
-  # resolved separately (UI "guess email", or `--recruiters --guess-emails`).
-  #
-  # Email enrichment uses a free-tier provider waterfall; set whichever keys you
-  # have in .env (all optional, each no-ops without its key):
-  #   PROSPEO_API_KEY              — 100 free credits; LinkedIn-URL -> email (login-free)
-  #   HUNTER_API_KEY               — ~50/mo; finder + company-pattern inference
-  #   TOMBA_API_KEY + TOMBA_SECRET — 25/mo; name+domain finder
-  #   REACHER_URL [+ REACHER_API_KEY] — self-hosted verifier (Gmail/MS-aware)
   enabled: true
-  # Which job statuses to pull target companies from (outreach-worthy by default).
   from_statuses:
-    - "approved"
-    - "queued"
-  max_companies: 25         # cap per run to stay under LinkedIn search throttling
+  - approved
+  - queued
+  max_companies: 25
   max_per_company: 8
-  pace_seconds: 5.0         # delay between companies
+  pace_seconds: 5.0
   titles:
-    - "recruiter"
-    - "technical recruiter"
-    - "talent acquisition"
-    - "university recruiter"
-    - "campus recruiter"
-    - "sourcer"
-
+  - recruiter
+  - technical recruiter
+  - talent acquisition
+  - university recruiter
+  - campus recruiter
+  - sourcer
 linkedin:
-  email: ""      # fill in .env as LINKEDIN_EMAIL
-  password: ""   # fill in .env as LINKEDIN_PASSWORD
-
+  email: ''
+  password: ''
 handshake:
-  email: ""      # fill in .env as HANDSHAKE_EMAIL
-  password: ""   # fill in .env as HANDSHAKE_PASSWORD
-
+  email: ''
+  password: ''
 llm:
-  provider: "groq"         # options: "groq", "gemini", "anthropic"
-  groq_model: "llama-3.1-8b-instant"
-  gemini_model: "gemini-2.5-flash"
-  anthropic_model: "claude-sonnet-4-6"
-
+  provider: groq
+  groq_model: llama-3.1-8b-instant
+  gemini_model: gemini-2.5-flash
+  anthropic_model: claude-sonnet-4-6
 tracker:
-  db_path: "tracker/applications.db"
-
+  db_path: tracker/applications.db
 output:
-  resumes_dir: "output/resumes"
-  logs_dir: "logs"
+  resumes_dir: output/resumes
+  logs_dir: logs
+notifications:
+  on_offer: true
+  on_interview: true
+  email_to: ''

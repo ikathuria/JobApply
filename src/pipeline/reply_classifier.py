@@ -18,13 +18,6 @@ _CATEGORIES = {
         "pleased to offer", "offer letter", "we are excited to offer",
         "extend an offer", "your offer", "job offer",
     ],
-    "interview": [
-        "schedule an interview", "schedule a call", "phone screen", "phone interview",
-        "technical interview", "onsite interview", "video interview", "hiring manager",
-        "next round", "your availability", "book a time", "meet with", "meet the team",
-        "interview with", "recruiter call", "interview invitation", "set up a call",
-        "would like to interview", "invite you to interview", "schedule time",
-    ],
     "oa": [
         "online assessment", "coding assessment", "coding challenge", "coding test",
         "take-home", "take home", "hackerrank", "codesignal", "coderpad", "codility",
@@ -39,6 +32,24 @@ _CATEGORIES = {
         "we have decided to move forward with",
     ],
 }
+
+# Interview phrases split by how much context they need. STRONG phrases are
+# specific enough to trust anywhere in the email; WEAK phrases ("hiring manager",
+# "your availability") appear constantly in application-confirmation and process-
+# description boilerplate, so they only count in the SUBJECT line — where a real
+# invite actually announces itself. This is what keeps confirmation emails from
+# being misread as interviews.
+_INTERVIEW_STRONG = [
+    "schedule an interview", "phone screen", "phone interview", "technical interview",
+    "onsite interview", "on-site interview", "interview invitation", "coding interview",
+    "would like to interview", "invite you to interview", "interview request",
+    "schedule your interview", "invitation to interview",
+]
+_INTERVIEW_WEAK = [
+    "video interview", "hiring manager", "next round", "your availability",
+    "book a time", "meet with", "meet the team", "interview with", "recruiter call",
+    "set up a call", "schedule a call", "schedule time", "interview",
+]
 
 # Tie-break priority when two categories score equally.
 _PRIORITY = ["offer", "rejection", "interview", "oa"]
@@ -57,12 +68,18 @@ _CONFIRMATION = [
 
 def classify(subject: str, body: str) -> str:
     """Return one of: applied, offer, interview, oa, rejection, other."""
+    subject_l = (subject or "").lower()
     text = f"{subject or ''}\n{body or ''}".lower()
 
     scores = {
         cat: sum(1 for kw in kws if kw in text)
         for cat, kws in _CATEGORIES.items()
     }
+    # Interview: strong phrases count anywhere; weak phrases only in the subject.
+    scores["interview"] = (
+        sum(1 for kw in _INTERVIEW_STRONG if kw in text)
+        + sum(1 for kw in _INTERVIEW_WEAK if kw in subject_l)
+    )
     best = max(scores.values())
     if best > 0:
         winners = [cat for cat, s in scores.items() if s == best]
