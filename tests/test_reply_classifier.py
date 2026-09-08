@@ -25,13 +25,29 @@ def test_classify(subject, body, expected):
     assert rc.classify(subject, body) == expected
 
 
-def test_confirmation_with_strong_signal_is_not_other():
-    # "application received" but also a real interview ask → interview wins.
+def test_confirmation_subject_wins_over_body_boilerplate():
+    # A confirmation SUBJECT is authoritative: its body routinely describes the
+    # whole funnel ("we'll schedule an interview…"), which must NOT read as a real
+    # interview. This is the precision guarantee for confirmation-heavy inboxes.
     cat = rc.classify(
         "Application received",
-        "We received your application. We'd like to schedule an interview — availability?",
+        "We received your application. Next we'll schedule an interview and may extend an offer.",
     )
-    assert cat == "interview"
+    assert cat == "applied"
+
+
+def test_real_interview_subject_is_interview():
+    # A genuine invite announces itself in the subject → interview.
+    assert rc.classify("Interview invitation", "Please pick a slot.") == "interview"
+
+
+def test_rejection_body_overrides_confirmation_subject():
+    # "Update on your application to X" (confirmation-ish subject) but a real
+    # rejection in the body → rejection.
+    assert rc.classify(
+        "Your application to Acme",
+        "Unfortunately, we have decided to move forward with other candidates.",
+    ) == "rejection"
 
 
 def test_match_company_single():

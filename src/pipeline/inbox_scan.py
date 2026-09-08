@@ -112,10 +112,14 @@ def _index_by_company(jobs: list[dict]) -> dict[str, dict]:
     return idx
 
 
-def _create_application(conn, company: str, role: str | None, applied_date: str | None) -> dict:
-    """Create a synthetic 'applied' job for an email-only application (idempotent
-    on the synthetic URL). Returns the job row as a dict."""
+def _create_application(conn, company: str, role: str | None,
+                        applied_date: str | None) -> tuple[dict, bool]:
+    """Find-or-create a synthetic 'applied' job for an email-only application
+    (idempotent on the synthetic URL). Returns (job, created)."""
     url = f"email:{_slug(company)}"
+    existing = conn.execute("SELECT id FROM jobs WHERE url = ?", (url,)).fetchone()
+    if existing:
+        return dict(conn.execute("SELECT * FROM jobs WHERE url = ?", (url,)).fetchone()), False
     upsert_jobs(conn, [{
         "title": role or "(applied via email)",
         "company": company,
@@ -132,7 +136,7 @@ def _create_application(conn, company: str, role: str | None, applied_date: str 
         update_status(conn, job["id"], job["status"],
                       date_applied=applied_date or date.today().isoformat())
         job["date_applied"] = applied_date or date.today().isoformat()
-    return job
+    return job, True
 
 
 def scan_inbox(conn, limit: int = 60, days: int = 60, notify: bool = True,
@@ -169,13 +173,14 @@ def scan_inbox(conn, limit: int = 60, days: int = 60, notify: bool = True,
                                              "subject": msg.get("subject", ""),
                                              "category": category})
                 continue
-            job = _create_application(conn, parsed["company"], parsed["role"],
-                                      (msg.get("date") or "")[:10] or None)
+            job, created = _create_application(conn, parsed["company"], parsed["role"],
+                                               (msg.get("date") or "")[:10] or None)
             by_company[_norm_company(parsed["company"])] = job
             if parsed["company"] not in companies:
                 companies.append(parsed["company"])
-            summary["created"].append({"job_id": job["id"], "company": parsed["company"],
-                                       "title": job.get("title"), "category": category})
+            if created:
+                summary["created"].append({"job_id": job["id"], "company": parsed["company"],
+                                           "title": job.get("title"), "category": category})
 
         if job is None:
             summary["unmatched"].append({"from": msg.get("from", ""),

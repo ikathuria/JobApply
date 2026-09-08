@@ -12,12 +12,8 @@ resolve to ``other`` / no match and are left for the human.
 
 import re
 
-# Category → ordered keyword phrases. Longer, more specific phrases first.
+# Category → keyword phrases (matched over the full email unless noted).
 _CATEGORIES = {
-    "offer": [
-        "pleased to offer", "offer letter", "we are excited to offer",
-        "extend an offer", "your offer", "job offer",
-    ],
     "oa": [
         "online assessment", "coding assessment", "coding challenge", "coding test",
         "take-home", "take home", "hackerrank", "codesignal", "coderpad", "codility",
@@ -51,45 +47,66 @@ _INTERVIEW_WEAK = [
     "set up a call", "schedule a call", "schedule time", "interview",
 ]
 
-# Tie-break priority when two categories score equally.
-_PRIORITY = ["offer", "rejection", "interview", "oa"]
+# Affirmative offer phrases rejections never use — safe to match anywhere.
+_OFFER_STRONG = [
+    "pleased to offer", "we are excited to offer", "excited to offer you",
+    "delighted to offer", "happy to offer you", "offer letter", "offer of employment",
+    "we would like to offer you", "extend you an offer",
+]
+# Ambiguous offer wording ("extend an offer", "your offer") also shows up in
+# rejections ("unable to extend an offer"), so only trust it in the SUBJECT.
+_OFFER_SUBJECT = ["extend an offer", "your offer", "job offer", "offer from"]
 
-# Application-confirmation signals → category "applied" (an application was
-# submitted). Checked only when no stronger response category scores, so a
-# genuine interview/OA/rejection still wins over a boilerplate confirmation.
-_CONFIRMATION = [
-    "thank you for applying", "thanks for applying", "application received",
-    "we received your application", "we've received your application",
-    "successfully submitted", "your application was sent to", "your application to",
-    "we got your resume", "application has been received", "thanks for your application",
-    "received your application", "your application for", "applying to",
+# A confirmation SUBJECT is authoritative: the email is an acknowledgement that
+# you applied, and its body typically *describes the whole funnel* ("we'll
+# schedule an interview… we may extend an offer…") — which must NOT be read as a
+# real interview/offer. Only a rejection body overrides a confirmation subject.
+_CONFIRM_SUBJECT = [
+    "thank you for applying", "thanks for applying", "thank you for your application",
+    "thanks for your application", "application received", "we received your application",
+    "confirmation of application", "confirmation of your application",
+    "application submitted", "application confirmation", "your application was sent to",
+    "we got your resume", "application to",  # LinkedIn "your application to ROLE at CO"
+]
+
+# Weaker confirmation signals used as a last-resort (body-level) fallback.
+_CONFIRMATION = _CONFIRM_SUBJECT + [
+    "we've received your application", "successfully submitted", "applying to",
+    "received your application", "your application for",
 ]
 
 
+def _hits(text: str, phrases) -> int:
+    return sum(1 for kw in phrases if kw in text)
+
+
 def classify(subject: str, body: str) -> str:
-    """Return one of: applied, offer, interview, oa, rejection, other."""
+    """Return one of: applied, offer, interview, oa, rejection, other.
+
+    Precedence (precision-biased for confirmation-heavy inboxes):
+      1. explicit rejection language (body) — authoritative
+      2. a confirmation SUBJECT → applied (ignore process boilerplate in the body)
+      3. OA / interview / offer signals
+      4. a confirmation anywhere → applied
+      5. other
+    """
     subject_l = (subject or "").lower()
     text = f"{subject or ''}\n{body or ''}".lower()
 
-    scores = {
-        cat: sum(1 for kw in kws if kw in text)
-        for cat, kws in _CATEGORIES.items()
-    }
-    # Interview: strong phrases count anywhere; weak phrases only in the subject.
-    scores["interview"] = (
-        sum(1 for kw in _INTERVIEW_STRONG if kw in text)
-        + sum(1 for kw in _INTERVIEW_WEAK if kw in subject_l)
-    )
-    best = max(scores.values())
-    if best > 0:
-        winners = [cat for cat, s in scores.items() if s == best]
-        if len(winners) == 1:
-            return winners[0]
-        for cat in _PRIORITY:
-            if cat in winners:
-                return cat
+    if _hits(text, _CATEGORIES["rejection"]) > 0:
+        return "rejection"
+    if any(c in subject_l for c in _CONFIRM_SUBJECT):
+        return "applied"
 
-    # No response signal — is this a submission confirmation?
+    if _hits(text, _CATEGORIES["oa"]) > 0:
+        return "oa"
+    interview = (_hits(text, _INTERVIEW_STRONG)
+                 + _hits(subject_l, _INTERVIEW_WEAK))
+    if interview > 0:
+        return "interview"
+    if _hits(text, _OFFER_STRONG) > 0 or _hits(subject_l, _OFFER_SUBJECT) > 0:
+        return "offer"
+
     if any(c in text for c in _CONFIRMATION):
         return "applied"
     return "other"
