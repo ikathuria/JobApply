@@ -64,6 +64,21 @@ sources:
   newgrad_jobs:
     url: "https://www.newgrad-jobs.com/?k=aiml"
     enabled: true
+  # Google Careers — browserless (parses the server-rendered results HTML).
+  # Fans out over queries x locations x target_levels. India needs no H-1B
+  # sponsorship for Ishani (Indian citizen), so it's kept alongside the US.
+  google_careers:
+    enabled: true
+    queries:
+      - "machine learning"
+      - "artificial intelligence"
+    locations:
+      - "United States"
+      - "India"
+    target_levels:      # EARLY | INTERN_AND_APPRENTICE | MID | ADVANCED
+      - "EARLY"
+      - "INTERN_AND_APPRENTICE"
+    max_per_query: 200
   # LinkedIn + Handshake PAUSED 2026-06-22 — fragile browser automation,
   # account-ban risk. Code + secrets retained; set enabled: true to re-enable.
   linkedin:

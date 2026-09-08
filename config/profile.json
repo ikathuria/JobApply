@@ -18,7 +18,8 @@
     "us_citizen_or_pr": false,
     "will_relocate": true,
     "expected_graduation": "May 2027",
-    "gpa": "4.0"
+    "gpa": "4.0",
+    "job_search_target": "full-time new-grad and internship AI/ML roles"
   },
   "education": [
     {
@@ -108,6 +109,7 @@
     "generative_ai": ["LLMs", "RAG", "Fine-Tuning", "Multi-Agent Systems", "Prompt Engineering", "LangChain", "HuggingFace", "Gemini", "ChatGPT", "Claude", "Mistral"],
     "ml_frameworks": ["PyTorch", "TensorFlow", "Scikit-Learn", "Ollama"],
     "programming": ["Python", "Golang", "TypeScript", "Java"],
+    "cs_fundamentals": ["Data Structures & Algorithms", "Distributed Systems", "System Design", "Scalability", "Concurrency"],
     "cloud_mlops": ["AWS Bedrock", "Lambda", "ECS", "Step Functions", "CloudFormation", "CloudWatch", "Azure"],
     "web_data": ["React", "Flask", "Django", "Pandas", "NumPy", "Tableau"]
   },

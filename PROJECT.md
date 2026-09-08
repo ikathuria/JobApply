@@ -2,13 +2,13 @@
 
 > Living context map. Any LLM or human should be able to read this file alone and understand what the project is, how it's built, and where things are. **Keep it in sync** whenever the stack, structure, conventions, or status changes.
 
-_Last updated: 2026-09-05_
+_Last updated: 2026-09-08_
 
 ---
 
 ## What it is
 
-JobApply is a personal, fully-automated AI/ML job-search pipeline built for Ishani Kathuria (MS Applied AI @ Purdue Northwest, ex-AWS SDE, F-1 international student, graduating May 2027 / possibly Dec 2026). As of 2026-07-19 the primary target is **full-time new-grad AI/ML roles in the USA** (the Summer-2026 internship cycle is over); internships/co-ops stay in scope for CPT during the school year. It scrapes jobs from intern-list.com and newgrad-jobs.com, scores and filters them (AI/ML relevance, role type, recency, and **H-1B sponsorship history**), tailors a resume + cover letter per job using an LLM, and lets Ishani review everything in a React dashboard. It also drafts warm-referral and cold emails to recruiters and tracks outreach. A GitHub Actions workflow runs the scrape-score-tailor pipeline daily; a Render-hosted FastAPI server serves the dashboard.
+JobApply is a personal, fully-automated AI/ML job-search pipeline built for Ishani Kathuria (MS Applied AI @ Purdue Northwest, ex-AWS SDE, F-1 international student, graduating May 2027 / possibly Dec 2026). As of 2026-07-19 the primary target is **full-time new-grad AI/ML roles in the USA** (the Summer-2026 internship cycle is over); internships/co-ops stay in scope for CPT during the school year. It scrapes jobs from intern-list.com, newgrad-jobs.com, and Google Careers (US + India, browserless), scores and filters them (AI/ML relevance, role type, recency, and **H-1B sponsorship history**), tailors a resume + cover letter per job using an LLM, and lets Ishani review everything in a React dashboard. It also drafts warm-referral and cold emails to recruiters and tracks outreach. A GitHub Actions workflow runs the scrape-score-tailor pipeline daily; a Render-hosted FastAPI server serves the dashboard.
 
 ---
 
@@ -48,6 +48,7 @@ JobApply/
 │  │  ├─ jobright_minisite.py    # Shared requests client for jobright.ai JSON API (paging + normalize)
 │  │  ├─ intern_list_scraper.py  # category "intern:us:ml_ai" + source label (uses jobright_minisite)
 │  │  ├─ newgrad_jobs_scraper.py # category "newgrad:us:ml_ai" + source label (M12)
+│  │  ├─ google_careers.py       # Google Careers — browserless (parses server-rendered ds:1 HTML blob); fans out over queries x locations (US+India) x target_levels
 │  │  ├─ linkedin_scraper.py     # PAUSED — Playwright, not run in GHA
 │  │  └─ handshake_scraper.py    # PAUSED — Playwright, not run in GHA
 │  ├─ pipeline/

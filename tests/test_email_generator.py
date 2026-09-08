@@ -54,6 +54,40 @@ def test_referral_uses_referral_prompt():
     assert "refer" in system_prompt.lower()
 
 
+def test_target_phrase_prefers_explicit_then_falls_back():
+    assert eg._target_phrase({"work_authorization": {"job_search_target": "SWE roles"}}) == "SWE roles"
+    assert eg._target_phrase({}) == eg.DEFAULT_TARGET
+    # default is not the stale "internship"-only framing
+    assert "new-grad" in eg.DEFAULT_TARGET
+
+
+def test_target_phrase_flows_into_system_prompt():
+    fake = '{"subject": "S", "body": "B"}'
+    profile = {**PROFILE, "work_authorization": {"job_search_target": "full-time new-grad AI/ML roles"}}
+    with patch.object(eg, "complete", return_value=fake) as mock:
+        eg.generate_cold_email(RECRUITER, JOB, profile=profile, email_type=eg.COLD)
+    assert "full-time new-grad AI/ML roles" in mock.call_args.args[0]
+
+
+def test_shared_context_flows_into_referral_message():
+    fake = '{"subject": "S", "body": "B"}'
+    with patch.object(eg, "complete", return_value=fake) as mock:
+        eg.generate_cold_email(
+            RECRUITER, JOB, profile=PROFILE, email_type=eg.REFERRAL,
+            shared_context="we overlapped at AWS",
+        )
+    user_message = mock.call_args.args[1]
+    assert "we overlapped at AWS" in user_message
+
+
+def test_shared_context_read_from_recruiter_dict():
+    fake = '{"subject": "S", "body": "B"}'
+    recruiter = {**RECRUITER, "notes": "ex-AWS, now at Google"}
+    with patch.object(eg, "complete", return_value=fake) as mock:
+        eg.generate_cold_email(recruiter, JOB, profile=PROFILE, email_type=eg.REFERRAL)
+    assert "ex-AWS, now at Google" in mock.call_args.args[1]
+
+
 def test_parse_handles_code_fences():
     fenced = '```json\n{"subject": "S", "body": "B"}\n```'
     assert eg._parse(fenced) == {"subject": "S", "body": "B"}

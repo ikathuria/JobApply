@@ -24,10 +24,28 @@ PROFILE_PATH = Path("config/profile.json")
 COLD = "cold"
 REFERRAL = "referral"
 
+# Fallback target when the profile can't tell us; kept role-agnostic so the same
+# generator serves internship, new-grad, and full-time outreach.
+DEFAULT_TARGET = "full-time new-grad and internship AI/ML roles"
+
 
 def _load_profile() -> dict:
     with open(PROFILE_PATH) as f:
         return json.load(f)
+
+
+def _target_phrase(profile: dict) -> str:
+    """Describe what the candidate is seeking, derived from their profile.
+
+    Uses ``work_authorization.job_search_target`` if present, else infers from
+    graduation timing. Keeps the outreach honest to the current search focus
+    (full-time new-grad since 2026-07) instead of the old "internship" default.
+    """
+    wa = profile.get("work_authorization", {})
+    explicit = (wa.get("job_search_target") or "").strip()
+    if explicit:
+        return explicit
+    return DEFAULT_TARGET
 
 
 def _candidate_context(profile: dict) -> str:
@@ -71,8 +89,8 @@ def _candidate_context(profile: dict) -> str:
     return "\n".join(lines)
 
 
-_COLD_SYSTEM = """You write concise, genuine cold outreach emails from a student seeking an AI/ML
-internship to a recruiter or HR contact.
+_COLD_SYSTEM = """You write concise, genuine cold outreach emails from a candidate seeking {target}
+to a recruiter or HR contact.
 
 CANDIDATE (use only these facts — never invent experience, schools, or skills):
 {candidate}
@@ -88,8 +106,8 @@ Respond ONLY with JSON, no code fences:
 {{"subject": "short specific subject line", "body": "full email body with greeting and sign-off"}}"""
 
 
-_REFERRAL_SYSTEM = """You write short, warm referral-request emails from a student seeking an AI/ML
-internship to a CURRENT EMPLOYEE at a target company (an engineer, PM, or researcher — not a recruiter).
+_REFERRAL_SYSTEM = """You write short, warm referral-request emails from a candidate seeking {target}
+to a CURRENT EMPLOYEE at a target company (an engineer, PM, or researcher — not a recruiter).
 
 CANDIDATE (use only these facts — never invent experience, schools, or skills):
 {candidate}
@@ -97,7 +115,8 @@ CANDIDATE (use only these facts — never invent experience, schools, or skills)
 RULES:
 - Acknowledge you know they're busy; be respectful of their time.
 - 1-2 sentences on why the candidate is a strong fit for AI/ML work at THIS company.
-- Reference any shared context if provided (same school, shared interest).
+- If SHARED CONTEXT is provided (e.g. former colleague, same past employer, same school), lead with it
+  warmly and naturally — it's the reason this ask lands.
 - Clear ask: would they be willing to refer the candidate, or intro them to the hiring team?
 - Under 150 words total. First person. Sign off with the candidate's name.
 
@@ -143,25 +162,32 @@ def generate_cold_email(
     job: dict | None,
     profile: dict | None = None,
     email_type: str = COLD,
+    shared_context: str | None = None,
 ) -> dict:
     """Generate a personalized outreach email.
 
     Args:
         recruiter: dict with at least ``name``; optional ``company``, ``title``.
+            A ``shared_context`` / ``notes`` field, if present, is used as the
+            warm hook for referrals (e.g. "we overlapped at AWS").
         job: dict with ``title`` + ``company`` (or None for a general intro).
         profile: candidate profile dict; loaded from config/profile.json if None.
         email_type: ``"cold"`` (recruiter/HR) or ``"referral"`` (employee).
+        shared_context: explicit warm hook; overrides the recruiter dict's own.
 
     Returns ``{"subject": str, "body": str}``.
     """
     profile = profile or _load_profile()
     system_tmpl = _REFERRAL_SYSTEM if email_type == REFERRAL else _COLD_SYSTEM
-    system_prompt = system_tmpl.format(candidate=_candidate_context(profile))
+    system_prompt = system_tmpl.format(
+        candidate=_candidate_context(profile), target=_target_phrase(profile)
+    )
 
     job = job or {}
     company = (recruiter.get("company") or job.get("company") or "the company").strip()
     role = (job.get("title") or "").strip()
     audience = "current employee" if email_type == REFERRAL else "recruiter / HR contact"
+    shared = (shared_context or recruiter.get("shared_context") or recruiter.get("notes") or "").strip()
 
     user_message = f"""Write the email.
 
@@ -170,7 +196,8 @@ RECIPIENT ({audience}):
   Title: {recruiter.get('title', '') or 'unknown'}
   Company: {company}
 
-TARGET ROLE: {role or 'AI/ML internship (no specific posting — general interest)'}
+TARGET ROLE: {role or 'AI/ML role (no specific posting — general interest)'}
+SHARED CONTEXT: {shared or 'none provided'}
 """
 
     raw = complete(system_prompt, user_message, max_tokens=500)

@@ -10,6 +10,7 @@ Usage:
   python main.py                          # discover + filter (all sources)
   python main.py --source intern_list     # single source
   python main.py --source newgrad_jobs
+  python main.py --source google_careers  # Google Careers (US + India, browserless)
   python main.py --source linkedin        # PAUSED (disabled in config)
   python main.py --tailor                 # tailor top unreviewed jobs
   python main.py --tailor --limit 5       # tailor top N jobs
@@ -113,6 +114,20 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
         logger.info("=== Scraping newgrad-jobs.com ===")
         jobs = scrape_newgrad_jobs(max_rows=300)
         logger.info(f"newgrad-jobs.com: {len(jobs)} raw listings")
+        all_jobs.extend(jobs)
+
+    if source in (None, "google_careers") and sources.get("google_careers", {}).get("enabled"):
+        from scrapers.google_careers import scrape_google_careers
+
+        logger.info("=== Scraping Google Careers ===")
+        gc_cfg = sources["google_careers"]
+        jobs = scrape_google_careers(
+            queries=gc_cfg.get("queries"),
+            locations=gc_cfg.get("locations"),
+            target_levels=gc_cfg.get("target_levels"),
+            max_per_query=gc_cfg.get("max_per_query", 200),
+        )
+        logger.info(f"Google Careers: {len(jobs)} raw listings")
         all_jobs.extend(jobs)
 
     if source in (None, "linkedin") and sources.get("linkedin", {}).get("enabled"):
@@ -617,7 +632,7 @@ def _slug(text: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
-    parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "linkedin", "handshake"])
+    parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "google_careers", "linkedin", "handshake"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
     parser.add_argument("--recruiters", action="store_true",
                         help="Scrape LinkedIn recruiters for the companies in your jobs DB")

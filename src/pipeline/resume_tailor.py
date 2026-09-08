@@ -59,7 +59,7 @@ def _profile_text(profile: dict) -> str:
 
 
 SYSTEM_PROMPT_TEMPLATE = """You are an expert technical resume writer helping a candidate \
-tailor their resume for AI/ML internship roles.
+tailor their resume for {target}.
 
 CANDIDATE PROFILE:
 {profile_text}
@@ -69,6 +69,13 @@ INSTRUCTIONS:
 - NEVER fabricate skills, tools, or experiences not present in the profile
 - Emphasize most-relevant experience bullets; you may omit less-relevant ones to keep focus
 - Keep bullet points concise, metric-driven, and action-verb led
+- LEAD every bullet with a strong action verb and a QUANTIFIED outcome (%, $, time, scale) — big-tech
+  screeners (Google, Meta, Amazon) weight measurable impact heavily; the profile has these numbers, so keep them
+- Mirror the exact keywords/phrases from the job description (e.g. "large-scale", "distributed systems",
+  "data structures and algorithms", named frameworks) wherever they truthfully apply — resumes are ATS
+  keyword-matched before a human reads them
+- For software/ML engineering roles, surface coding + CS-fundamentals and distributed-systems-at-scale
+  signal; for research / scientist roles, foreground publications and research experience near the top
 - Select the 2-3 most relevant projects for this specific role
 - For skills, promote categories most relevant to the JD to the top
 - Write a 2-sentence professional summary tailored to the specific role
@@ -105,7 +112,11 @@ def tailor_resume(job: dict, jd_text: str) -> dict | None:
     Returns tailored resume dict, or None on failure.
     """
     profile = _load_profile()
-    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(profile_text=_profile_text(profile))
+    target = (profile.get("work_authorization", {}).get("job_search_target")
+              or "full-time new-grad and internship AI/ML roles")
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+        profile_text=_profile_text(profile), target=target
+    )
 
     user_message = f"""Please tailor the resume for this position:
 
