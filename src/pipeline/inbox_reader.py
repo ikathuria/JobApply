@@ -118,7 +118,15 @@ def fetch_recent(limit: int = 40, days: int = 30) -> list[dict]:
     messages: list[dict] = []
     try:
         imap.login(user, password)
-        imap.select(mailbox, readonly=True)
+        # imaplib doesn't quote the mailbox name, so folders with spaces
+        # (e.g. "INBOX.job apps.reverts") must be quoted or SELECT silently
+        # fails and later commands error with "illegal in state AUTH".
+        select_name = f'"{mailbox}"' if (" " in mailbox and not mailbox.startswith('"')) else mailbox
+        status, _ = imap.select(select_name, readonly=True)
+        if status != "OK":
+            logger.error(f"IMAP could not select mailbox {mailbox!r} — check IMAP_MAILBOX "
+                         f"(this server's folders look like 'INBOX.job apps.reverts').")
+            return []
         since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%d-%b-%Y")
         status, data = imap.search(None, f'(SINCE {since})')
         if status != "OK":
