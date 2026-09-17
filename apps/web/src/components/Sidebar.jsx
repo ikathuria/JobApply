@@ -1,12 +1,5 @@
 // Sidebar — warm paper redesign, CSS-var based
 
-function IconHome() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M8 1.5L1.5 6.8V14.5H5.5V9.5H10.5V14.5H14.5V6.8L8 1.5Z" />
-    </svg>
-  )
-}
 function IconLayers() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -61,8 +54,7 @@ function IconPrep() {
 // Two-tier nav (M28): the daily apply-loop screens sit in the prominent
 // "Workspace" group; everything else demotes to a lighter "Tools" group.
 const PRIMARY_NAV = [
-  { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,   tone: 'blue'   },
-  { id: 'jobs',      label: 'Jobs',       Icon: IconLayers, tone: 'purple', hasBadge: true },
+  { id: 'pipeline', label: 'Pipeline', Icon: IconLayers, tone: 'purple', hasBadge: true },
 ]
 const TOOLS_NAV = [
   { id: 'outreach',  label: 'Outreach',       Icon: IconMail,     tone: 'blue'   },

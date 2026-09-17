@@ -1,7 +1,6 @@
 export default function Topbar({ screen }) {
   const titles = {
-    dashboard: 'Command Center',
-    jobs:      'Job Pipeline',
+    pipeline:  'Job Pipeline',
     outreach:  'Recruiter Outreach',
     timeline:  'Recruiting Timeline',
     prep:      'Interview Prep',

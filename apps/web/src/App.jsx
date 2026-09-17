@@ -4,9 +4,8 @@ import { DARK, LIGHT } from './theme.js'
 import { api } from './api.js'
 import Sidebar from './components/Sidebar.jsx'
 import Topbar from './components/Topbar.jsx'
-import JobsView from './components/JobsView.jsx'
+import PipelineView from './components/PipelineView.jsx'
 import JobDrawer from './components/JobDrawer.jsx'
-import DashboardView from './components/DashboardView.jsx'
 import AnalyticsView from './components/AnalyticsView.jsx'
 import SettingsView from './components/SettingsView.jsx'
 import OutreachView from './components/OutreachView.jsx'
@@ -23,8 +22,13 @@ function saveState(s) {
 export default function App() {
   const stored = loadState()
 
+  // M29: Dashboard + Jobs merged into one "Pipeline" screen; migrate old state.
+  const initialScreen = (!stored.screen || stored.screen === 'dashboard' || stored.screen === 'jobs')
+    ? 'pipeline'
+    : stored.screen
+
   const [dark, setDarkRaw]     = useState(stored.dark !== false)
-  const [screen, setScreenRaw] = useState(stored.screen || 'dashboard')
+  const [screen, setScreenRaw] = useState(initialScreen)
   const [tab, setTabRaw]       = useState(stored.tab || 'new')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
@@ -53,8 +57,8 @@ export default function App() {
   const setScreen = s => { setScreenRaw(s); saveState({ dark, screen: s, tab }) }
   const setTab    = t => {
     setTabRaw(t)
-    setScreenRaw('jobs')
-    saveState({ dark, screen: 'jobs', tab: t })
+    setScreenRaw('pipeline')
+    saveState({ dark, screen: 'pipeline', tab: t })
     setSelectedJob(null)
   }
 
@@ -64,8 +68,8 @@ export default function App() {
   const openJobsForCompany = company => {
     setJobsSearch(company || '')
     setTabRaw('all')
-    setScreenRaw('jobs')
-    saveState({ dark, screen: 'jobs', tab: 'all' })
+    setScreenRaw('pipeline')
+    saveState({ dark, screen: 'pipeline', tab: 'all' })
     setSelectedJob(null)
   }
   // Reach out about a company from the Timeline (company-level, no specific job).
@@ -106,19 +110,10 @@ export default function App() {
           <Topbar screen={screen} />
 
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {screen === 'dashboard' && (
-              <DashboardView
-                stats={stats}
-                setTab={setTab}
-                onSelectJob={job => { setSelectedJob(job); setScreen('jobs') }}
-                onRefresh={refreshKey}
-              />
-            )}
-
-            {screen === 'jobs' && (
+            {screen === 'pipeline' && (
               <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <JobsView
+                  <PipelineView
                     onSelectJob={setSelectedJob}
                     selectedJob={selectedJob}
                     tab={tab}

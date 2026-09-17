@@ -101,13 +101,22 @@ maintainable.
   headers → "New-Grad AI/ML Job Search · 2026–27".
 - Verified in-browser: both groups render, nav clicks work, build green.
 
-### M29 — PipelineView (the core surface)
-- New `PipelineView` that owns the stage rail + active-stage deck, composing the
-  existing `FocusQueue` / `ReviewDeck` / `ApprovedDeck`.
-- Fold `DashboardView`'s "needs action" cues into the Pipeline header; retire the
-  separate Dashboard nav entry (view code can stay until fully absorbed).
-- Inline entry points on a job: **Reach out** (→ Outreach, prefilled) and
-  **Prep** (→ Interview Prep) so the loop isn't broken to use a tool.
+### M29 — PipelineView (the core surface) ✅ (done 2026-09-17)
+- New `PipelineView` composes the existing `JobsView` board (Today's Focus +
+  stage tabs New→Ready→Approved→Applied→All + review/apply decks) — the stage
+  rail already lives in JobsView, so this reorganizes rather than rewrites.
+- Merged Dashboard + Jobs into a **single "Pipeline" primary nav entry** (default
+  landing; old `dashboard`/`jobs` stored state migrates to `pipeline`).
+- Folded the Dashboard's one unique "needs action" cue — stale applications due
+  for follow-up — into a slim collapsible banner atop the board (deep-links to
+  the Applied tab). At-a-glance funnel counts already live in the sidebar, so
+  the old stat-card grid was dropped rather than duplicated.
+- **Deleted `DashboardView.jsx`** (fully absorbed). Removed the now-unused
+  `IconHome`; Topbar/title updated.
+- Verified in-browser: default lands on Pipeline, banner expand + deep-link work,
+  stage tabs switch, build green.
+- Inline job entry points (**Reach out** already exists in JobDrawer; a **Prep**
+  shortcut) — Reach out is wired; Prep shortcut deferred to M30/M31 polish.
 
 ### M30 — Split the JobsView monolith
 - Extract `ImportModal`, `ReviewDeck`, `ApprovedDeck`, `FocusQueue`, and the
