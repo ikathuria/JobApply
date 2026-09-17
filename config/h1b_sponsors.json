@@ -2,6 +2,14 @@
   "source": "Curated from public USCIS H-1B Employer Data Hub / MyVisaJobs top-sponsor rankings + JobApply target companies. A starter set of well-known, high-volume H-1B sponsors — not exhaustive.",
   "generated": "2026-07-19",
   "note": "Names are normalized at load (lowercase, punctuation + corporate suffixes stripped, token-subset match), so 'Amazon.com, Inc.' matches 'Amazon'. Used as a SOFT scoring boost by default; unknown companies are NOT penalized. A strict require_sponsor filter is opt-in (job_filter.filter_jobs). Refresh via scripts/refresh_h1b_sponsors.py against the USCIS CSV.",
+  "defense_itar_note": "Defense / aerospace primes and other export-controlled (ITAR/EAR) employers that typically require US citizen or permanent-resident status and will NOT sponsor an F-1/H-1B. These VETO the known-sponsor boost even if a name also token-matches the sponsors list (e.g. SpaceX, Anduril) — sponsorship.is_defense_itar_excluded() short-circuits is_known_sponsor(). Same normalization + token-subset matching as sponsors. Not exhaustive; a specific role may still differ.",
+  "defense_itar_exclusions": [
+    "SpaceX", "Anduril", "Blue Origin",
+    "Lockheed Martin", "RTX", "Raytheon", "Northrop Grumman",
+    "General Dynamics", "L3Harris", "BAE Systems", "Boeing",
+    "GE Aerospace", "Collins Aerospace", "Pratt Whitney",
+    "Rolls-Royce", "Leidos", "Booz Allen Hamilton", "SAIC"
+  ],
   "sponsors": [
     "Amazon", "Amazon Web Services", "AWS", "Annapurna Labs", "A9",
     "Google", "Alphabet", "Google DeepMind", "DeepMind", "Waymo", "YouTube",
@@ -36,6 +44,6 @@
     "Palo Alto Networks", "Fortinet", "Cohesity", "Rubrik", "HashiCorp",
     "Grammarly", "Duolingo", "Chime", "Plaid", "Brex", "Ramp", "Affirm",
     "Cohere", "Hugging Face", "Runway", "Perplexity", "Character AI", "xAI",
-    "Waymo", "Verily", "Nuro", "Applied Intuition", "Anduril", "SpaceX"
+    "Waymo", "Verily", "Nuro", "Applied Intuition"
   ]
 }

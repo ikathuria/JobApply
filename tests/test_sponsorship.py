@@ -2,7 +2,12 @@
 Tests for the visa-sponsorship-history filter (M17).
 """
 
-from pipeline.sponsorship import is_known_sponsor, sponsor_score, _normalize
+from pipeline.sponsorship import (
+    is_known_sponsor,
+    is_defense_itar_excluded,
+    sponsor_score,
+    _normalize,
+)
 from pipeline.job_filter import score_job, filter_jobs
 
 
@@ -39,6 +44,31 @@ def test_normalize_strips_suffixes():
 def test_sponsor_score_is_binary():
     assert sponsor_score("Google") == 1.0
     assert sponsor_score("Nobody Co") == 0.0
+
+
+# ── defense / ITAR exclusions ─────────────────────────────────────────────────
+
+def test_defense_itar_companies_flagged():
+    assert is_defense_itar_excluded("SpaceX")
+    assert is_defense_itar_excluded("Lockheed Martin Corporation")   # suffix
+    assert is_defense_itar_excluded("Anduril Industries")            # token-subset
+    assert not is_defense_itar_excluded("Amazon")
+    assert not is_defense_itar_excluded("")
+    assert not is_defense_itar_excluded(None)
+
+
+def test_itar_exclusion_vetoes_sponsor_boost():
+    # SpaceX / Anduril token-match sponsor-like names but require US-person
+    # status — they must NOT count as known sponsors.
+    assert not is_known_sponsor("SpaceX")
+    assert not is_known_sponsor("Anduril")
+    assert sponsor_score("SpaceX") == 0.0
+
+
+def test_itar_exclusion_does_not_over_match_sibling():
+    # "GE Aerospace" is excluded; a non-defense GE unit must not be.
+    assert is_defense_itar_excluded("GE Aerospace")
+    assert not is_defense_itar_excluded("GE Healthcare")
 
 
 # ── scoring integration ───────────────────────────────────────────────────────
