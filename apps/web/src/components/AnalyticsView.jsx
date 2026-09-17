@@ -111,7 +111,7 @@ export default function AnalyticsView({ stats }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="analytics-grid-main">
         {/* Funnel */}
         <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 20 }}>Application Funnel</div>
@@ -275,7 +275,7 @@ export default function AnalyticsView({ stats }) {
 
       {/* ── Source & sponsorship response rates (M25) ───────────────────────── */}
       {funnelData && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
+        <div className="analytics-grid-even">
           {/* Response rate by known-sponsor status — the core thesis of the pivot */}
           <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Response by Sponsor Status</div>

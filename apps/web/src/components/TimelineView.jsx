@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
 import { api } from '../api.js'
-import { Card, Btn, EmptyState, Spinner, SectionLabel, Tag } from './ui/index.jsx'
+import { Card, Btn, EmptyState, Spinner, SectionLabel, Tag, Toast } from './ui/index.jsx'
 
 // Group order for the three buckets shown top-to-bottom.
 const GROUPS = [
@@ -271,17 +271,7 @@ export default function TimelineView({ onReachOut, onOpenRoles }) {
         )}
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
-          padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
-          background: toast.kind === 'err' ? T.danger : T.success,
-          boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
-        }}>
-          {toast.msg}
-        </div>
-      )}
+      <Toast toast={toast} />
     </div>
   )
 }

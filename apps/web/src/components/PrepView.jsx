@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
 import { api } from '../api.js'
-import { Card, Btn, EmptyState, Spinner, SectionLabel, Divider, StatusBadge, Tag } from './ui/index.jsx'
+import { Card, Btn, EmptyState, Spinner, SectionLabel, Divider, StatusBadge, Tag, Toast } from './ui/index.jsx'
 
 function fmtDate(s) {
   return s ? String(s).slice(0, 10) : ''
@@ -87,9 +87,9 @@ export default function PrepView() {
   const c = prep?.content
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+    <div className={`master-detail${selected ? ' has-detail' : ''}`} style={{ height: '100%' }}>
       {/* ── Left: interview-stage jobs ── */}
-      <div style={{ width: 320, borderRight: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="master-detail-list" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '18px 16px 10px' }}>
           <SectionLabel style={{ marginBottom: 4 }}>Interview stage</SectionLabel>
           <div style={{ fontSize: 12, color: T.muted }}>Jobs at OA or interview — generate a tailored prep pack for each.</div>
@@ -124,6 +124,7 @@ export default function PrepView() {
 
         {selected && (
           <div>
+            <button className="master-detail-back" onClick={() => setSelectedId(null)}>← Interviews</button>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{selected.title}</div>
@@ -205,16 +206,7 @@ export default function PrepView() {
         )}
       </div>
 
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
-          padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
-          background: toast.kind === 'err' ? T.danger : T.success,
-          boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
-        }}>
-          {toast.msg}
-        </div>
-      )}
+      <Toast toast={toast} />
     </div>
   )
 }

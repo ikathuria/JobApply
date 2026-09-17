@@ -236,39 +236,82 @@ function ImportModal({ dark, onClose, onSuccess }) {
 }
 
 // ── Focus queue ───────────────────────────────────────────────────────────────
-function FocusQueue({ focus, onSelectJob, setTab, dark }) {
+// Collapsed by default to a one-line summary so it doesn't push the tabs/filter
+// bar below the fold — expands into the full card grid on click.
+function FocusQueue({ focus, onSelectJob, setTab, dark, open, onToggle }) {
   const T = dark ? DARK : LIGHT
   if (!focus?.length) return null
+
+  const openItem = item => {
+    if (item.jobId) onSelectJob({ id: item.jobId, _needsFetch: true })
+    else setTab(item.tab)
+  }
+
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-        Today's Focus
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
-        {focus.map(item => (
-          <div key={item.id}
-            onClick={() => {
-              if (item.jobId) onSelectJob({ id: item.jobId, _needsFetch: true })
-              else setTab(item.tab)
-            }}
-            style={{
-              background: T.card, border: `1px solid ${T.border}`,
-              borderLeft: `3px solid ${item.color}`,
-              borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
-              transition: 'all 0.15s',
-              display: 'flex', flexDirection: 'column', gap: 6,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.boxShadow = `0 0 0 3px ${item.color}18` }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.borderLeftColor = item.color; e.currentTarget.style.boxShadow = 'none' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <span style={{ fontSize: 16, lineHeight: 1.2 }}>{item.icon}</span>
-              <span style={{ fontSize: 12, color: T.text, fontWeight: 500, flex: 1, lineHeight: 1.4 }}>{item.label}</span>
+    <div style={{ marginBottom: open ? 24 : 14 }}>
+      <button
+        onClick={onToggle}
+        aria-expanded={open}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          fontFamily: 'Inter, system-ui, sans-serif',
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Today's Focus
+        </span>
+        <span style={{
+          fontSize: 10, fontWeight: 800, color: T.text, background: T.border,
+          borderRadius: 10, padding: '1px 7px',
+        }}>{focus.length}</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 11, color: T.muted, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▸</span>
+      </button>
+
+      {!open && (
+        <div
+          role="button" tabIndex={0}
+          onClick={() => openItem(focus[0])}
+          onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openItem(focus[0]))}
+          style={{
+            marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+            fontSize: 12, color: T.text,
+          }}
+        >
+          <span style={{ fontSize: 14 }}>{focus[0].icon}</span>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{focus[0].label}</span>
+          <span style={{ fontWeight: 700, color: focus[0].color, flexShrink: 0 }}>{focus[0].cta} →</span>
+          {focus.length > 1 && <span style={{ color: T.muted, flexShrink: 0 }}>+{focus.length - 1} more</span>}
+        </div>
+      )}
+
+      {open && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginTop: 10 }}>
+          {focus.map(item => (
+            <div key={item.id}
+              role="button" tabIndex={0}
+              onClick={() => openItem(item)}
+              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openItem(item))}
+              style={{
+                background: T.card, border: `1px solid ${T.border}`,
+                borderLeft: `3px solid ${item.color}`,
+                borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
+                transition: 'all 0.15s',
+                display: 'flex', flexDirection: 'column', gap: 6,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = item.color; e.currentTarget.style.boxShadow = `0 0 0 3px ${item.color}18` }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.borderLeftColor = item.color; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ fontSize: 16, lineHeight: 1.2 }}>{item.icon}</span>
+                <span style={{ fontSize: 12, color: T.text, fontWeight: 500, flex: 1, lineHeight: 1.4 }}>{item.label}</span>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: item.color, alignSelf: 'flex-start' }}>{item.cta} →</span>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: item.color, alignSelf: 'flex-start' }}>{item.cta} →</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -912,6 +955,8 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   const [dateTo, setDateTo]                 = useState('')
   const [jobs, setJobs]             = useState([])
   const [focus, setFocus]           = useState([])
+  const [focusOpen, setFocusOpen]   = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [loading, setLoading]       = useState(true)
   const [showImport, setShowImport] = useState(false)
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -1043,6 +1088,9 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   }, [jobs])
 
   const hasFilters = !!(search || locationFilter || sourceFilter || dateFrom || dateTo || minScore > 0)
+  // Only the "advanced" fields (row 2) count toward the Filters-button badge —
+  // search lives in the always-visible row and isn't part of that disclosure.
+  const advancedFilterCount = [minScore > 0, !!locationFilter, !!sourceFilter, !!dateFrom, !!dateTo].filter(Boolean).length
   function clearFilters() {
     setSearch('')
     setLocationFilter('')
@@ -1066,7 +1114,8 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
       {/* Focus queue */}
       <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
-        <FocusQueue focus={focus} onSelectJob={onSelectJob} setTab={setTab} dark={dark} />
+        <FocusQueue focus={focus} onSelectJob={onSelectJob} setTab={setTab} dark={dark}
+          open={focusOpen} onToggle={() => setFocusOpen(o => !o)} />
       </div>
 
       {/* Tab bar */}
@@ -1118,6 +1167,26 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           </div>
           <span className="filter-scope-tag">{TABS.find(t => t.id === tab)?.label ?? tab}</span>
           <span className="filter-count">{filteredJobs.length} {filteredJobs.length === 1 ? 'job' : 'jobs'}</span>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            aria-expanded={showFilters}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 6,
+              border: `1px solid ${showFilters || advancedFilterCount > 0 ? T.accent : T.border}`,
+              background: showFilters ? T.accentBg : 'transparent',
+              color: showFilters || advancedFilterCount > 0 ? T.accent : T.muted,
+              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}>
+            Filters
+            {advancedFilterCount > 0 && (
+              <span style={{
+                background: T.accent, color: '#fff', fontSize: 10, fontWeight: 800,
+                borderRadius: 10, padding: '0 6px', lineHeight: '15px',
+              }}>{advancedFilterCount}</span>
+            )}
+          </button>
           {(tab === 'ready' || tab === 'approved') && (
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, background: T.surface, borderRadius: 8, padding: 4 }}>
               {['deck', 'list'].map(mode => (
@@ -1133,49 +1202,51 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
             </div>
           )}
         </div>
-        {/* Row 2: sort + score + location + source + dates + clear */}
-        <div className="filter-row">
-          <select className="filter-select" value={sort} onChange={e => setSort(e.target.value)}>
-            <option value="score">Score ↓</option>
-            <option value="company">Company A–Z</option>
-            <option value="starred">Starred first</option>
-          </select>
+        {/* Row 2: sort + score + location + source + dates + clear — behind "Filters" */}
+        {showFilters && (
+          <div className="filter-row">
+            <select className="filter-select" value={sort} onChange={e => setSort(e.target.value)}>
+              <option value="score">Score ↓</option>
+              <option value="company">Company A–Z</option>
+              <option value="starred">Starred first</option>
+            </select>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <span style={{ fontSize: 11, color: T.muted, whiteSpace: 'nowrap' }}>Score ≥</span>
-            <input type="range" min={0} max={1} step={0.05} value={minScore}
-              onChange={e => setMinScore(parseFloat(e.target.value))}
-              style={{ width: 72, accentColor: T.accent }} />
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: T.text, width: 30 }}>
-              {Math.round(minScore * 100)}%
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <span style={{ fontSize: 11, color: T.muted, whiteSpace: 'nowrap' }}>Score ≥</span>
+              <input type="range" min={0} max={1} step={0.05} value={minScore}
+                onChange={e => setMinScore(parseFloat(e.target.value))}
+                style={{ width: 72, accentColor: T.accent }} />
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: T.text, width: 30 }}>
+                {Math.round(minScore * 100)}%
+              </span>
+            </div>
+
+            {locationOptions.length > 0 && (
+              <select className="filter-select" value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
+                <option value="">All locations</option>
+                {locationOptions.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+              </select>
+            )}
+
+            {sourceOptions.length > 1 && (
+              <select className="filter-select" value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}>
+                <option value="">All sources</option>
+                {sourceOptions.map(src => <option key={src} value={src}>{src}</option>)}
+              </select>
+            )}
+
+            {(tab === 'applied' || tab === 'all') && (<>
+              <input type="date" className="filter-date" value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)} title="Applied from" />
+              <input type="date" className="filter-date" value={dateTo}
+                onChange={e => setDateTo(e.target.value)} title="Applied to" />
+            </>)}
+
+            {hasFilters && (
+              <button className="filter-clear" onClick={clearFilters}>Clear</button>
+            )}
           </div>
-
-          {locationOptions.length > 0 && (
-            <select className="filter-select" value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
-              <option value="">All locations</option>
-              {locationOptions.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-            </select>
-          )}
-
-          {sourceOptions.length > 1 && (
-            <select className="filter-select" value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}>
-              <option value="">All sources</option>
-              {sourceOptions.map(src => <option key={src} value={src}>{src}</option>)}
-            </select>
-          )}
-
-          {(tab === 'applied' || tab === 'all') && (<>
-            <input type="date" className="filter-date" value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)} title="Applied from" />
-            <input type="date" className="filter-date" value={dateTo}
-              onChange={e => setDateTo(e.target.value)} title="Applied to" />
-          </>)}
-
-          {hasFilters && (
-            <button className="filter-clear" onClick={clearFilters}>Clear</button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Job list */}

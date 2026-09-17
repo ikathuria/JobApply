@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
 import { api } from '../api.js'
-import { Card, Btn, Input, Textarea, EmptyState, Spinner, SectionLabel, Divider } from './ui/index.jsx'
+import { Card, Btn, Input, Textarea, EmptyState, Spinner, SectionLabel, Divider, Toast } from './ui/index.jsx'
 
 const OUTREACH_STATUSES = ['draft', 'sent', 'replied', 'bounced', 'ignored']
 const STATUS_COLOR = {
@@ -189,9 +189,9 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'flex', gap: 18, padding: 20, overflow: 'hidden' }}>
+      <div className={`master-detail${selected ? ' has-detail' : ''}`} style={{ padding: 20 }}>
         {/* ── Left: recruiter list ── */}
-        <div style={{ width: 320, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="master-detail-list" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <SectionLabel style={{ marginBottom: 0 }}>Recruiters</SectionLabel>
             <Btn size="sm" variant={addOpen ? 'secondary' : 'primary'} onClick={() => setAddOpen(o => !o)}>
@@ -243,6 +243,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
 
           {selected && (
             <div>
+              <button className="master-detail-back" onClick={() => setSelectedId(null)}>← Recruiters</button>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: T.text }}>{selected.name}</div>
@@ -330,17 +331,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
         </div>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
-          padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
-          background: toast.kind === 'err' ? T.danger : T.success,
-          boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
-        }}>
-          {toast.msg}
-        </div>
-      )}
+      <Toast toast={toast} />
     </div>
   )
 }

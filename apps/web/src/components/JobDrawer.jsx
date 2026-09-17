@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { DARK, LIGHT, STATUS_META } from '../theme.js'
-import { Btn, StatusBadge, ScoreBar, Tag, Textarea, Divider, Spinner } from './ui/index.jsx'
+import { Btn, StatusBadge, ScoreBar, Tag, Textarea, Spinner } from './ui/index.jsx'
 import { api } from '../api.js'
 
-const STATUS_OPTS = ['new', 'queued', 'approved', 'applied', 'oa', 'interview', 'offer', 'rejected', 'skipped']
 const PIPELINE_STATUSES = ['new', 'queued', 'approved', 'applied', 'oa', 'interview', 'offer']
 
 const STATUS_HELP = {
@@ -71,18 +70,6 @@ function TextField({ label, value, onChange, T, dark, type = 'text', placeholder
   )
 }
 
-function SelectField({ label, value, onChange, T, dark, options, style = {} }) {
-  return (
-    <Field label={label} T={T} style={style}>
-      <select value={value} onChange={e => onChange(e.target.value)} style={fieldBase(T, dark)}>
-        {options.map(s => (
-          <option key={s} value={s}>{STATUS_META[s]?.label || s}</option>
-        ))}
-      </select>
-    </Field>
-  )
-}
-
 function FormSection({ title, sub, children, T, dark }) {
   return (
     <div style={{
@@ -99,6 +86,40 @@ function FormSection({ title, sub, children, T, dark }) {
       {children}
     </div>
   )
+}
+
+// Same visual shell as FormSection, but the body only renders when `open` —
+// keeps the drawer from being one long always-expanded form.
+function CollapsibleSection({ title, sub, T, open, onToggle, badge, children }) {
+  return (
+    <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 14, overflow: 'hidden' }}>
+      <button onClick={onToggle} aria-expanded={open} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+        padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer',
+        textAlign: 'left', fontFamily: 'Inter, system-ui, sans-serif',
+      }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: T.text, flex: 1 }}>{title}</span>
+        {badge}
+        <span style={{ fontSize: 11, color: T.muted, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>▸</span>
+      </button>
+      {open && (
+        <div style={{ padding: '0 14px 14px' }}>
+          {sub && <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5, marginBottom: 12 }}>{sub}</div>}
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Which secondary sections start open, based on the job's current stage —
+// avoids re-showing everything every time (Notes and the primary action stay
+// outside the accordion since they're used on almost every visit).
+function defaultOpenSections(job) {
+  const open = new Set()
+  if (['applied', 'oa', 'interview', 'offer', 'rejected'].includes(job.status)) open.add('tracking')
+  if ((job.description || '').trim() && ['queued', 'approved'].includes(job.status)) open.add('ats')
+  return open
 }
 
 function ConfirmModal({ job, onConfirm, onCancel, dark }) {
@@ -216,6 +237,24 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const [editMsg, setEditMsg] = useState('')
   const [ats, setAts] = useState(null)
   const [atsLoading, setAtsLoading] = useState(false)
+  const [openSections, setOpenSections] = useState(new Set())
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [narrow, setNarrow] = useState(false)
+
+  // Below ~900px the drawer overlays the screen instead of squeezing the job
+  // list down to nothing.
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 900px)')
+    const apply = () => setNarrow(mql.matches)
+    apply()
+    mql.addEventListener('change', apply)
+    return () => mql.removeEventListener('change', apply)
+  }, [])
+  const toggleSection = id => setOpenSections(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   // Lazily compute the ATS keyword match when viewing a job with a description.
   useEffect(() => {
@@ -247,7 +286,20 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
     setCoverLetterMode('pdf')
     setTailorMsg('')
     setTrackingMsg('')
+    setMoreOpen(false)
   }, [initialJob?.id])
+
+  // Reset which secondary sections are expanded whenever a *different* job is
+  // opened (not on every status change — that would collapse things mid-edit).
+  useEffect(() => {
+    if (!job) return
+    setOpenSections(prev => {
+      const next = defaultOpenSections(job)
+      if (initialJob?._openTab === 'edit') next.add('details')
+      return next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.id])
 
   useEffect(() => {
     if (!job) return
@@ -416,6 +468,17 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const drawerTabs = ['overview', 'resume', 'cover letter']
   const notesRows = Math.min(18, Math.max(8, notes.split('\n').length + Math.ceil(notes.length / 120)))
 
+  // Secondary status moves — one kebab menu instead of a permanent button grid.
+  const moreActions = []
+  if (job.status === 'new') {
+    moreActions.push({ label: 'Skip', onClick: () => patchStatus('skipped') })
+    moreActions.push({ label: 'Reject', danger: true, onClick: () => patchStatus('rejected') })
+  }
+  if (job.status === 'queued') moreActions.push({ label: 'Back to new', onClick: () => patchStatus('new') })
+  if (job.status === 'approved') moreActions.push({ label: 'Back to ready', onClick: () => patchStatus('queued') })
+  if (['applied', 'oa', 'interview'].includes(job.status)) moreActions.push({ label: 'Mark rejected', danger: true, onClick: () => patchStatus('rejected') })
+  if (['rejected', 'skipped'].includes(job.status)) moreActions.push({ label: 'Reopen', onClick: () => patchStatus('new') })
+
   return (
     <>
       {showConfirm && (
@@ -429,7 +492,15 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
         />
       )}
 
-      <div style={{
+      {narrow && (
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 90 }} />
+      )}
+
+      <div style={narrow ? {
+        position: 'fixed', inset: 0, zIndex: 91,
+        display: 'flex', flexDirection: 'column',
+        background: T.surface,
+      } : {
         width: 480,
         flexShrink: 0,
         height: '100vh',
@@ -453,14 +524,46 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 {job.source && <><span>·</span><Tag>{job.source}</Tag></>}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, position: 'relative' }}>
               <button
                 onClick={() => patchStatus(job.status, { starred: job.starred ? 0 : 1 })}
+                aria-label={job.starred ? 'Unstar' : 'Star'}
                 title={job.starred ? 'Unstar' : 'Star'}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: job.starred ? '#F59E0B' : T.muted, fontSize: 17, padding: 4 }}>
                 {job.starred ? '★' : '☆'}
               </button>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18, padding: 4 }}>x</button>
+              {moreActions.length > 0 && (
+                <button
+                  onClick={() => setMoreOpen(o => !o)}
+                  aria-label="More actions" aria-expanded={moreOpen} title="More actions"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 16, padding: 4, lineHeight: 1 }}>
+                  ⋮
+                </button>
+              )}
+              {moreOpen && (
+                <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 19 }} />
+              )}
+              {moreOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 20, marginTop: 4, zIndex: 20,
+                  background: T.card, border: `1px solid ${T.border}`, borderRadius: 8,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.18)', minWidth: 150, overflow: 'hidden',
+                }}>
+                  {moreActions.map(a => (
+                    <button key={a.label}
+                      onClick={() => { setMoreOpen(false); a.onClick() }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontFamily: 'Inter, system-ui, sans-serif', fontSize: 12, fontWeight: 600,
+                        color: a.danger ? T.danger : T.text,
+                      }}>
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18, padding: 4 }}>x</button>
             </div>
           </div>
 
@@ -537,11 +640,12 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
               )}
 
               {editForm && (
-                <FormSection
+                <CollapsibleSection
                   title={overviewEditing ? 'Edit this job' : 'Role details'}
                   sub={overviewEditing ? 'You are editing directly in Overview. Save here when the scrape or import needs cleanup.' : 'Core job information and metadata.'}
                   T={T}
-                  dark={dark}
+                  open={openSections.has('details') || overviewEditing}
+                  onToggle={() => toggleSection('details')}
                 >
                   {overviewEditing ? (
                     <>
@@ -579,27 +683,12 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                         <div style={{ ...input, minHeight: 34, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.url || 'Not set'}</div>
                       </Field>
                       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                        <Btn variant="secondary" size="sm" onClick={() => setOverviewEditing(true)}>Edit details</Btn>
+                        <Btn variant="secondary" size="sm" onClick={() => { setOverviewEditing(true); setOpenSections(prev => new Set(prev).add('details')) }}>Edit details</Btn>
                       </div>
                     </>
                   )}
-                </FormSection>
+                </CollapsibleSection>
               )}
-
-              <FormSection title="Update this application" sub="The fields you are most likely to touch after every job-search session." T={T} dark={dark}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
-                  <SelectField label="Status" value={trackingForm.status} onChange={v => setTracking('status', v)} options={STATUS_OPTS} T={T} dark={dark} />
-                  <TextField label="Date applied" type="date" value={trackingForm.date_applied} onChange={v => setTracking('date_applied', v)} T={T} dark={dark} />
-                  <TextField label="Interview date" type="date" value={trackingForm.interview_date} onChange={v => setTracking('interview_date', v)} T={T} dark={dark} />
-                  <TextField label="Follow-up date" type="date" value={trackingForm.follow_up_date} onChange={v => setTracking('follow_up_date', v)} T={T} dark={dark} />
-                  <TextField label="Recruiter" value={trackingForm.recruiter} onChange={v => setTracking('recruiter', v)} placeholder="Name or email" T={T} dark={dark} style={{ gridColumn: '1/-1' }} />
-                  <TextField label="Rejection stage" value={trackingForm.rejection_stage} onChange={v => setTracking('rejection_stage', v)} placeholder="Resume screen, OA, phone screen..." T={T} dark={dark} style={{ gridColumn: '1/-1' }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <Btn variant="primary" size="sm" onClick={saveTracking} disabled={updating}>Save tracking</Btn>
-                  {trackingMsg && <span style={{ fontSize: 12, color: trackingMsg === 'Saved' ? T.success : T.danger }}>{trackingMsg}</span>}
-                </div>
-              </FormSection>
 
               <FormSection title="Notes" T={T} dark={dark}>
                 <Textarea value={notes} onChange={setNotes} placeholder="Referral notes, next step, application quirks..." rows={notesRows} style={{ lineHeight: 1.6 }} />
@@ -610,7 +699,22 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 )}
               </FormSection>
 
-              <FormSection title="Job description" T={T} dark={dark}>
+              <CollapsibleSection title="Tracking" sub="The fields you are most likely to touch after every job-search session."
+                T={T} open={openSections.has('tracking')} onToggle={() => toggleSection('tracking')}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
+                  <TextField label="Date applied" type="date" value={trackingForm.date_applied} onChange={v => setTracking('date_applied', v)} T={T} dark={dark} />
+                  <TextField label="Interview date" type="date" value={trackingForm.interview_date} onChange={v => setTracking('interview_date', v)} T={T} dark={dark} />
+                  <TextField label="Follow-up date" type="date" value={trackingForm.follow_up_date} onChange={v => setTracking('follow_up_date', v)} T={T} dark={dark} />
+                  <TextField label="Recruiter" value={trackingForm.recruiter} onChange={v => setTracking('recruiter', v)} placeholder="Name or email" T={T} dark={dark} style={{ gridColumn: '1/-1' }} />
+                  <TextField label="Rejection stage" value={trackingForm.rejection_stage} onChange={v => setTracking('rejection_stage', v)} placeholder="Resume screen, OA, phone screen..." T={T} dark={dark} style={{ gridColumn: '1/-1' }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <Btn variant="primary" size="sm" onClick={saveTracking} disabled={updating}>Save tracking</Btn>
+                  {trackingMsg && <span style={{ fontSize: 12, color: trackingMsg === 'Saved' ? T.success : T.danger }}>{trackingMsg}</span>}
+                </div>
+              </CollapsibleSection>
+
+              <CollapsibleSection title="Job description" T={T} open={openSections.has('jd')} onToggle={() => toggleSection('jd')}>
                 <div style={{ fontSize: 12, color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: jdExpanded ? 'none' : 140, overflow: 'hidden' }}>
                   {job.description || 'No description available.'}
                 </div>
@@ -618,12 +722,19 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 800, padding: '5px 0', marginTop: 4 }}>
                   {jdExpanded ? 'Show less' : 'Show more'}
                 </button>
-              </FormSection>
+              </CollapsibleSection>
 
               {(job.description || '').trim() && (
-                <FormSection title="ATS keyword match"
+                <CollapsibleSection title="ATS keyword match"
                   sub="JD skill keywords found in your materials — add the missing ones before applying"
-                  T={T} dark={dark}>
+                  T={T} open={openSections.has('ats')} onToggle={() => toggleSection('ats')}
+                  badge={ats && ats.score != null ? (
+                    <span style={{
+                      fontSize: 10, fontWeight: 800, fontFamily: 'JetBrains Mono, monospace',
+                      color: ats.score >= 0.7 ? '#10B981' : ats.score >= 0.4 ? '#F59E0B' : '#EF4444',
+                    }}>{Math.round(ats.score * 100)}%</span>
+                  ) : null}
+                >
                   {atsLoading && <div style={{ fontSize: 12, color: T.muted }}>Analyzing…</div>}
                   {ats && ats.score != null && (() => {
                     const pct = Math.round(ats.score * 100)
@@ -655,19 +766,8 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                   {ats && ats.score == null && (
                     <div style={{ fontSize: 11, color: T.muted }}>{ats.note || 'No keywords detected in the description.'}</div>
                   )}
-                </FormSection>
+                </CollapsibleSection>
               )}
-
-              <Divider />
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {job.status === 'new' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('skipped')} style={{ width: '100%' }}>Skip</Btn>}
-                {job.status === 'new' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>Reject</Btn>}
-                {job.status === 'queued' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('new')} style={{ width: '100%' }}>Back to new</Btn>}
-                {job.status === 'approved' && <Btn variant="ghost" size="sm" onClick={() => patchStatus('queued')} style={{ width: '100%' }}>Back to ready</Btn>}
-                {['applied', 'oa', 'interview'].includes(job.status) && <Btn variant="ghost" size="sm" onClick={() => patchStatus('rejected')} style={{ width: '100%', color: T.danger }}>Mark rejected</Btn>}
-                {['rejected', 'skipped'].includes(job.status) && <Btn variant="ghost" size="sm" onClick={() => patchStatus('new')} style={{ width: '100%' }}>Reopen</Btn>}
-              </div>
             </div>
           )}
 

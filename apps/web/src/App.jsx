@@ -26,6 +26,7 @@ export default function App() {
   const [dark, setDarkRaw]     = useState(stored.dark !== false)
   const [screen, setScreenRaw] = useState(stored.screen || 'dashboard')
   const [tab, setTabRaw]       = useState(stored.tab || 'new')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
   const [reachOutJob, setReachOutJob] = useState(null)
   const [jobsSearch, setJobsSearch]   = useState('')
@@ -36,6 +37,17 @@ export default function App() {
   useEffect(() => {
     document.body.classList.toggle('dark', dark)
   }, [dark])
+
+  // Auto-collapse the sidebar to an icon rail on narrow windows; the sidebar's
+  // own toggle button can still override this until the breakpoint is crossed
+  // again.
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1024px)')
+    const apply = () => setSidebarCollapsed(mql.matches)
+    apply()
+    mql.addEventListener('change', apply)
+    return () => mql.removeEventListener('change', apply)
+  }, [])
 
   const setDark   = v => { setDarkRaw(v);   saveState({ dark: v, screen, tab }) }
   const setScreen = s => { setScreenRaw(s); saveState({ dark, screen: s, tab }) }
@@ -86,6 +98,8 @@ export default function App() {
           dark={dark}
           setDark={setDark}
           stats={stats}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed(c => !c)}
         />
 
         <div className="app-main">

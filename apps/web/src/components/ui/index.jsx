@@ -91,6 +91,9 @@ export function Card({ children, style = {}, onClick, noPad = false }) {
   const [hov, setHov] = useState(false)
   return (
     <div onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onClick())) : undefined}
       onMouseEnter={() => onClick && setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
         background: T.card, border: `1px solid ${hov && onClick ? T.accent + '60' : T.border}`,
@@ -189,6 +192,24 @@ if (typeof document !== 'undefined') {
   const s = document.createElement('style')
   s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }'
   document.head.appendChild(s)
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+// Shared by any view with a `flash(msg, kind)` helper + `{ msg, kind }` state.
+export function Toast({ toast }) {
+  const { dark } = useContext(ThemeCtx)
+  const T = dark ? DARK : LIGHT
+  if (!toast) return null
+  return (
+    <div role="status" aria-live="polite" style={{
+      position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
+      padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
+      background: toast.kind === 'err' ? T.danger : T.success,
+      boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+    }}>
+      {toast.msg}
+    </div>
+  )
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────

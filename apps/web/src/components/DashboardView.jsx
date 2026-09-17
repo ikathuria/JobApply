@@ -35,7 +35,9 @@ function MatchCard({ job, onClick }) {
   const pct = Math.round((job.score ?? 0) * 100)
   const scoreColor = pct >= 75 ? 'var(--ok)' : pct >= 55 ? 'var(--warn)' : 'var(--bad)'
   return (
-    <div className="match-card" onClick={() => onClick(job)}>
+    <div className="match-card" onClick={() => onClick(job)}
+      role="button" tabIndex={0}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onClick(job))}>
       <div
         className="score-chip"
         style={{
@@ -110,7 +112,13 @@ export default function DashboardView({ stats, setTab, onSelectJob, onRefresh })
               {focus.slice(0, 3).map(item => (
                 <div
                   key={item.id}
+                  role="button" tabIndex={0}
                   onClick={() => item.jobId ? onSelectJob({ id: item.jobId, _needsFetch: true }) : setTab(item.tab)}
+                  onKeyDown={e => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return
+                    e.preventDefault()
+                    item.jobId ? onSelectJob({ id: item.jobId, _needsFetch: true }) : setTab(item.tab)
+                  }}
                   style={{
                     background: 'rgba(255,255,255,0.55)',
                     border: `1px solid ${item.color}50`,
@@ -155,7 +163,9 @@ export default function DashboardView({ stats, setTab, onSelectJob, onRefresh })
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {followups.slice(0, 6).map(j => (
               <div key={j.id}
+                role="button" tabIndex={0}
                 onClick={() => onSelectJob({ id: j.id, _needsFetch: true })}
+                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelectJob({ id: j.id, _needsFetch: true }))}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'rgba(255,255,255,0.5)', borderRadius: 8, cursor: 'pointer' }}>
                 <span style={{ fontSize: 12, color: 'var(--ink)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {j.title} <span style={{ color: 'var(--ink-3)' }}>@ {j.company || 'N/A'}</span>

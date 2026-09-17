@@ -77,7 +77,7 @@ const STATUS_ROWS = [
   { key: 'offer',     label: 'Offer',     color: '#5A9DA8' },
 ]
 
-export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
+export default function Sidebar({ screen, setScreen, dark, setDark, stats, collapsed, onToggleCollapsed }) {
   const goTo = (id) => setScreen(id)
 
   const totalApplied = stats
@@ -86,18 +86,20 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
   const pct = stats?.total ? Math.round((totalApplied / stats.total) * 100) : 0
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-mark">J</div>
-        <div className="col" style={{ lineHeight: 1.15 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>JobApply</span>
-          <span className="mono" style={{ fontSize: 9.5, color: 'var(--ink-3)', letterSpacing: '0.13em', textTransform: 'uppercase' }}>AI · 2026</span>
-        </div>
+        {!collapsed && (
+          <div className="col" style={{ lineHeight: 1.15 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>JobApply</span>
+            <span className="mono" style={{ fontSize: 9.5, color: 'var(--ink-3)', letterSpacing: '0.13em', textTransform: 'uppercase' }}>AI · 2026</span>
+          </div>
+        )}
       </div>
 
       {/* Nav */}
-      <div className="eyebrow">Workspace</div>
+      {!collapsed && <div className="eyebrow">Workspace</div>}
       <div className="col gap-1">
         {NAV.map(({ id, label, Icon, tone, hasBadge }) => {
           const active = screen === id
@@ -105,7 +107,8 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
           const toneColor  = tone ? `var(--${tone})`      : 'var(--paper-3)'
           const toneInk    = tone ? `var(--${tone}-ink)`  : 'var(--ink-3)'
           return (
-            <button key={id} className={`nav-item${active ? ' active' : ''}`} onClick={() => goTo(id)}>
+            <button key={id} className={`nav-item${active ? ' active' : ''}`} onClick={() => goTo(id)}
+              title={collapsed ? label : undefined} aria-label={label}>
               <div
                 className="nav-icon"
                 style={{
@@ -115,8 +118,8 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
               >
                 <Icon />
               </div>
-              <span style={{ flex: 1 }}>{label}</span>
-              {badge > 0 && (
+              {!collapsed && <span style={{ flex: 1 }}>{label}</span>}
+              {!collapsed && badge > 0 && (
                 <span
                   className="nav-count"
                   style={{
@@ -133,56 +136,70 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
       </div>
 
       {/* Pipeline stats */}
-      <div className="sidebar-section-gap" />
-      <div className="eyebrow">Pipeline</div>
-      <div className="col">
-        {STATUS_ROWS.map(({ key, label, color }) => (
-          <div key={key} className="status-row">
-            <div className="row gap-2">
-              <div
-                className="status-dot"
-                style={{ background: color, borderColor: color }}
-              />
-              <span>{label}</span>
+      {!collapsed && (<>
+        <div className="sidebar-section-gap" />
+        <div className="eyebrow">Pipeline</div>
+        <div className="col">
+          {STATUS_ROWS.map(({ key, label, color }) => (
+            <div key={key} className="status-row">
+              <div className="row gap-2">
+                <div
+                  className="status-dot"
+                  style={{ background: color, borderColor: color }}
+                />
+                <span>{label}</span>
+              </div>
+              <span className="mono tabular" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+                {stats?.[key] ?? 0}
+              </span>
             </div>
-            <span className="mono tabular" style={{ fontSize: 11, color: 'var(--ink-3)' }}>
-              {stats?.[key] ?? 0}
-            </span>
-          </div>
-        ))}
+          ))}
 
-        {/* Progress bar */}
-        {stats && (
-          <div style={{ padding: '10px 10px 4px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 5 }}>
-              <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Submitted</span>
-              <span className="mono tabular" style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700 }}>{pct}%</span>
+          {/* Progress bar */}
+          {stats && (
+            <div style={{ padding: '10px 10px 4px' }}>
+              <div className="row" style={{ justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Submitted</span>
+                <span className="mono tabular" style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700 }}>{pct}%</span>
+              </div>
+              <div style={{ height: 5, borderRadius: 5, background: 'var(--paper-3)', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${pct}%`, height: '100%', borderRadius: 5,
+                  background: `linear-gradient(90deg, var(--accent), var(--ok))`,
+                  transition: 'width 0.5s ease',
+                }} />
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 4 }}>
+                {totalApplied} of {stats.total ?? 0} jobs
+              </div>
             </div>
-            <div style={{ height: 5, borderRadius: 5, background: 'var(--paper-3)', overflow: 'hidden' }}>
-              <div style={{
-                width: `${pct}%`, height: '100%', borderRadius: 5,
-                background: `linear-gradient(90deg, var(--accent), var(--ok))`,
-                transition: 'width 0.5s ease',
-              }} />
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 4 }}>
-              {totalApplied} of {stats.total ?? 0} jobs
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </>)}
 
       <div className="grow" />
 
       {/* Footer */}
       <div className="sidebar-divider" />
 
+      {/* Collapse toggle */}
+      <button
+        onClick={onToggleCollapsed}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        className="nav-item"
+        style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+      >
+        <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>{collapsed ? '»' : '« Collapse'}</span>
+      </button>
+
       {/* Theme toggle */}
-      <div className="row" style={{ padding: '4px 6px 8px', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{dark ? 'Dark' : 'Light'} mode</span>
+      <div className="row" style={{ padding: '4px 6px 8px', justifyContent: collapsed ? 'center' : 'space-between' }}>
+        {!collapsed && <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{dark ? 'Dark' : 'Light'} mode</span>}
         <button
           onClick={() => setDark(!dark)}
           className="theme-toggle"
+          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
           style={{ background: dark ? 'var(--accent)' : 'var(--paper-4)' }}
         >
           <div className="theme-knob" style={{ left: dark ? 19 : 3 }} />
@@ -192,10 +209,12 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats }) {
       {/* User */}
       <div className="user-chip">
         <div className="user-avatar">IK</div>
-        <div className="col" style={{ lineHeight: 1.2, minWidth: 0 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ishani Kathuria</span>
-          <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>Summer 2026</span>
-        </div>
+        {!collapsed && (
+          <div className="col" style={{ lineHeight: 1.2, minWidth: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ishani Kathuria</span>
+            <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>Summer 2026</span>
+          </div>
+        )}
       </div>
     </aside>
   )
