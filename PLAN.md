@@ -118,10 +118,15 @@ maintainable.
 - Inline job entry points (**Reach out** already exists in JobDrawer; a **Prep**
   shortcut) — Reach out is wired; Prep shortcut deferred to M30/M31 polish.
 
-### M30 — Split the JobsView monolith
-- Extract `ImportModal`, `ReviewDeck`, `ApprovedDeck`, `FocusQueue`, and the
-  download/CSV helpers into their own files under `components/pipeline/`.
-- Target: no single view file over ~15 KB; shared helpers deduped.
+### M30 — Split the JobsView monolith ✅ (done 2026-09-17)
+- Extracted `ImportModal` (+ CSV helpers/constants), `FocusQueue`, `ReviewDeck`,
+  and `ApprovedDeck` (+ file-download helpers) into `components/pipeline/`, with
+  `TABS`/`normalizeLocation` in `pipeline/constants.js`. Trimmed now-unused
+  imports from `JobsView`.
+- `JobsView.jsx`: **62 KB → 18.7 KB**; every extracted file ≤15 KB (ReviewDeck
+  14.7, ApprovedDeck 12.3, ImportModal 12.2, FocusQueue 3.7, constants 0.5).
+- Pure refactor — the production JS bundle hash was **byte-identical** before
+  and after, proving behavior is unchanged.
 
 ### M31 — Polish + verify
 - Rebuild `apps/web/dist`, click through each slice in the browser.
