@@ -229,6 +229,49 @@ ROLE_LABEL = {
 }
 
 
+# ── LinkedIn referral-ask drafts ────────────────────────────────────────────
+# These connections are all 1st-degree, so the play is a warm LinkedIn DM (not
+# cold email) asking for a referral. Deterministic templates — personalized by
+# the contact's first name, company, role type, and pipeline tier — so the run
+# stays offline/fast; the report reminds you to tailor the top ones by hand.
+# Sender identity is pulled from config/profile.json where practical, with these
+# stable hooks as the fallback so the message reads right even without it.
+SENDER_INTRO = (
+    "I'm finishing my MS in Applied AI at Purdue and spent ~2 years as an SDE at "
+    "AWS before this, now focused on new-grad AI/ML roles (RAG/LLM and applied ML)"
+)
+
+
+def draft_message(c: Contact) -> str:
+    """A short, warm LinkedIn referral-ask DM tailored to one connection."""
+    first = (c.first or c.name or "there").strip()
+    company = (c.company or "your team").strip()
+
+    # Context sentence — where this company sits in her funnel.
+    if c.company_tier == TIER_INTERVIEW:
+        ctx = f"I'm currently interviewing with {company} for an AI/ML role"
+    elif c.company_tier == TIER_APPLIED:
+        ctx = f"I recently applied to a few AI/ML roles at {company}"
+    else:
+        ctx = f"I'm focusing my search on AI/ML teams at {company}"
+
+    # The ask — engineers/managers can refer; recruiters route you to the req.
+    if c.role_type == "hiring_manager":
+        ask = "Would you be open to referring me, or pointing me to the right person on your team?"
+    elif c.role_type == "engineer_referrer":
+        ask = "Would you be open to referring me internally?"
+    else:  # recruiter_relevant / recruiter_generic
+        ask = (f"Would you be the right person to talk to about new-grad AI/ML "
+               f"openings at {company}, or could you point me to the team that's hiring?")
+
+    return (
+        f"Hi {first}, hope you've been well! {SENDER_INTRO}. "
+        f"{ctx}. {ask} "
+        f"Happy to send my resume and the exact job links to make it easy — "
+        f"thanks so much either way!"
+    )
+
+
 def write_report(shortlist: list[Contact], all_contacts: list[Contact], out_dir: Path) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     md_path = out_dir / "linkedin_outreach.md"
@@ -240,34 +283,39 @@ def write_report(shortlist: list[Contact], all_contacts: list[Contact], out_dir:
     n_active = sum(1 for c in shortlist if c.company_tier == TIER_INTERVIEW)
 
     lines = [
-        "# LinkedIn outreach shortlist",
+        "# LinkedIn referral outreach — worklist",
         "",
         f"- **{len(all_contacts)}** connections scanned → **{len(shortlist)}** worth reaching out to",
         f"- {n_recruiter} recruiters · {n_eng} engineers/referrers · {n_hm} hiring managers",
         f"- {n_active} at companies where you're **interview-stage** (top priority)",
         "",
-        "Ranked by leverage (company relevance + role). Reach out to engineers for "
-        "referrals first, then the relevant recruiter for the same company.",
+        "These are all 1st-degree connections, so message them **on LinkedIn** (not "
+        "email). Ranked by leverage — work top-down and **personalize each draft** "
+        "before sending (add a shared detail; don't paste as-is). Start with the "
+        "interview-stage companies, then engineers/referrers at sponsors.",
         "",
-        "| # | Name | Company | Title | Type | Why | LinkedIn |",
-        "|---|------|---------|-------|------|-----|----------|",
+        "---",
+        "",
     ]
     for i, c in enumerate(shortlist, 1):
-        why = c.tier_label
-        url = f"[profile]({c.url})" if c.url else "—"
-        lines.append(
-            f"| {i} | {c.name} | {c.company} | {c.position} | "
-            f"{ROLE_LABEL.get(c.role_type, c.role_type)} | {why} | {url} |"
-        )
+        profile = f"[LinkedIn profile]({c.url})" if c.url else "_(no profile URL)_"
+        why = f" · {c.tier_label}" if c.tier_label else ""
+        lines += [
+            f"### {i}. {c.name} — {c.company}",
+            f"_{c.position} · {ROLE_LABEL.get(c.role_type, c.role_type)}{why}_ · {profile}",
+            "",
+            f"> {draft_message(c)}",
+            "",
+        ]
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["rank", "name", "company", "title", "role_type",
-                    "company_tier", "score", "email", "linkedin_url"])
+                    "company_tier", "score", "linkedin_url", "message"])
         for i, c in enumerate(shortlist, 1):
             w.writerow([i, c.name, c.company, c.position, c.role_type,
-                        c.company_tier, c.score, c.email, c.url])
+                        c.company_tier, c.score, c.url, draft_message(c)])
     return md_path, csv_path
 
 

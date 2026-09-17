@@ -330,6 +330,10 @@ make outreach-linkedin ARGS=--load
 
 Ranking uses the same curated H-1B-sponsor list as the job scorer, plus your
 live-application signal from the tracker (interview-stage companies rank first).
+The report (`output/outreach/linkedin_outreach.md`) includes a ready-to-send,
+personalized **LinkedIn referral-ask DM** per connection — these are 1st-degree
+connections, so message them on LinkedIn (not email); personalize the top ones
+before sending.
 
 ### Interactive apply
 
