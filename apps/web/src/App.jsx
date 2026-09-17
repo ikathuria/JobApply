@@ -33,6 +33,7 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedJob, setSelectedJob] = useState(null)
   const [reachOutJob, setReachOutJob] = useState(null)
+  const [prepFocusJob, setPrepFocusJob] = useState(null)
   const [jobsSearch, setJobsSearch]   = useState('')
   const [stats, setStats]      = useState(null)
   const [refreshKey, setRefreshKey]  = useState(0)
@@ -131,6 +132,7 @@ export default function App() {
                     onClose={() => setSelectedJob(null)}
                     onRefresh={onRefresh}
                     onReachOut={job => { setReachOutJob(job); setSelectedJob(null); setScreen('outreach') }}
+                    onPrep={job => { setPrepFocusJob(job); setSelectedJob(null); setScreen('prep') }}
                   />
                 )}
               </div>
@@ -156,7 +158,7 @@ export default function App() {
 
             {screen === 'prep' && (
               <div style={{ flex: 1, overflow: 'hidden' }}>
-                <PrepView />
+                <PrepView focusJobId={prepFocusJob?.id} />
               </div>
             )}
 

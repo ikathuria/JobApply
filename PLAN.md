@@ -128,10 +128,14 @@ maintainable.
 - Pure refactor — the production JS bundle hash was **byte-identical** before
   and after, proving behavior is unchanged.
 
-### M31 — Polish + verify
-- Rebuild `apps/web/dist`, click through each slice in the browser.
-- Keep the tree flake8-clean; `npm run build` green; pytest green.
-- Commit `dist` per the local-only model (Makefile `local` serves committed build).
+### M31 — Polish + verify ✅ (done 2026-09-17)
+- Added an inline **Prep** shortcut to the JobDrawer (next to "Reach out"),
+  shown only for OA/interview-stage jobs; it deep-links to Interview Prep and
+  auto-selects that job (`PrepView` now takes an optional `focusJobId`).
+- Final in-browser click-through of every view (Pipeline, Outreach, Timeline,
+  Interview Prep, Analytics, Settings) — all render, nav active-state correct,
+  the Prep deep-link auto-selects the job, **zero console errors, zero server
+  500s**. `npm run build` green; pytest 237 green; `dist` committed.
 
 ---
 

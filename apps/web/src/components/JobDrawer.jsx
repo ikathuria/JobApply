@@ -217,7 +217,7 @@ function StatusRail({ job, T, dark, disabled, onChange }) {
   )
 }
 
-export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, onReachOut }) {
+export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, onReachOut, onPrep }) {
   const T = dark ? DARK : LIGHT
   const [job, setJob] = useState(initialJob)
   const [activeTab, setActiveTab] = useState('overview')
@@ -600,6 +600,9 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
             )}
             {onReachOut && (
               <Btn variant="secondary" size="sm" onClick={() => onReachOut(job)}>Reach out</Btn>
+            )}
+            {onPrep && ['oa', 'interview'].includes(job.status) && (
+              <Btn variant="secondary" size="sm" onClick={() => onPrep(job)}>Prep</Btn>
             )}
           </div>
           {tailorMsg && <div style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>{tailorMsg}</div>}

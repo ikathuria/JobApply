@@ -35,7 +35,7 @@ function QuestionBucket({ title, items, T }) {
   )
 }
 
-export default function PrepView() {
+export default function PrepView({ focusJobId } = {}) {
   const { dark } = useContext(ThemeCtx)
   const T = dark ? DARK : LIGHT
 
@@ -56,6 +56,15 @@ export default function PrepView() {
   }, [])
 
   useEffect(() => { loadJobs() }, [loadJobs])
+
+  // Deep-link: when opened from a job's "Prep" shortcut, auto-select it once
+  // the interview-stage list has loaded (no-op if the job isn't in the list).
+  useEffect(() => {
+    if (focusJobId == null || !jobs) return
+    const j = jobs.find(x => x.id === focusJobId)
+    if (j && selectedId !== j.id) selectJob(j)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusJobId, jobs])
 
   const selectJob = (job) => {
     setSelectedId(job.id)
