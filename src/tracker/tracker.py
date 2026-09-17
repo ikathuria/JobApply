@@ -55,6 +55,23 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     return conn
 
 
+def connect(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    """Open a connection to an already-initialized DB (row_factory + WAL, no
+    schema work). Use `init_db` once to create/migrate the schema; use this for
+    lightweight per-thread handles afterwards.
+
+    A single sqlite3 connection must not be executed on concurrently from
+    multiple threads (it crosses cursor state and yields corrupt rows), so
+    multi-threaded callers (e.g. the FastAPI threadpool) open one connection
+    per thread via this helper rather than sharing one.
+    """
+    conn = sqlite3.connect(db_path, check_same_thread=False, timeout=30)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    return conn
+
+
 def _create_tables(conn: sqlite3.Connection) -> None:
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS jobs (

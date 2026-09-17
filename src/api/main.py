@@ -89,28 +89,55 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", str(ROOT / "output" / "resumes"))
 # ── Singleton DB connection ───────────────────────────────────────────────────
 # Uses Turso (libsql) when TURSO_DATABASE_URL is set, sqlite3 otherwise.
 
-_conn = None
+import threading
+
+_conn = None                       # shared Turso HTTP connection (stateless per execute)
+_local = threading.local()         # per-thread sqlite connections
+_schema_ready = False
+_schema_lock = threading.Lock()
 
 
 _GIT_DB = ROOT / "src" / "tracker" / "applications.db"   # always the git-committed copy
 
 
 def db():
-    global _conn
-    if _conn is None:
-        if os.environ.get("TURSO_DATABASE_URL"):
-            import threading
-            from api.turso import connect as turso_connect, seed_from_sqlite
-            from tracker.tracker import _create_tables  # type: ignore[attr-defined]
-            _conn = turso_connect()
-            _create_tables(_conn)            # schema first (fast, ~5 HTTP calls)
-            # Seed in background — app responds immediately, jobs appear within seconds
-            threading.Thread(
-                target=seed_from_sqlite, args=(_conn, _GIT_DB), daemon=True
-            ).start()
-        else:
-            _conn = init_db(DB_PATH)         # local: plain sqlite3
-    return _conn
+    """Return a DB connection for the current request.
+
+    Turso: one shared HTTP wrapper (each execute is an independent request).
+    Local sqlite: one connection PER THREAD. A single sqlite3 connection cannot
+    be executed on concurrently from multiple threads — the FastAPI threadpool
+    ran ~7 queries in parallel on one shared connection, crossing cursor state
+    and raising `IndexError: tuple index out of range` from get_stats. Handing
+    each thread its own connection (schema created once) fixes it; WAL keeps
+    committed writes visible across connections.
+    """
+    global _conn, _schema_ready
+    if _conn is not None:
+        return _conn                         # explicit override (tests inject here)
+
+    if os.environ.get("TURSO_DATABASE_URL"):
+        from api.turso import connect as turso_connect, seed_from_sqlite
+        from tracker.tracker import _create_tables  # type: ignore[attr-defined]
+        _conn = turso_connect()
+        _create_tables(_conn)                # schema first (fast, ~5 HTTP calls)
+        # Seed in background — app responds immediately, jobs appear within seconds
+        threading.Thread(
+            target=seed_from_sqlite, args=(_conn, _GIT_DB), daemon=True
+        ).start()
+        return _conn
+
+    # Local sqlite: create/migrate the schema once, then a connection per thread.
+    if not _schema_ready:
+        with _schema_lock:
+            if not _schema_ready:
+                init_db(DB_PATH).close()     # create + migrate schema once
+                _schema_ready = True
+    conn = getattr(_local, "conn", None)
+    if conn is None:
+        from tracker.tracker import connect as sqlite_connect
+        conn = sqlite_connect(DB_PATH)
+        _local.conn = conn
+    return conn
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
