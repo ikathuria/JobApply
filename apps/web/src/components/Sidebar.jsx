@@ -58,14 +58,18 @@ function IconPrep() {
   )
 }
 
-const NAV = [
-  { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,     tone: 'blue'   },
-  { id: 'jobs',      label: 'Jobs',       Icon: IconLayers,   tone: 'purple', hasBadge: true },
-  { id: 'outreach',  label: 'Outreach',   Icon: IconMail,     tone: 'blue'   },
-  { id: 'timeline',  label: 'Timeline',   Icon: IconCalendar, tone: 'teal'   },
-  { id: 'prep',      label: 'Interview Prep', Icon: IconPrep,  tone: 'purple' },
-  { id: 'analytics', label: 'Analytics',  Icon: IconChart,    tone: 'teal'   },
-  { id: 'settings',  label: 'Settings',   Icon: IconGear,     tone: null     },
+// Two-tier nav (M28): the daily apply-loop screens sit in the prominent
+// "Workspace" group; everything else demotes to a lighter "Tools" group.
+const PRIMARY_NAV = [
+  { id: 'dashboard', label: 'Dashboard',  Icon: IconHome,   tone: 'blue'   },
+  { id: 'jobs',      label: 'Jobs',       Icon: IconLayers, tone: 'purple', hasBadge: true },
+]
+const TOOLS_NAV = [
+  { id: 'outreach',  label: 'Outreach',       Icon: IconMail,     tone: 'blue'   },
+  { id: 'timeline',  label: 'Timeline',       Icon: IconCalendar, tone: 'teal'   },
+  { id: 'prep',      label: 'Interview Prep',  Icon: IconPrep,     tone: 'purple' },
+  { id: 'analytics', label: 'Analytics',      Icon: IconChart,    tone: 'teal'   },
+  { id: 'settings',  label: 'Settings',       Icon: IconGear,     tone: null     },
 ]
 
 const STATUS_ROWS = [
@@ -76,6 +80,38 @@ const STATUS_ROWS = [
   { key: 'interview', label: 'Interview', color: '#C28098' },
   { key: 'offer',     label: 'Offer',     color: '#5A9DA8' },
 ]
+
+function NavButton({ item, active, collapsed, badge, onClick }) {
+  const { label, Icon, tone } = item
+  const toneColor = tone ? `var(--${tone})`     : 'var(--paper-3)'
+  const toneInk   = tone ? `var(--${tone}-ink)` : 'var(--ink-3)'
+  return (
+    <button className={`nav-item${active ? ' active' : ''}`} onClick={onClick}
+      title={collapsed ? label : undefined} aria-label={label}>
+      <div
+        className="nav-icon"
+        style={{
+          background: active ? toneColor : 'var(--paper-3)',
+          color:      active ? toneInk   : 'var(--ink-3)',
+        }}
+      >
+        <Icon />
+      </div>
+      {!collapsed && <span style={{ flex: 1 }}>{label}</span>}
+      {!collapsed && badge > 0 && (
+        <span
+          className="nav-count"
+          style={{
+            background: active ? toneColor : 'var(--paper-3)',
+            color:      active ? toneInk   : 'var(--ink-3)',
+          }}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
+  )
+}
 
 export default function Sidebar({ screen, setScreen, dark, setDark, stats, collapsed, onToggleCollapsed }) {
   const goTo = (id) => setScreen(id)
@@ -98,47 +134,42 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats, colla
         )}
       </div>
 
-      {/* Nav */}
+      {/* Primary nav — the daily apply loop */}
       {!collapsed && <div className="eyebrow">Workspace</div>}
       <div className="col gap-1">
-        {NAV.map(({ id, label, Icon, tone, hasBadge }) => {
-          const active = screen === id
-          const badge = hasBadge ? (stats?.ready ?? 0) : null
-          const toneColor  = tone ? `var(--${tone})`      : 'var(--paper-3)'
-          const toneInk    = tone ? `var(--${tone}-ink)`  : 'var(--ink-3)'
-          return (
-            <button key={id} className={`nav-item${active ? ' active' : ''}`} onClick={() => goTo(id)}
-              title={collapsed ? label : undefined} aria-label={label}>
-              <div
-                className="nav-icon"
-                style={{
-                  background: active ? toneColor : 'var(--paper-3)',
-                  color:      active ? toneInk   : 'var(--ink-3)',
-                }}
-              >
-                <Icon />
-              </div>
-              {!collapsed && <span style={{ flex: 1 }}>{label}</span>}
-              {!collapsed && badge > 0 && (
-                <span
-                  className="nav-count"
-                  style={{
-                    background: active ? toneColor        : 'var(--paper-3)',
-                    color:      active ? toneInk          : 'var(--ink-3)',
-                  }}
-                >
-                  {badge}
-                </span>
-              )}
-            </button>
-          )
-        })}
+        {PRIMARY_NAV.map(item => (
+          <NavButton
+            key={item.id}
+            item={item}
+            active={screen === item.id}
+            collapsed={collapsed}
+            badge={item.hasBadge ? (stats?.ready ?? 0) : 0}
+            onClick={() => goTo(item.id)}
+          />
+        ))}
+      </div>
+
+      {/* Secondary nav — occasional tools */}
+      {!collapsed
+        ? <div className="eyebrow" style={{ marginTop: 14 }}>Tools</div>
+        : <div className="sidebar-divider" style={{ margin: '8px 0' }} />}
+      <div className="col gap-1">
+        {TOOLS_NAV.map(item => (
+          <NavButton
+            key={item.id}
+            item={item}
+            active={screen === item.id}
+            collapsed={collapsed}
+            badge={0}
+            onClick={() => goTo(item.id)}
+          />
+        ))}
       </div>
 
       {/* Pipeline stats */}
       {!collapsed && (<>
         <div className="sidebar-section-gap" />
-        <div className="eyebrow">Pipeline</div>
+        <div className="eyebrow">Funnel</div>
         <div className="col">
           {STATUS_ROWS.map(({ key, label, color }) => (
             <div key={key} className="status-row">
@@ -212,7 +243,7 @@ export default function Sidebar({ screen, setScreen, dark, setDark, stats, colla
         {!collapsed && (
           <div className="col" style={{ lineHeight: 1.2, minWidth: 0 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ishani Kathuria</span>
-            <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>Summer 2026</span>
+            <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>New-grad · 2026–27</span>
           </div>
         )}
       </div>

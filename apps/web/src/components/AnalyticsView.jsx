@@ -94,7 +94,7 @@ export default function AnalyticsView({ stats }) {
   return (
     <div style={{ padding: '28px 32px', overflowY: 'auto', height: '100%' }}>
       <div className="page-title" style={{ marginBottom: 4 }}>Pipeline Analytics</div>
-      <div style={{ fontSize: 13, color: T.muted, marginBottom: 28 }}>Summer 2026 AI/ML Internship Search</div>
+      <div style={{ fontSize: 13, color: T.muted, marginBottom: 28 }}>New-Grad AI/ML Job Search · 2026–27</div>
 
       {/* Top stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>

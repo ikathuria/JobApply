@@ -86,7 +86,7 @@ export default function DashboardView({ stats, setTab, onSelectJob, onRefresh })
       <div className="hero-banner">
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
           <div className="col gap-3" style={{ maxWidth: 520 }}>
-            <span className="eyebrow" style={{ padding: 0 }}>AI/ML Internship Search · Summer 2026</span>
+            <span className="eyebrow" style={{ padding: 0 }}>New-Grad AI/ML Job Search · 2026–27</span>
             <h1 className="hero-title">
               The hunt is <em>on.</em>
             </h1>

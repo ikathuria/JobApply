@@ -90,11 +90,16 @@ maintainable.
 - Trim README.md: drop the overview/stack blocks that duplicate PROJECT.md;
   keep it as the run/setup guide. Add the LinkedIn outreach workflow.
 
-### M28 — Two-tier navigation
-- Rebuild `Sidebar.jsx`: `Pipeline` as the single primary item, a `Tools`
-  group (Outreach, Timeline, Prep, Analytics, Settings) under a divider.
-- Keep the pipeline-stats block and progress bar.
-- Fix stale copy (user chip / Settings still say "Summer 2026" → "New-grad 2026–27").
+### M28 — Two-tier navigation ✅ (done 2026-09-17)
+- Rebuilt `Sidebar.jsx` into two groups: **Workspace** (Dashboard, Jobs — the
+  daily loop) and a demoted **Tools** group (Outreach, Timeline, Prep,
+  Analytics, Settings) under its own label / a divider when collapsed.
+  Extracted a shared `NavButton`. Collapsing Dashboard + Jobs into a single
+  "Pipeline" entry is deferred to M29 (needs `PipelineView`).
+- Renamed the stats-section label "Pipeline" → "Funnel" to free the term.
+- Fixed stale copy: user chip → "New-grad · 2026–27"; Dashboard + Analytics
+  headers → "New-Grad AI/ML Job Search · 2026–27".
+- Verified in-browser: both groups render, nav clicks work, build green.
 
 ### M29 — PipelineView (the core surface)
 - New `PipelineView` that owns the stage rail + active-stage deck, composing the
