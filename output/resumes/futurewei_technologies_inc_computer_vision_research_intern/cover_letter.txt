@@ -1,5 +1,0 @@
-My strong academic background in AI, coupled with practical experience in multimodal systems and generative AI, makes me incredibly excited about the opportunity to conduct original research in computer vision at Futurewei Technologies. I am eager to contribute to innovative solutions and push the boundaries of what's possible in this dynamic field.
-
-In my research, I've developed novel architectures for multimodal generative models, leading to a publication in a top-tier CV/ML conference. I also designed and implemented a 3D reconstruction pipeline using PyTorch, achieving a 15% improvement in accuracy over baseline methods. My experience extends to systematically reviewing state-of-the-art techniques and conducting rigorous experimental studies to refine solutions.
-
-I am passionate about advancing computer vision research and believe my skills align perfectly with your team's goals. I would love to discuss how I can contribute to Futurewei's cutting-edge projects.

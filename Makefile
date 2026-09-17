@@ -1,4 +1,4 @@
-.PHONY: dev api web install build prod local
+.PHONY: dev api web install build prod local outreach-linkedin
 
 # Dev: open two cmd windows (Windows) running both servers
 dev:
@@ -27,6 +27,12 @@ prod: build
 # No rebuild. GitHub Actions keeps the data fresh; `git pull` grabs new PDFs.
 local:
 	uvicorn api.main:app --port 8000
+
+# Rank LinkedIn connections into an outreach shortlist (reads the gitignored
+# data/linkedin/Connections.csv; writes output/outreach/). Pass ARGS="--load"
+# to also upsert the shortlist into the recruiters table.
+outreach-linkedin:
+	python scripts/linkedin_outreach.py $(ARGS)
 
 # Install all dependencies (Python + Node)
 install:

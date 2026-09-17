@@ -1,5 +1,0 @@
-I'm incredibly excited by the opportunity to contribute to Abaka AI's mission of building high-quality datasets and evaluation pipelines as a Summer Research Intern. My strong background in LLM-based systems, multimodal AI, and hands-on experience in designing and evaluating AI solutions, particularly with RAG systems and multi-agent evaluation frameworks, directly aligns with your focus on LLM reasoning and QA.
-
-In previous projects, I designed and implemented a novel RAG system, achieving a 15% improvement in answer accuracy on complex QA tasks compared to baseline models. I also developed a multi-agent evaluation framework to systematically assess LLM reasoning capabilities, identifying critical failure modes and informing dataset construction. My experience extends to building robust data pipelines and performing in-depth error taxonomy, which I believe would be valuable in constructing and maintaining your expert-level benchmarks.
-
-I am eager to apply my skills to your impactful research artifacts and collaborate with your team. Thank you for considering my application; I look forward to discussing how I can contribute to Abaka AI.

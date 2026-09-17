@@ -1,5 +1,0 @@
-I'm excited by the opportunity to design and develop AI/ML models for telecom operational use cases at VIAVI Solutions. My strong research background in RAG systems and practical experience deploying LLM-based solutions at AWS make me well-prepared to contribute to your Wireless Network Lab. I'm particularly drawn to the chance to apply advanced AI techniques to real-world network diagnostics and automation.
-
-In my research, I've successfully built and managed data pipelines, curating and structuring complex datasets for large-scale model training on GPU infrastructure. I also developed robust evaluation benchmarks, validating model outputs against expert assessments, and have a track record of contributing to research publications. My experience with foundation models and parameter-efficient fine-tuning methods aligns directly with your preferred qualifications.
-
-I am eager to bring my expertise in deep learning and wireless communications to VIAVI Solutions and collaborate with your cross-functional engineering team. Thank you for considering my application; I look forward to discussing how I can contribute to your innovative projects.

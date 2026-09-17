@@ -1,5 +1,0 @@
-I'm particularly excited about the Applied Scientist Intern role within TikTok's Trust and Safety team, especially the opportunity to apply multimodal foundation models to critical content moderation challenges. My strong foundation in LLM research, multimodal AI, and practical experience in building and optimizing AI systems align perfectly with the technical demands and impact-driven nature of this role, and I'm eager to contribute innovative solutions.
-
-During my Master's in Applied AI, I developed a novel multimodal sentiment analysis model, achieving a 15% improvement in accuracy over baseline models by integrating visual and textual cues. At AWS, I optimized a large-scale distributed training pipeline for a deep learning model, reducing training time by 20% and improving resource utilization. I also have hands-on experience with PyTorch and various performance tuning techniques for large AI networks.
-
-I am enthusiastic about the prospect of leveraging my skills to enhance user safety at TikTok. Thank you for considering my application; I look forward to discussing how my background can contribute to your team.

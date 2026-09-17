@@ -1,5 +1,0 @@
-I'm incredibly excited by the prospect of designing and building resilient backend services for SentinelOne's AI-driven cybersecurity products. My experience developing and deploying LLM-backed features and RAG systems at AWS and Purdue has prepared me to contribute immediately. The opportunity to optimize distributed systems and evaluate AI quality aligns perfectly with my passion for creating high-performance, production-ready solutions.
-
-At AWS, I developed and deployed a scalable RAG system, improving information retrieval accuracy by 15% for internal tools. I also engineered a distributed system that processed over 10,000 requests per second, demonstrating my ability to build resilient service integrations and handle failure modes. My work at Purdue involved designing evaluation harnesses for novel LLM architectures, which led to a 20% improvement in model robustness and real-world behavior.
-
-I'm eager to bring my Python engineering skills and AI/ML expertise to SentinelOne and contribute to your cutting-edge cybersecurity solutions. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

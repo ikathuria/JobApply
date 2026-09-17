@@ -1,5 +1,0 @@
-I'm excited by the opportunity to contribute to TikTok's Global E-Commerce Content Recommendation team, particularly in exploring innovative generative recommendation techniques. My strong foundation in generative AI, large-scale system optimization, and deep learning frameworks makes me eager to enhance user experience and unlock new content discovery capabilities.
-
-My research includes developing novel diffusion models for multimodal content generation, which directly aligns with your exploration of generative recommendation. I’ve also optimized large-scale deep learning systems, achieving significant performance gains in recommendation accuracy and efficiency. Furthermore, I have experience building multi-model systems, enabling unified recommendations across diverse content formats, similar to your goal of connecting livestreams, short videos, and search.
-
-I am enthusiastic about applying my skills to real-world challenges at TikTok and contributing to your cutting-edge recommendation systems. Thank you for considering my application; I look forward to discussing how I can contribute.

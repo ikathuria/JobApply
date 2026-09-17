@@ -1,5 +1,0 @@
-I'm excited by the opportunity to contribute to TikTok's recommendation algorithms, especially given my strong background in developing and optimizing LLM-based systems with a focus on retrieval quality. My expertise in full-stack ML pipelines and deep learning frameworks aligns perfectly with your need for an intern to enhance user experience and drive impactful, end-to-end machine learning solutions.
-
-In my research, I designed and implemented a novel retrieval-augmented generation system, improving content relevance by 15% on a large-scale dataset. I also optimized a deep learning model's inference speed by 20% through efficient architecture design and PyTorch-based implementations, demonstrating my ability to own and optimize ML pipelines. My work has resulted in first-author publications at top-tier AI conferences, showcasing my theoretical and empirical research capabilities.
-
-I am eager to apply my skills to TikTok's dynamic environment and contribute to developing industry-leading recommendation systems. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

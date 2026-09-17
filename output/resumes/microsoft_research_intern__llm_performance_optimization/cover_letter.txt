@@ -1,5 +1,0 @@
-I'm particularly excited about this Research Intern role at Microsoft because my work on RAG system optimization and practical experience in deploying and optimizing LLM-based solutions directly align with your focus on LLM performance. I'm eager to apply my skills in inference latency reduction and distributed system efficiency to contribute to your innovative research.
-
-In my academic research, I successfully reduced inference latency by 15% in a custom LLM architecture by optimizing GPU kernel performance. I also developed and deployed a novel RAG system, achieving a 20% improvement in response time through strategic caching and parallel processing. My experience extends to identifying and resolving performance bottlenecks in high-performance computing environments, often leveraging unconventional approaches to achieve significant gains.
-
-I am enthusiastic about the opportunity to collaborate with Microsoft's world-class researchers and contribute to cutting-edge advancements in LLM performance. I am confident my skills and passion for innovation would make a meaningful impact, and I look forward to discussing how I can contribute to your team.

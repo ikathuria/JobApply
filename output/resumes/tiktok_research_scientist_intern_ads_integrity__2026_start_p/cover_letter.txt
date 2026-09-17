@@ -1,5 +1,0 @@
-I'm excited by the prospect of contributing to TikTok's Ads Business Integrity team, particularly in leading research and development of advanced generative AI technologies. My strong foundation in generative AI, LLMs, and multimodal systems, coupled with experience in deploying AI solutions at scale, aligns perfectly with your need for robust, low-latency, and cost-effective solutions.
-
-My research has focused on optimizing LLM performance across pre-training, SFT, and RLHF, including developing novel distillation techniques for efficient large-scale model inference. I've also designed and deployed multimodal AIGC solutions for content understanding, translating research breakthroughs into practical, production-grade AI services. Furthermore, I have experience in developing agentic systems using reinforcement learning to address real-world challenges.
-
-I am eager to apply my expertise to innovate within TikTok's dynamic environment and contribute to next-generation AI-driven ecosystems. Thank you for considering my application; I look forward to the opportunity to discuss how I can contribute.

@@ -1,5 +1,0 @@
-I'm incredibly excited by the prospect of contributing to Adobe's mission of enhancing customer experiences through AI and generative technologies like Firefly. My background in applied research on RAG systems, developing LLM-based solutions at AWS, and contributing to publications aligns perfectly with your focus on integrating novel work into product development and driving results-oriented research.
-
-At AWS, I developed and deployed an LLM-based solution for internal knowledge retrieval, improving information access efficiency by 30%. My research on RAG systems involved optimizing retrieval strategies and fine-tuning models, leading to a 15% improvement in answer relevance in specific domains. I've also actively contributed to research publications, demonstrating my ability to communicate complex technical concepts to peers and integrate new findings into practical applications.
-
-I'm eager to apply my skills in machine learning, NLP, and generative AI to Adobe's innovative projects. I am confident I can make meaningful contributions to your team and would welcome the opportunity to discuss how my experience can benefit Adobe.

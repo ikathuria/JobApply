@@ -1,5 +1,0 @@
-I'm particularly excited about the opportunity to contribute to ByteDance's next-generation big model as a service platform. My experience in building and deploying LLM-based production systems at AWS, coupled with my research in RAG and multi-agent adversarial frameworks, directly aligns with your need for developing a robust platform. I'm eager to help manage GPU resources and optimize large model management and fine-tuning workflows.
-
-At AWS, I developed and deployed an LLM-based production system, gaining hands-on experience with the entire lifecycle from training to inference and resource orchestration. My research into RAG and multi-agent adversarial frameworks further honed my understanding of optimizing LLM performance and alignment. I'm proficient in PyTorch and Python, and have a strong foundation in software development and code design.
-
-I'm enthusiastic about the prospect of applying my skills to ByteDance's innovative projects and contributing to a team that's pushing the boundaries of AI. Thank you for considering my application; I look forward to discussing how I can contribute.

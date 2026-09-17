@@ -1,5 +1,0 @@
-I'm particularly excited about the Machine Learning Engineer Intern role on TikTok's Recommendation algorithm team. My strong foundation in developing and optimizing LLM-based systems, coupled with a proven track record in large-scale ML infrastructure, aligns perfectly with your focus on enhancing user experience and platform growth through innovative machine learning solutions.
-
-During my research, I developed a novel deep learning architecture for content understanding, improving recommendation accuracy by 15% on a large-scale dataset. I also optimized a full-stack ML pipeline for a previous project, reducing inference latency by 20% while maintaining model performance. My experience extends to implementing robust and fair ML solutions, directly addressing key product challenges like those TikTok faces.
-
-I am eager to contribute my skills to TikTok's dynamic environment and learn from your industry-leading team. Thank you for considering my application; I look forward to discussing how I can contribute.

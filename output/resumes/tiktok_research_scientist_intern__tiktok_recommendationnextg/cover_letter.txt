@@ -1,5 +1,0 @@
-I'm incredibly excited by the prospect of contributing to TikTok's next-generation recommendation systems, especially given my background in designing and deploying LLM-based systems and my research in RAG and multi-agent frameworks. My work directly aligns with your goal of enhancing user engagement and personalization through advanced machine learning techniques.
-
-In my research, I've developed and optimized LLM architectures for real-time inference, achieving a 15% improvement in response latency for a conversational AI system. I also led a project integrating RAG into a knowledge retrieval system, boosting answer accuracy by 20% while reducing hallucination rates. Furthermore, my experience with multi-agent frameworks has equipped me to design robust, scalable systems that balance diverse objectives.
-
-I am eager to apply my expertise in large model technologies and deep learning to innovate within TikTok's dynamic environment. I'm confident I can make significant contributions to your team and would welcome the opportunity to discuss my qualifications further.

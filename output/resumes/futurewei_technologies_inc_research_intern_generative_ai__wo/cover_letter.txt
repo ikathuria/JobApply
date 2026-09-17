@@ -1,5 +1,0 @@
-I'm excited by the prospect of contributing to Futurewei's cutting-edge research in generative AI and world modeling. My strong academic foundation in AI, coupled with practical experience developing and deploying LLM-based systems at AWS, makes me eager to apply my skills. I believe my proven ability to develop novel algorithms and optimize complex AI systems aligns perfectly with the responsibilities of this Research Intern role.
-
-At AWS, I developed and deployed an LLM-based system for automated content generation, which involved fine-tuning a large language model and optimizing its inference pipeline, resulting in a 30% reduction in latency. My Ph.D. research focuses on novel generative adversarial networks for synthetic data generation, leading to two publications in top-tier conferences. I'm proficient in PyTorch and TensorFlow, and have hands-on experience across the full ML development lifecycle, from data annotation to model deployment.
-
-I am enthusiastic about the opportunity to innovate and publish with Futurewei's research team. Thank you for considering my application; I look forward to discussing how I can contribute.

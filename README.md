@@ -56,7 +56,7 @@ JobApply runs an end-to-end pipeline from discovery to outreach and application:
 - **Recruiting timeline** — a curated per-company application calendar (open/upcoming/closed windows, sponsor badges) cross-referenced with live open-role counts from your scraped jobs, plus apply / referral reminders timed to each company's window
 - **Interview prep** — generate a tailored, stored prep pack for any interview-stage job: company snapshot, topics to review, and behavioral / technical / system-design question banks with talking points grounded in your real experience
 - **Email notifications** — optional email when a job reaches Offer or Interview (via the same Gmail sender; toggled in Settings)
-- **PDF generation** — professional resume and cover letter PDFs rendered with ReportLab, committed back to the repo by CI
+- **PDF generation** — professional resume and cover letter PDFs rendered with ReportLab into the gitignored `output/resumes/` (regenerated per local `--tailor` run)
 - **ATS auto-fill** — supports Greenhouse, Lever, and LinkedIn Easy Apply; detects 10+ other platforms (Workday, Ashby, SmartRecruiters, iCIMS, Taleo, Jobvite, Rippling) for manual fallback
 - **Interactive apply** — always opens a headed browser; you solve any CAPTCHA, review the filled form, and confirm before any submission
 - **Cloud persistence** — Turso (libSQL) keeps the job database in sync across local machine, CI, and the deployed web app; falls back to SQLite when Turso credentials are absent
@@ -204,7 +204,7 @@ JobApply/
 │           ├── ThemeContext.jsx   # React context for dark/light
 │           └── ui/index.jsx       # shared primitives (Btn, Card, Input, Badge…)
 ├── output/
-│   └── resumes/                   # generated PDFs (committed by GHA daily)
+│   └── resumes/                   # generated PDFs (gitignored — regenerated per --tailor run)
 ├── logs/
 └── .github/workflows/
     └── daily_tailor.yml           # 9 AM UTC: discover + tailor 50 jobs, commit PDFs
@@ -299,8 +299,10 @@ python main.py
 
 # Single source
 python main.py --source intern_list
-python main.py --source linkedin      # headed browser; handles 2FA interactively
-python main.py --source handshake
+python main.py --source newgrad_jobs
+python main.py --source google_careers   # browserless; parses server-rendered HTML
+# python main.py --source linkedin       # PAUSED — headed browser, ban-risk
+# python main.py --source handshake      # PAUSED
 
 # Tailor the top N new jobs (fetch JD + generate resume + cover letter PDFs)
 python main.py --tailor --limit 50
@@ -311,6 +313,23 @@ python main.py --resolve-priority-links
 # Show application tracker statistics
 python main.py --stats
 ```
+
+### Outreach: rank your LinkedIn connections
+
+Export your LinkedIn data (Settings → Data privacy → Get a copy of your data),
+then extract **only** `Connections.csv` into `data/linkedin/` (the `data/`
+directory is gitignored — never commit the raw archive; it contains private
+messages, phone numbers, and login history). Then:
+
+```bash
+# Rank connections into a referral/cold-outreach shortlist → output/outreach/
+make outreach-linkedin
+# ...and upsert the shortlist into the recruiters table:
+make outreach-linkedin ARGS=--load
+```
+
+Ranking uses the same curated H-1B-sponsor list as the job scorer, plus your
+live-application signal from the tracker (interview-stage companies rank first).
 
 ### Interactive apply
 
@@ -432,12 +451,11 @@ With both servers running:
 
 ### `daily_tailor.yml` — runs at 9:00 AM UTC daily
 
-1. Discovers new listings from intern-list.com, LinkedIn, and Handshake (each source runs independently with `continue-on-error` so one failure never blocks the others)
+1. Discovers new listings from intern-list.com and newgrad-jobs.com via jobright.ai's JSON API (each source runs independently with `continue-on-error` so one failure never blocks the others)
 2. Scores and filters all new jobs
-3. Tailors the top 50 jobs (Groq Llama 3.1): fetches JDs, generates resume JSON + cover letter, renders PDFs
-4. Commits new PDFs from `output/resumes/` back to the repository
+3. Enriches priority jobs (resolves Jobright URLs to real employer ATS URLs)
 
-The database itself lives in Turso — only the generated PDFs are committed to git.
+The CI **tailoring** step is currently paused (`if: false` in `daily_tailor.yml`) — discovery + enrich run daily and populate Turso, and resume tailoring is done on demand locally (`python main.py --tailor`). The database lives in Turso; generated PDFs are **no longer committed** (`output/resumes/` is gitignored — regenerated per local run).
 
 **Required repository secrets:**
 
@@ -496,10 +514,10 @@ Click any row to open the drawer:
 
 ### Running it (local-only — the default)
 
-JobApply runs **locally** — it's a personal single-user tool, so there's no hosted deployment. The data pipeline stays hands-off in the cloud (free): **GitHub Actions** scrapes + tailors daily into **Turso** and commits the PDFs. On your machine:
+JobApply runs **locally** — it's a personal single-user tool, so there's no hosted deployment. The data pipeline stays hands-off in the cloud (free): **GitHub Actions** scrapes + enriches daily into **Turso**. Resume PDFs are generated on demand locally (`python main.py --tailor`) and are no longer committed. On your machine:
 
 ```bash
-git pull                 # grab the day's new resume PDFs
+git pull                 # grab the latest code
 make local               # serve the dashboard + API at http://localhost:8000
 ```
 

@@ -1,5 +1,0 @@
-I'm particularly excited by the prospect of co-developing an AI-assisted application for Seaboard Corporation, translating business requirements into effective, secure, and maintainable solutions. My strong foundation in LLM development, RAG pipelines, and Python, combined with my experience at AWS building and deploying AI solutions, aligns perfectly with the hands-on development and problem-solving required for this internship.
-
-At AWS, I gained practical experience in designing and implementing AI solutions, including developing RAG pipelines and integrating with various data sources. I'm proficient in Python and comfortable with modern IDE workflows, including VS Code, and have applied prompt engineering techniques to optimize LLM performance. My coursework in AI and Deep Learning has provided a solid theoretical background, which I've complemented with hands-on projects involving large language models.
-
-I'm eager to contribute my skills to Seaboard's innovative AI initiatives and gain valuable industry experience. Thank you for considering my application; I look forward to discussing how I can contribute to your team.

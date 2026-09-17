@@ -1,5 +1,0 @@
-My experience in large-scale system optimization, information retrieval, and deep learning, combined with a passion for recommendation systems, aligns perfectly with ByteDance's mission to enhance the TikTok e-commerce experience. I am eager to contribute to building and scaling innovative recommendation algorithms.
-
-During my research, I developed a novel deep learning model for personalized content recommendation, achieving a 15% improvement in user engagement metrics over baseline models. I also optimized a large-scale information retrieval system, reducing query latency by 20% while handling millions of daily requests. My work involved leveraging PyTorch for model development and deploying solutions within a distributed computing environment.
-
-I am excited by the prospect of applying my skills to ByteDance's dynamic e-commerce platform. I am confident I can make meaningful contributions to your team and would welcome the opportunity to discuss my qualifications further.

@@ -1,5 +1,0 @@
-My academic background in Applied AI, coupled with hands-on experience in audio processing and developing robust AI systems, directly aligns with Leidos's focus on speech processing and ASR for low-resource languages. I am eager to apply my skills in Python, PyTorch, and cloud environments to contribute to your prototype pipeline development and audio data analysis efforts.
-
-In my "DeepFakeGuard" project, I developed a system for detecting manipulated audio, gaining practical experience with audio signal processing and feature extraction. Additionally, my work at AWS involved building and deploying AI systems, which honed my ability to preprocess and analyze data, run experiments, and document findings in a cloud-based environment. I'm adept at using Python and PyTorch for machine learning tasks, skills directly applicable to your ASR and audio enhancement efforts.
-
-I'm incredibly enthusiastic about the opportunity to contribute to Leidos's innovative work in speech processing. Thank you for considering my application; I look forward to discussing how I can support your team.

@@ -1,5 +1,0 @@
-I'm incredibly excited by the prospect of contributing to BeOne Medicines' mission of fighting cancer, especially given my strong foundation in LLM-based application development and RAG systems, coupled with hands-on experience in multi-agent frameworks. The opportunity to apply modern AI engineering practices to develop impactful solutions aligns perfectly with my passion for leveraging AI for real-world good.
-
-During my academic projects, I developed a multi-agent system for information retrieval, integrating RAG to enhance contextual understanding and reduce hallucinations, which significantly improved response accuracy by 25%. I also automated a data processing workflow using Python, reducing manual effort by 40% and demonstrating my ability to build robust, efficient solutions. My experience with AI coding tools like GitHub Copilot has also streamlined my development process, allowing me to focus on complex problem-solving.
-
-I'm eager to bring my skills and enthusiasm to BeOne Medicines and contribute to your innovative work. Thank you for considering my application; I look forward to discussing how I can support your team.

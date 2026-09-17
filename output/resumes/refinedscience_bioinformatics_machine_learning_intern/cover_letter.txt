@@ -1,5 +1,0 @@
-I'm excited by the prospect of applying my machine learning and generative AI expertise to RefinedScience's single-cell biology and precision medicine initiatives. My strong academic background in AI and practical experience developing LLM-based systems, particularly with multimodal knowledge graphs and RAG systems, directly aligns with your interest in accelerating biological data interpretation and scientific workflows.
-
-During my Ph.D., I developed a novel graph neural network architecture for integrating multiomics data, achieving a 15% improvement in cell type classification accuracy over state-of-the-art methods. I also led a project to build a RAG system for scientific literature, enabling researchers to query complex biological pathways and reducing information retrieval time by 30%. My experience includes extensive work with scRNA-seq data using Scanpy and developing reproducible computational workflows in Python.
-
-I am eager to contribute to RefinedScience's mission and further develop my skills in a cutting-edge environment. Thank you for considering my application; I look forward to discussing how my background can benefit your team.

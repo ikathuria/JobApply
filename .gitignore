@@ -7,7 +7,13 @@ __pycache__/
 *.egg-info/
 logs/
 output/apply_screenshots/
-output/resumes/_test/
+# Generated tailoring artifacts — regenerated per run, no longer committed
+output/resumes/*
+!output/resumes/.gitkeep
+# Script-generated outreach reports (linkedin_outreach.py, etc.)
+output/outreach/
+# Raw personal data exports (LinkedIn archive: messages, phone numbers, etc.) — never commit
+data/
 apps/web/node_modules/
 src/tracker/applications.db
 src/tracker/applications.backup*.db
