@@ -22,6 +22,9 @@ Usage:
     # Same, then upsert the shortlist into the `recruiters` table:
     python scripts/linkedin_outreach.py --load
 
+    # Focus on just the top N (report, CSV, and --load all respect it):
+    python scripts/linkedin_outreach.py --top 60 --load
+
     # Point at a different export explicitly:
     python scripts/linkedin_outreach.py ~/Downloads/Connections.csv
 
@@ -272,7 +275,8 @@ def draft_message(c: Contact) -> str:
     )
 
 
-def write_report(shortlist: list[Contact], all_contacts: list[Contact], out_dir: Path) -> tuple[Path, Path]:
+def write_report(shortlist: list[Contact], all_contacts: list[Contact], out_dir: Path,
+                 full_shortlist_len: int | None = None) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     md_path = out_dir / "linkedin_outreach.md"
     csv_path = out_dir / "linkedin_outreach.csv"
@@ -282,17 +286,34 @@ def write_report(shortlist: list[Contact], all_contacts: list[Contact], out_dir:
     n_hm = sum(1 for c in shortlist if c.role_type == "hiring_manager")
     n_active = sum(1 for c in shortlist if c.company_tier == TIER_INTERVIEW)
 
+    full = full_shortlist_len if full_shortlist_len is not None else len(shortlist)
+    scanned = (f"- **{len(all_contacts)}** connections scanned → **{full}** worth "
+               f"reaching out to")
+    if full_shortlist_len is not None and len(shortlist) < full:
+        scanned += f" · **showing the top {len(shortlist)}**"
+
+    # Companies with the most contacts in this set — reach out to a company's
+    # people together (one engineer for the referral, then its recruiter).
+    company_counts: dict[str, int] = {}
+    for c in shortlist:
+        if c.company:
+            company_counts[c.company] = company_counts.get(c.company, 0) + 1
+    top_companies = sorted(company_counts.items(), key=lambda kv: (-kv[1], kv[0].lower()))[:10]
+    companies_line = " · ".join(f"{name} ({n})" for name, n in top_companies)
+
     lines = [
         "# LinkedIn referral outreach — worklist",
         "",
-        f"- **{len(all_contacts)}** connections scanned → **{len(shortlist)}** worth reaching out to",
+        scanned,
         f"- {n_recruiter} recruiters · {n_eng} engineers/referrers · {n_hm} hiring managers",
         f"- {n_active} at companies where you're **interview-stage** (top priority)",
+        f"- **Top companies here:** {companies_line}" if companies_line else "",
         "",
         "These are all 1st-degree connections, so message them **on LinkedIn** (not "
         "email). Ranked by leverage — work top-down and **personalize each draft** "
-        "before sending (add a shared detail; don't paste as-is). Start with the "
-        "interview-stage companies, then engineers/referrers at sponsors.",
+        "before sending (add a shared detail; don't paste as-is). Reach out to a "
+        "company's people together: an engineer/referrer for the referral, then its "
+        "recruiter.",
         "",
         "---",
         "",
@@ -361,6 +382,8 @@ def main() -> int:
                     help="Path to LinkedIn Connections.csv "
                          "(default: data/linkedin/Connections.csv)")
     ap.add_argument("--load", action="store_true", help="Upsert the shortlist into the recruiters table")
+    ap.add_argument("--top", type=int, default=None, metavar="N",
+                    help="Only output the top N of the shortlist (report, CSV, and --load)")
     ap.add_argument("--out", type=Path, default=REPO_ROOT / "output" / "outreach",
                     help="Output directory for the report (default: output/outreach)")
     ap.add_argument("--db", type=Path, default=DB_PATH, help="Tracker DB path")
@@ -368,6 +391,9 @@ def main() -> int:
 
     if not args.csv.exists():
         print(f"error: {args.csv} not found", file=sys.stderr)
+        return 1
+    if args.top is not None and args.top < 1:
+        print("error: --top must be a positive integer", file=sys.stderr)
         return 1
 
     print(f"Reading {args.csv} …")
@@ -378,13 +404,17 @@ def main() -> int:
               f"{len(applied)} applied-to companies (nudge tier)")
     shortlist = rank(contacts, interview, applied)
 
-    md_path, csv_path = write_report(shortlist, contacts, args.out)
-    print(f"  {len(contacts)} scanned → {len(shortlist)} on the shortlist")
+    # --top focuses the whole run (report, CSV, and --load) on the highest-leverage N.
+    selected = shortlist[:args.top] if args.top else shortlist
+
+    md_path, csv_path = write_report(selected, contacts, args.out, len(shortlist))
+    scope = f"top {len(selected)} of {len(shortlist)}" if args.top else str(len(shortlist))
+    print(f"  {len(contacts)} scanned → {scope} on the worklist")
     print(f"  report:  {md_path}")
     print(f"  csv:     {csv_path}")
 
     if args.load:
-        ins, upd = load_into_db(shortlist, args.db)
+        ins, upd = load_into_db(selected, args.db)
         print(f"  loaded into recruiters: {ins} new, {upd} updated")
     else:
         print("  (dry run — pass --load to write into the recruiters table)")

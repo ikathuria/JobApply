@@ -28,9 +28,9 @@ prod: build
 local:
 	uvicorn api.main:app --port 8000
 
-# Rank LinkedIn connections into an outreach shortlist (reads the gitignored
-# data/linkedin/Connections.csv; writes output/outreach/). Pass ARGS="--load"
-# to also upsert the shortlist into the recruiters table.
+# Rank LinkedIn connections into a referral worklist with per-contact DM drafts
+# (reads the gitignored data/linkedin/Connections.csv; writes output/outreach/).
+# ARGS examples: ARGS="--load" (upsert into recruiters), ARGS="--top 60 --load".
 outreach-linkedin:
 	python scripts/linkedin_outreach.py $(ARGS)
 
