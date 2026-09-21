@@ -21,6 +21,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   const [sourceFilter, setSourceFilter]     = useState('')
   const [dateFrom, setDateFrom]             = useState('')
   const [dateTo, setDateTo]                 = useState('')
+  const [sponsorsOnly, setSponsorsOnly]     = useState(false)
   const [jobs, setJobs]             = useState([])
   const [focus, setFocus]           = useState([])
   const [focusOpen, setFocusOpen]   = useState(false)
@@ -110,9 +111,10 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
       if (sourceFilter && j.source !== sourceFilter) return false
       if (dateFrom && j.date_applied && j.date_applied < dateFrom) return false
       if (dateTo && j.date_applied && j.date_applied > dateTo) return false
+      if (sponsorsOnly && !j.known_sponsor) return false
       return true
     })
-  }, [jobs, search, locationFilter, sourceFilter, dateFrom, dateTo])
+  }, [jobs, search, locationFilter, sourceFilter, dateFrom, dateTo, sponsorsOnly])
 
   useEffect(() => {
     setReviewMode(tab === 'ready' || tab === 'approved' ? 'deck' : 'list')
@@ -125,6 +127,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     setSourceFilter('')
     setDateFrom('')
     setDateTo('')
+    setSponsorsOnly(false)
   }, [tab])
 
   // Deep-link from the Timeline view: seed the search with a company name.
@@ -155,10 +158,10 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     return opts.sort()
   }, [jobs])
 
-  const hasFilters = !!(search || locationFilter || sourceFilter || dateFrom || dateTo || minScore > 0)
+  const hasFilters = !!(search || locationFilter || sourceFilter || dateFrom || dateTo || minScore > 0 || sponsorsOnly)
   // Only the "advanced" fields (row 2) count toward the Filters-button badge —
   // search lives in the always-visible row and isn't part of that disclosure.
-  const advancedFilterCount = [minScore > 0, !!locationFilter, !!sourceFilter, !!dateFrom, !!dateTo].filter(Boolean).length
+  const advancedFilterCount = [minScore > 0, !!locationFilter, !!sourceFilter, !!dateFrom, !!dateTo, sponsorsOnly].filter(Boolean).length
   function clearFilters() {
     setSearch('')
     setLocationFilter('')
@@ -166,6 +169,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     setDateFrom('')
     setDateTo('')
     setMinScore(0)
+    setSponsorsOnly(false)
   }
 
   const tabCount = (tabId) => {
@@ -309,6 +313,21 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
               <input type="date" className="filter-date" value={dateTo}
                 onChange={e => setDateTo(e.target.value)} title="Applied to" />
             </>)}
+
+            <button
+              onClick={() => setSponsorsOnly(v => !v)}
+              aria-pressed={sponsorsOnly}
+              title="Show only companies that are known H-1B sponsors"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
+                borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                fontFamily: 'Inter, system-ui, sans-serif',
+                border: `1px solid ${sponsorsOnly ? T.success : T.border}`,
+                background: sponsorsOnly ? `${T.success}1A` : 'transparent',
+                color: sponsorsOnly ? T.success : T.muted,
+              }}>
+              {sponsorsOnly ? '✓ ' : ''}H-1B sponsors only
+            </button>
 
             {hasFilters && (
               <button className="filter-clear" onClick={clearFilters}>Clear</button>
