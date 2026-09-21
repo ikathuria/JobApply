@@ -168,7 +168,21 @@ active search (warm LinkedIn referrals + F-1 sponsor prioritization).
   **H-1B** badge; the drawer header shows **H-1B SPONSOR** — sponsor-friendly
   roles are prioritizable at a glance.
 
+### M35 — Daily reminder email ✅ (done 2026-09-21)
+- `pipeline/daily_reminder.py` + `python main.py --remind`: a short daily,
+  action-first email — what to **apply** to (approved/queued + top new H-1B
+  sponsor roles), who to **ask for referrals** (LinkedIn connections not yet
+  messaged), and **follow-ups** due. Reuses the SMTP sender; no-ops without creds.
+- Scheduled via `.github/workflows/daily_reminder.yml` (daily 14:00 UTC ≈ 9 AM
+  Central), opt-in on SMTP secrets. **Data caveat:** GHA reads Turso (fresh
+  scraped jobs → the Apply/sponsor section is always populated); applied statuses
+  + LinkedIn recruiters are local, so referral/follow-up sections only fill in
+  cloud mode once that state is synced to Turso (or run `--remind` locally).
+
 ### Backlog (not yet built)
+- **Sync local personal state (recruiters + applied statuses) to Turso** so the
+  cloud daily reminder's referral/follow-up sections populate (or converge on
+  one DB). Chosen delivery is GHA (2026-09-21), so this is the main follow-up.
 - Editable **country** field on recruiters (LinkedIn export has no location, so
   a country filter needs manual data — deferred by decision 2026-09-21).
 - **Email discovery** auto-fill for cold (non-connection) recruiters.
@@ -201,5 +215,6 @@ python main.py --scan-inbox            # read replies, auto-advance statuses
 python main.py --ingest --days 60      # reconstruct funnel from the job-apps folder
 python main.py --dedup                 # collapse cross-source duplicates
 python main.py --digest                # weekly summary email
+python main.py --remind                # daily apply/referral/follow-up nudge
 python main.py --stats
 ```

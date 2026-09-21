@@ -477,6 +477,20 @@ Set these under **Settings → Secrets and variables → Actions → New reposit
 
 > **Note:** There is no automated apply workflow. The apply step is intentionally interactive-only — run `python main.py --apply` locally when you are ready to submit.
 
+### `daily_reminder.yml` — daily 14:00 UTC (~9 AM Central)
+
+Emails a short, action-first nudge every morning: what to **apply** to (approved/queued roles + top new **H-1B-sponsor** jobs), who to **ask for a referral** (LinkedIn connections not yet messaged), and **follow-ups** due. Build it locally anytime with `python main.py --remind`.
+
+**To enable the daily email**, add the SMTP secrets to GitHub (the same ones the weekly digest uses):
+
+| Secret | Description |
+|--------|-------------|
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` | Your mailbox (or use the legacy `GMAIL_ADDRESS` / `GMAIL_APP_PASSWORD`) |
+
+Without these the workflow runs and no-ops safely. Change the send time by editing the `cron` (it's UTC; `0 14 * * *` ≈ 9 AM Central during CDT).
+
+> **Data note:** GitHub reads **Turso**, which holds the daily-scraped jobs — so the **Apply / sponsor-jobs** section is always populated with fresh roles. Your **applied statuses** and **LinkedIn connections** live in your **local** DB, so the referral + follow-up sections only fill in cloud mode if that state is synced to Turso. If you want those sections fully populated daily, either sync your local data up or run the reminder locally on a schedule (`python main.py --remind` via cron/launchd) instead.
+
 ---
 
 ## Dashboard
