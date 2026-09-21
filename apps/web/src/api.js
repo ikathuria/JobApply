@@ -52,6 +52,7 @@ export const api = {
   patchRecruiter:   (id, data)  => req('PATCH',  `/recruiters/${id}`, data),
   deleteRecruiter:  (id)        => req('DELETE', `/recruiters/${id}`),
   recruiterOutreach:(id)        => req('GET',    `/recruiters/${id}/outreach`),
+  logLinkedin:      (id, data)  => req('POST',   `/recruiters/${id}/log-linkedin`, data),
 
   // ── Outreach: emails ──
   draftOutreach:    (data)      => req('POST',   '/outreach/draft', data),

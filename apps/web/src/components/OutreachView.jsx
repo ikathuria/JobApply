@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useContext, useMemo } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
 import { api } from '../api.js'
+import { linkedinMessage } from '../lib/linkedinMessage.js'
 import { Card, Btn, Input, Textarea, EmptyState, Spinner, SectionLabel, Divider, Toast } from './ui/index.jsx'
 
 const OUTREACH_STATUSES = ['draft', 'sent', 'replied', 'bounced', 'ignored']
@@ -32,6 +33,11 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
   // list filters
   const [search, setSearch] = useState('')
   const [companyFilter, setCompanyFilter] = useState('')
+  const [messagedFilter, setMessagedFilter] = useState('all')  // all | yes | no
+
+  // LinkedIn DM cockpit
+  const [liDraft, setLiDraft] = useState('')
+  const [logging, setLogging] = useState(false)
 
   // add-recruiter form
   const [addOpen, setAddOpen] = useState(false)
@@ -64,6 +70,12 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
       setForm(f => ({ ...f, company: reachOutJob.company || '' }))
     }
   }, [reachOutJob])
+
+  // Prefill the LinkedIn DM draft whenever the selected connection changes.
+  useEffect(() => {
+    const r = recruiters?.find(x => x.id === selectedId)
+    setLiDraft(r && r.linkedin_url ? linkedinMessage(r) : '')
+  }, [selectedId, recruiters])
 
   const selectRecruiter = (id) => {
     setSelectedId(id)
@@ -165,15 +177,43 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
   const filteredRecruiters = useMemo(() => {
     let list = recruiters || []
     if (companyFilter) list = list.filter(r => r.company === companyFilter)
+    if (messagedFilter === 'yes') list = list.filter(r => (r.sent_count || 0) > 0)
+    else if (messagedFilter === 'no') list = list.filter(r => !(r.sent_count || 0))
     const q = search.trim().toLowerCase()
     if (q) {
       list = list.filter(r =>
         [r.name, r.company, r.title].filter(Boolean).some(s => s.toLowerCase().includes(q)))
     }
     return list
-  }, [recruiters, companyFilter, search])
+  }, [recruiters, companyFilter, messagedFilter, search])
 
-  const hasFilter = Boolean(companyFilter || search.trim())
+  const hasFilter = Boolean(companyFilter || search.trim() || messagedFilter !== 'all')
+
+  const copyLinkedin = async () => {
+    try {
+      await navigator.clipboard.writeText(liDraft)
+      flash('Message copied — paste it into LinkedIn')
+    } catch {
+      flash('Copy failed — select the text and copy manually', 'err')
+    }
+  }
+  const openLinkedin = () => {
+    if (selected?.linkedin_url) window.open(selected.linkedin_url, '_blank', 'noopener')
+  }
+  const markMessaged = async () => {
+    if (!selectedId) return
+    setLogging(true)
+    try {
+      await api.logLinkedin(selectedId, { body: liDraft, job_id: reachOutJob ? reachOutJob.id : null })
+      flash('Logged — follow-up set for 7 days out')
+      loadOutreachQuiet(); loadRecruiters(); loadFollowups()
+      if (reachOutJob) clearReachOut()
+    } catch (e) {
+      flash(e.message || 'Could not log the message', 'err')
+    } finally {
+      setLogging(false)
+    }
+  }
   const selectStyle = {
     background: T.card, color: T.text, border: `1px solid ${T.border}`,
     borderRadius: 8, padding: '8px 10px', fontSize: 12.5, fontWeight: 600,
@@ -254,6 +294,11 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                 <option value="">All companies ({companyOptions.length})</option>
                 {companyOptions.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+              <select value={messagedFilter} onChange={e => setMessagedFilter(e.target.value)} style={{ ...selectStyle, maxWidth: 130 }}>
+                <option value="all">Any status</option>
+                <option value="no">Not messaged</option>
+                <option value="yes">Messaged</option>
+              </select>
             </div>
           )}
           {hasFilter && recruiters?.length > 0 && (
@@ -262,7 +307,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                 {filteredRecruiters.length} of {recruiters.length}
               </span>
               <button
-                onClick={() => { setSearch(''); setCompanyFilter('') }}
+                onClick={() => { setSearch(''); setCompanyFilter(''); setMessagedFilter('all') }}
                 style={{ background: 'transparent', border: 'none', color: T.accent, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
               >
                 Clear filters
@@ -317,10 +362,31 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                 </div>
               </div>
 
-              {!selected.email && (
+              {!selected.email && !selected.linkedin_url && (
                 <div style={{ marginTop: 10, fontSize: 12, color: T.warning }}>
                   ⚠ Add an email for this recruiter before sending.
                 </div>
+              )}
+
+              {/* LinkedIn DM cockpit — primary channel for 1st-degree connections */}
+              {selected.linkedin_url && (
+                <Card style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <SectionLabel style={{ marginBottom: 0 }}>LinkedIn referral message</SectionLabel>
+                    <span style={{ fontSize: 11, color: T.muted }}>1st-degree · send in LinkedIn</span>
+                  </div>
+                  <Textarea value={liDraft} onChange={setLiDraft} rows={6} style={{ marginTop: 8 }} />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                    <Btn variant="primary" onClick={copyLinkedin} disabled={!liDraft.trim()}>Copy message</Btn>
+                    <Btn variant="secondary" onClick={openLinkedin}>Open profile ↗</Btn>
+                    <Btn variant="success" onClick={markMessaged} disabled={logging}>
+                      {logging ? <Spinner size={14} color="#fff" /> : 'Mark as messaged'}
+                    </Btn>
+                  </div>
+                  <div style={{ fontSize: 11, color: T.muted, marginTop: 8 }}>
+                    Personalize before sending. “Mark as messaged” logs it and sets a 7-day follow-up.
+                  </div>
+                </Card>
               )}
 
               {/* Composer */}
@@ -361,7 +427,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                           {o.subject || '(no subject)'}
                         </div>
                         <div style={{ fontSize: 11.5, color: T.muted, marginTop: 3 }}>
-                          {o.type === 'referral' ? 'Referral' : 'Cold'}
+                          {o.type === 'referral' ? 'Referral' : o.type === 'linkedin' ? 'LinkedIn' : 'Cold'}
                           {o.sent_at ? ` · sent ${fmtDate(o.sent_at)}` : ''}
                           {o.follow_up_date ? ` · follow up ${fmtDate(o.follow_up_date)}` : ''}
                         </div>
