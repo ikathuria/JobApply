@@ -608,6 +608,18 @@ def run_digest() -> None:
         conn.close()
 
 
+def run_reminder() -> None:
+    """Compose + email the daily apply/referral reminder (M35)."""
+    from pipeline.daily_reminder import send_reminder
+    conn = _open_db()
+    try:
+        ok = send_reminder(conn)
+        print("Daily reminder sent." if ok else
+              "Reminder not sent — check SMTP creds / notifications.email_to.")
+    finally:
+        conn.close()
+
+
 def run_dedup() -> None:
     """Detect + skip duplicate NEW listings across sources (M24)."""
     from pipeline.dedup import dedup_new_jobs
@@ -655,6 +667,8 @@ def main() -> None:
                         help="With --scan-inbox: how many days of mail to read (default: 60)")
     parser.add_argument("--digest", action="store_true",
                         help="Email a weekly summary (new jobs, reviews, follow-ups, windows)")
+    parser.add_argument("--remind", action="store_true",
+                        help="Email a daily nudge (what to apply to, who to ask for referrals, follow-ups)")
     parser.add_argument("--dedup", action="store_true",
                         help="Detect duplicate NEW listings across sources and skip the extras")
     args = parser.parse_args()
@@ -682,6 +696,8 @@ def main() -> None:
                        ingest=args.ingest, days=args.days)
     elif args.digest:
         run_digest()
+    elif args.remind:
+        run_reminder()
     elif args.dedup:
         run_dedup()
     else:
