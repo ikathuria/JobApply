@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useContext } from 'react'
+import { useState, useEffect, useCallback, useContext, useMemo } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
 import { DARK, LIGHT } from '../theme.js'
 import { api } from '../api.js'
@@ -28,6 +28,10 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
   const [loadingOutreach, setLoadingOutreach] = useState(false)
   const [followups, setFollowups] = useState([])
   const [toast, setToast] = useState(null)
+
+  // list filters
+  const [search, setSearch] = useState('')
+  const [companyFilter, setCompanyFilter] = useState('')
 
   // add-recruiter form
   const [addOpen, setAddOpen] = useState(false)
@@ -152,6 +156,30 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
 
   const selected = recruiters?.find(r => r.id === selectedId)
 
+  // Distinct companies (for the filter dropdown) + the filtered recruiter list.
+  const companyOptions = useMemo(() => {
+    const set = new Set((recruiters || []).map(r => r.company).filter(Boolean))
+    return Array.from(set).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+  }, [recruiters])
+
+  const filteredRecruiters = useMemo(() => {
+    let list = recruiters || []
+    if (companyFilter) list = list.filter(r => r.company === companyFilter)
+    const q = search.trim().toLowerCase()
+    if (q) {
+      list = list.filter(r =>
+        [r.name, r.company, r.title].filter(Boolean).some(s => s.toLowerCase().includes(q)))
+    }
+    return list
+  }, [recruiters, companyFilter, search])
+
+  const hasFilter = Boolean(companyFilter || search.trim())
+  const selectStyle = {
+    background: T.card, color: T.text, border: `1px solid ${T.border}`,
+    borderRadius: 8, padding: '8px 10px', fontSize: 12.5, fontWeight: 600,
+    cursor: 'pointer', outline: 'none', maxWidth: 150,
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Follow-up reminder banner */}
@@ -214,12 +242,43 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
             </Card>
           )}
 
+          {recruiters?.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <Input
+                value={search}
+                onChange={setSearch}
+                placeholder="Search name / company / title"
+                style={{ flex: 1 }}
+              />
+              <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)} style={selectStyle}>
+                <option value="">All companies ({companyOptions.length})</option>
+                {companyOptions.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
+          {hasFilter && recruiters?.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 11.5, color: T.muted }}>
+                {filteredRecruiters.length} of {recruiters.length}
+              </span>
+              <button
+                onClick={() => { setSearch(''); setCompanyFilter('') }}
+                style={{ background: 'transparent', border: 'none', color: T.accent, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {recruiters === null && <div style={{ padding: 20, textAlign: 'center' }}><Spinner /></div>}
             {recruiters?.length === 0 && !addOpen && (
               <EmptyState icon="✉" title="No recruiters yet" sub="Add a recruiter to start outreach." />
             )}
-            {recruiters?.map(r => (
+            {recruiters?.length > 0 && filteredRecruiters.length === 0 && (
+              <EmptyState icon="⌕" title="No matches" sub="Try a different company or search term." />
+            )}
+            {filteredRecruiters.map(r => (
               <Card key={r.id} onClick={() => selectRecruiter(r.id)}
                 style={selectedId === r.id ? { borderColor: T.accent, boxShadow: `0 0 0 3px ${T.accent}18` } : {}}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{r.name}</div>
