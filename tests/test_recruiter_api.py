@@ -76,3 +76,26 @@ def test_outreach_for_missing_recruiter_404(conn):
     with pytest.raises(HTTPException) as exc:
         M.api_add_outreach(M.OutreachIn(recruiter_id=12345, subject="x"))
     assert exc.value.status_code == 404
+
+
+def test_log_linkedin_records_sent_outreach_and_followup(conn):
+    rid = M.api_add_recruiter(M.RecruiterIn(name="Conn", company="Amazon"))["id"]
+    res = M.api_log_linkedin(rid, M.LinkedInLogIn(body="Hi, would you refer me?"))
+    assert res["logged"] is True
+    assert res["sent_at"] and res["follow_up_date"]
+
+    rows = M.api_recruiter_outreach(rid)
+    assert len(rows) == 1
+    assert rows[0]["type"] == "linkedin"
+    assert rows[0]["status"] == "sent"
+    assert rows[0]["body"] == "Hi, would you refer me?"
+
+    # Counts as a sent outreach on the recruiter list (drives sent_count + follow-ups).
+    listed = {r["id"]: r for r in M.api_list_recruiters()}
+    assert listed[rid]["sent_count"] == 1
+
+
+def test_log_linkedin_missing_recruiter_404(conn):
+    with pytest.raises(HTTPException) as exc:
+        M.api_log_linkedin(999, M.LinkedInLogIn())
+    assert exc.value.status_code == 404

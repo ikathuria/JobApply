@@ -32,6 +32,7 @@ STATUS_OFFER = "offer"
 # Outreach record types + statuses (recruiters / referrals)
 OUTREACH_COLD = "cold_email"
 OUTREACH_REFERRAL = "referral"
+OUTREACH_LINKEDIN = "linkedin"   # a LinkedIn DM (sent by hand, logged for tracking)
 
 OUTREACH_DRAFT = "draft"         # generated, not yet sent
 OUTREACH_SENT = "sent"

@@ -43,7 +43,7 @@ from tracker.tracker import (
     update_recruiter, delete_recruiter,
     add_outreach, get_outreach, list_outreach_for_recruiter, update_outreach,
     update_outreach_status, list_followups_due,
-    OUTREACH_COLD, OUTREACH_REFERRAL, OUTREACH_SENT,
+    OUTREACH_COLD, OUTREACH_REFERRAL, OUTREACH_SENT, OUTREACH_LINKEDIN,
     add_reminder, get_reminder, list_reminders, list_reminders_due,
     update_reminder, delete_reminder, REMINDER_APPLY,
     upsert_prep, get_prep, delete_prep, list_prep_jobs,
@@ -715,6 +715,32 @@ def api_recruiter_outreach(recruiter_id: int) -> list[dict]:
     if not get_recruiter(conn, recruiter_id):
         raise HTTPException(404, "Recruiter not found")
     return [dict(o) for o in list_outreach_for_recruiter(conn, recruiter_id)]
+
+
+class LinkedInLogIn(BaseModel):
+    body: str | None = None
+    job_id: int | None = None
+
+
+@app.post("/api/recruiters/{recruiter_id}/log-linkedin")
+def api_log_linkedin(recruiter_id: int, payload: LinkedInLogIn) -> dict:
+    """Record a LinkedIn DM the user sent by hand as a 'sent' outreach row, so
+    it counts toward sent_count and enters the 7-day follow-up system. No message
+    is sent from here — LinkedIn DMs are sent manually in LinkedIn."""
+    from datetime import datetime, timedelta, timezone
+    conn = db()
+    if not get_recruiter(conn, recruiter_id):
+        raise HTTPException(404, "Recruiter not found")
+    oid = add_outreach(
+        conn, recruiter_id, type=OUTREACH_LINKEDIN,
+        subject="LinkedIn message", body=payload.body,
+        job_id=payload.job_id, status=OUTREACH_SENT,
+    )
+    now = datetime.now(timezone.utc)
+    sent_at = now.isoformat()
+    follow_up = (now + timedelta(days=7)).date().isoformat()
+    update_outreach(conn, oid, sent_at=sent_at, follow_up_date=follow_up)
+    return {"logged": True, "id": oid, "sent_at": sent_at, "follow_up_date": follow_up}
 
 
 # ── Outreach ──────────────────────────────────────────────────────────────────
