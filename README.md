@@ -489,7 +489,18 @@ Emails a short, action-first nudge every morning: what to **apply** to (approved
 
 Without these the workflow runs and no-ops safely. Change the send time by editing the `cron` (it's UTC; `0 14 * * *` ≈ 9 AM Central during CDT).
 
-> **Data note:** GitHub reads **Turso**, which holds the daily-scraped jobs — so the **Apply / sponsor-jobs** section is always populated with fresh roles. Your **applied statuses** and **LinkedIn connections** live in your **local** DB, so the referral + follow-up sections only fill in cloud mode if that state is synced to Turso. If you want those sections fully populated daily, either sync your local data up or run the reminder locally on a schedule (`python main.py --remind` via cron/launchd) instead.
+> **Data note:** GitHub reads **Turso**, which holds the daily-scraped jobs — so the **Apply / sponsor-jobs** section is always populated with fresh roles. Your **applied statuses** and **LinkedIn connections** live in your **local** DB, so the referral + follow-up sections only fill in cloud mode once that state is pushed to Turso. Do that with **`make sync-turso`** (see below); re-run it whenever you've applied to jobs or messaged connections and want the next morning's email current.
+
+### Keeping the cloud DB in sync + tidy
+
+```bash
+make sync-turso ARGS=--dry-run   # preview what would be pushed
+make sync-turso                  # push local jobs (status != new) + recruiters + outreach to Turso
+make tidy ARGS=--dry-run         # preview old un-applied jobs to delete
+make tidy                        # delete new/queued listings older than 30 days
+```
+
+Both need `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` in your `.env` (the same values as the GitHub secrets). `sync-turso` never deletes Turso's freshly-scraped `new` jobs — it only upserts your tracked jobs, recruiters, and outreach. Stale un-applied jobs are **also pruned automatically every day** by the discovery workflow (`daily_tailor.yml`), so this is only needed if you want to prune on demand. Once Turso holds your progress, adding those creds to `.env` also points the local app at Turso, so local and cloud converge on one DB.
 
 ---
 

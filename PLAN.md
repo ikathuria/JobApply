@@ -179,10 +179,20 @@ active search (warm LinkedIn referrals + F-1 sponsor prioritization).
   + LinkedIn recruiters are local, so referral/follow-up sections only fill in
   cloud mode once that state is synced to Turso (or run `--remind` locally).
 
+### M36 — Local→Turso sync + auto-pruning ✅ (done 2026-09-21)
+- `scripts/sync_to_turso.py` (`make sync-turso`): pushes local personal state —
+  tracked jobs (status != new, upsert by url), recruiters (dedup by
+  linkedin_url/email/name+company), and outreach (mirrored, recruiter_id
+  remapped) — up to Turso, so the cloud daily reminder's referral + follow-up
+  sections populate. Never deletes Turso's scraped `new` jobs. Idempotent.
+- Stale un-applied jobs (new/queued, 30d+) now pruned **daily** via a new step in
+  `daily_tailor.yml`; `make tidy` prunes on demand. (Was monthly-only.)
+- Once Turso creds are in `.env`, the local app reads Turso too → local + cloud
+  converge on one DB (the clean end state).
+- Tested with a two-SQLite stand-in for Turso (4 tests): upsert, id-remap,
+  remote-`new`-preservation, idempotency.
+
 ### Backlog (not yet built)
-- **Sync local personal state (recruiters + applied statuses) to Turso** so the
-  cloud daily reminder's referral/follow-up sections populate (or converge on
-  one DB). Chosen delivery is GHA (2026-09-21), so this is the main follow-up.
 - Editable **country** field on recruiters (LinkedIn export has no location, so
   a country filter needs manual data — deferred by decision 2026-09-21).
 - **Email discovery** auto-fill for cold (non-connection) recruiters.
