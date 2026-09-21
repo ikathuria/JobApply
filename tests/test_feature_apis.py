@@ -92,3 +92,23 @@ def test_followup_draft_endpoint(conn):
     jid = _add(conn, "j", "applied", title="ML Engineer", company="Stripe")
     d = M.api_application_followup_draft(jid)
     assert "ML Engineer" in d["body"] and "Stripe" in d["body"]
+
+
+# ── Sponsor annotation on jobs (F-1 prioritization) ──────────────────────────
+
+def test_jobs_annotated_with_sponsor_flags(conn):
+    _add(conn, "s1", "new", company="Amazon Web Services")   # known H-1B sponsor
+    _add(conn, "s2", "new", company="Totally Unknown LLC")   # not a known sponsor
+
+    jobs = {j["company"]: j for j in M.api_jobs()["jobs"]}
+    assert jobs["Amazon Web Services"]["known_sponsor"] is True
+    assert jobs["Totally Unknown LLC"]["known_sponsor"] is False
+    # Both flags always present so the UI can rely on them.
+    assert "sponsor_excluded" in jobs["Amazon Web Services"]
+
+
+def test_single_job_annotated_with_sponsor_flags(conn):
+    jid = _add(conn, "s3", "new", company="Amazon")
+    job = M.api_get_job(jid)
+    assert job["known_sponsor"] is True
+    assert "sponsor_excluded" in job

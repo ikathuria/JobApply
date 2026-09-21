@@ -520,6 +520,13 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
               </div>
               <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontWeight: 700, color: T.text }}>{job.company || 'Unknown company'}</span>
+                {job.known_sponsor && (
+                  <span title="Known H-1B sponsor" style={{
+                    fontSize: 9.5, fontWeight: 800, color: T.success,
+                    background: `${T.success}1A`, border: `1px solid ${T.success}40`,
+                    borderRadius: 5, padding: '1px 6px', letterSpacing: '0.03em',
+                  }}>H-1B SPONSOR</span>
+                )}
                 {job.location && <><span>·</span><span>{job.location}</span></>}
                 {job.source && <><span>·</span><Tag>{job.source}</Tag></>}
               </div>

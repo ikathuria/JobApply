@@ -95,6 +95,13 @@ export default function JobRow({ job, onSelect, selected, checked, onCheck, mult
         </div>
         <div style={{ fontSize: 11, color: T.muted, display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, flexWrap: 'nowrap' }}>
           <span style={{ fontWeight: 600 }}>{job.company}</span>
+          {job.known_sponsor && (
+            <span title="Known H-1B sponsor" style={{
+              fontSize: 9, fontWeight: 800, color: T.success,
+              background: `${T.success}1A`, border: `1px solid ${T.success}40`,
+              borderRadius: 5, padding: '0 5px', whiteSpace: 'nowrap', letterSpacing: '0.03em',
+            }}>H-1B</span>
+          )}
           <span>·</span>
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.location}</span>
           {job.interview_date && (

@@ -272,6 +272,15 @@ def api_focus() -> list[dict]:
 # ── Jobs list ─────────────────────────────────────────────────────────────────
 
 
+def _annotate_sponsor(job: dict) -> dict:
+    """Tag a job dict with H-1B sponsor signal for the F-1 search (badges in UI)."""
+    from pipeline.sponsorship import is_known_sponsor, is_defense_itar_excluded
+    company = job.get("company") or ""
+    job["known_sponsor"] = is_known_sponsor(company)
+    job["sponsor_excluded"] = is_defense_itar_excluded(company)
+    return job
+
+
 @app.get("/api/jobs")
 def api_jobs(
     status: str | None = None,
@@ -305,7 +314,8 @@ def api_jobs(
 
     total = len(jobs)
     start = page * limit
-    return {"jobs": jobs[start : start + limit], "total": total, "page": page}
+    page_jobs = [_annotate_sponsor(j) for j in jobs[start : start + limit]]
+    return {"jobs": page_jobs, "total": total, "page": page}
 
 
 # ── Single job ────────────────────────────────────────────────────────────────
@@ -316,7 +326,7 @@ def api_get_job(job_id: int) -> dict:
     row = db().execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
     if not row:
         raise HTTPException(404, "Job not found")
-    return dict(row)
+    return _annotate_sponsor(dict(row))
 
 
 # ── Patch job ─────────────────────────────────────────────────────────────────
