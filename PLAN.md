@@ -192,6 +192,19 @@ active search (warm LinkedIn referrals + F-1 sponsor prioritization).
 - Tested with a two-SQLite stand-in for Turso (4 tests): upsert, id-remap,
   remote-`new`-preservation, idempotency.
 
+### M37 — Inbox sync GitHub flow ✅ (done 2026-09-21)
+- `.github/workflows/inbox_sync.yml` (daily 13:00 UTC, an hour before the
+  reminder) runs `main.py --scan-inbox --ingest`, so jobs applied to **outside
+  this tool** (LinkedIn, company sites — anything that emails a confirmation)
+  are auto-tracked into Turso and show up in the daily email + follow-ups.
+  Read-only on the mailbox, precision-biased. Opt-in on SMTP/Turso secrets;
+  IMAP creds default to SMTP.
+- Ishani's mailbox: applications in `INBOX.job apps` (default), responses in
+  `INBOX.job apps.reverts` → set GitHub secret `IMAP_MAILBOX=INBOX.job apps.reverts`.
+- Backlog offshoot: one-time importer for the LinkedIn `Job Applications.csv`
+  export to backfill historical LinkedIn applications (the email flow covers new
+  ones going forward).
+
 ### Backlog (not yet built)
 - Editable **country** field on recruiters (LinkedIn export has no location, so
   a country filter needs manual data — deferred by decision 2026-09-21).

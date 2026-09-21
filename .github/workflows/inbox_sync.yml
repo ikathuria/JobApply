@@ -1,0 +1,67 @@
+name: Inbox Sync
+
+# Reads your mailbox over IMAP and reconstructs the funnel from email, so jobs
+# you applied to *outside* this tool (LinkedIn, company sites, anywhere that
+# sends a confirmation) get tracked automatically — then they show up in the
+# daily reminder + follow-ups.
+#
+#   --ingest reads the "job apps" folder (application confirmations → creates
+#            tracked applications) and the inbox (responses → advances statuses).
+#
+# Runs at 13:00 UTC, an hour before the Daily Reminder (14:00 UTC), so new
+# applications land in Turso before the morning email is built. Read-only on the
+# mailbox (never deletes / marks read) and precision-biased.
+#
+# Opt-in: needs the SMTP secrets (IMAP creds default to them) + Turso. Without
+# them it runs and no-ops gracefully. Set IMAP_* secrets only if your mailbox
+# differs from the defaults (host derived from SMTP_HOST; applied folder
+# "INBOX.job apps"; responses folder "INBOX").
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # daily 13:00 UTC (~1h before the reminder)
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'How many days of mail to read (default: 7)'
+        default: '7'
+        required: false
+
+jobs:
+  inbox:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+
+      - name: Ingest applications + responses from email
+        env:
+          TURSO_DATABASE_URL:  ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:    ${{ secrets.TURSO_AUTH_TOKEN }}
+          SMTP_HOST:           ${{ secrets.SMTP_HOST }}
+          SMTP_USER:           ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:       ${{ secrets.SMTP_PASSWORD }}
+          # Optional overrides (only if your mailbox differs from the defaults):
+          IMAP_HOST:            ${{ secrets.IMAP_HOST }}
+          IMAP_MAILBOX:         ${{ secrets.IMAP_MAILBOX }}
+          IMAP_APPLIED_MAILBOX: ${{ secrets.IMAP_APPLIED_MAILBOX }}
+          IMAP_REVERTS_MAILBOX: ${{ secrets.IMAP_REVERTS_MAILBOX }}
+        run: |
+          DAYS=${{ github.event.inputs.days || '7' }}
+          python main.py --scan-inbox --ingest --days "$DAYS"

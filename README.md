@@ -489,6 +489,17 @@ Emails a short, action-first nudge every morning: what to **apply** to (approved
 
 Without these the workflow runs and no-ops safely. Change the send time by editing the `cron` (it's UTC; `0 14 * * *` ≈ 9 AM Central during CDT).
 
+### `inbox_sync.yml` — daily 13:00 UTC (before the reminder)
+
+Reads your mailbox over IMAP and reconstructs applications from email — so jobs you applied to **outside this tool** (LinkedIn, company sites, anywhere that emails a confirmation) get tracked automatically and show up in the daily reminder + follow-ups. Runs `python main.py --scan-inbox --ingest`; read-only on the mailbox, precision-biased. Do it manually anytime with the same command.
+
+**To enable it**, add (beyond the SMTP secrets, which double as the IMAP login):
+
+| Secret | Value |
+|--------|-------|
+| `IMAP_MAILBOX` | `INBOX.job apps.reverts` (your responses folder; applications default to `INBOX.job apps`) |
+| `IMAP_HOST` | *(optional)* only if your IMAP host isn't derivable from `SMTP_HOST` |
+
 > **Data note:** GitHub reads **Turso**, which holds the daily-scraped jobs — so the **Apply / sponsor-jobs** section is always populated with fresh roles. Your **applied statuses** and **LinkedIn connections** live in your **local** DB, so the referral + follow-up sections only fill in cloud mode once that state is pushed to Turso. Do that with **`make sync-turso`** (see below); re-run it whenever you've applied to jobs or messaged connections and want the next morning's email current.
 
 ### Keeping the cloud DB in sync + tidy
