@@ -485,11 +485,12 @@ The React dashboard is built with a warm paper design system (cream/rust palette
 
 ### Screens
 
+Navigation is two-tier: a prominent **Workspace** group (Pipeline) and a demoted **Tools** group (Outreach, Timeline, Interview Prep, Analytics, Settings).
+
 | Screen | What it does |
 |--------|-------------|
-| **Command Center** | Live stat cards (discovered, applied, in pipeline, offers), top-scored matches, today's focus tasks |
-| **Jobs** | Five tabs: New / Ready / Approved / Applied / All. Tab-scoped search, location + source dropdowns, date-range pickers (Applied/All tabs), score slider, sort. Ready and Approved tabs have swipe-style review decks. |
-| **Outreach** | Recruiters, composer (warm-referral / cold), send via Gmail, follow-up banner |
+| **Pipeline** (primary) | The daily surface — a stale-application follow-up banner + today's focus, then five stage tabs (New / Ready / Approved / Applied / All) with tab-scoped search, location + source dropdowns, score slider, an **H-1B sponsors only** toggle, and swipe-style review/apply decks on Ready/Approved. Jobs at known H-1B sponsors show an **H-1B badge**. |
+| **Outreach** | Recruiters with company + search + messaged filters. Email composer (warm-referral / cold) for cold contacts, and a **LinkedIn referral cockpit** for 1st-degree connections (auto-drafted DM → Copy / Open profile / Mark as messaged, which logs it into the 7-day follow-up system). Nothing auto-sends. |
 | **Timeline** | Recruiting calendar — 23 target companies grouped Open now / Upcoming / Closed, with H-1B sponsor badges, live open-role counts from the scraped jobs, and apply / referral reminders (M19) |
 | **Interview Prep** | Per-interview LLM prep packs — company snapshot, topics to review, behavioral / technical / system-design question banks with talking points, questions to ask, checklist (M9) |
 | **Analytics** | Application funnel, conversion rates, pipeline flow Sankey diagram, rejection-by-stage breakdown |

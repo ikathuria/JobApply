@@ -83,12 +83,12 @@ maintainable.
   `scripts/force_reseed_turso.py`, `scripts/pull_from_turso.py`,
   `scripts/skip_phd_jobs.py`; rotate the stale `apps/web/dist` bundles.
 
-### M27 — Docs refresh ◐ (in progress)
-- Rewrite this PLAN.md as the refocus roadmap (this file). ✅
-- Sync PROJECT.md: add Google Careers source, `linkedin_outreach.py`, inbox
+### M27 — Docs refresh ✅ (done 2026-09-17)
+- Rewrote this PLAN.md as the refocus roadmap.
+- Synced PROJECT.md: Google Careers source, `linkedin_outreach.py`, inbox
   classifier hardening, the `output/resumes` gitignore change, and the UI plan.
-- Trim README.md: drop the overview/stack blocks that duplicate PROJECT.md;
-  keep it as the run/setup guide. Add the LinkedIn outreach workflow.
+- Trimmed README.md: fixed stale "PDFs committed by CI" claims, corrected the
+  source list, and added the LinkedIn outreach workflow.
 
 ### M28 — Two-tier navigation ✅ (done 2026-09-17)
 - Rebuilt `Sidebar.jsx` into two groups: **Workspace** (Dashboard, Jobs — the
@@ -136,6 +136,43 @@ maintainable.
   Interview Prep, Analytics, Settings) — all render, nav active-state correct,
   the Prep deep-link auto-selects the job, **zero console errors, zero server
   500s**. `npm run build` green; pytest 237 green; `dist` committed.
+
+---
+
+## Outreach & job-search enhancements (post-roadmap, 2026-09-20/21)
+
+The refocus roadmap (M26–M31) is complete; these build on it, driven by the
+active search (warm LinkedIn referrals + F-1 sponsor prioritization).
+
+### M32 — LinkedIn referral outreach ✅ (done 2026-09-20/21)
+- `scripts/linkedin_outreach.py`: loads the LinkedIn `Connections.csv` (gitignored
+  `data/linkedin/`), ranks by leverage (H-1B sponsor + live-application signal),
+  and writes a worklist with a **personalized referral-ask DM per connection**.
+  `--top N` focuses report/CSV/`--load`; report shows top-companies for batching.
+- **In-app LinkedIn cockpit** (Outreach tab): for 1st-degree connections, an
+  editable auto-generated referral DM with **Copy / Open profile / Mark as
+  messaged**. "Mark as messaged" logs it via `POST /api/recruiters/{id}/log-linkedin`
+  (type `linkedin`, status `sent`, +7-day follow-up) so it counts toward
+  `sent_count` and enters the follow-up system. Nothing is auto-sent — DMs go
+  out by hand in LinkedIn (safe + ToS-respecting).
+- `lib/linkedinMessage.js` mirrors the Python template so in-app == worklist.
+
+### M33 — Outreach & pipeline filters ✅ (done 2026-09-20/21)
+- Outreach tab: **company** dropdown, **name/company/title search**, and a
+  **messaged / not-messaged** filter, with an "N of M" count + Clear.
+- Jobs view: **"H-1B sponsors only"** toggle in the advanced filter row.
+
+### M34 — H-1B sponsor visibility ✅ (done 2026-09-21)
+- `/api/jobs` + `/api/jobs/{id}` annotate each job with `known_sponsor` /
+  `sponsor_excluded` (via `pipeline.sponsorship`). Job rows show a compact
+  **H-1B** badge; the drawer header shows **H-1B SPONSOR** — sponsor-friendly
+  roles are prioritizable at a glance.
+
+### Backlog (not yet built)
+- Editable **country** field on recruiters (LinkedIn export has no location, so
+  a country filter needs manual data — deferred by decision 2026-09-21).
+- **Email discovery** auto-fill for cold (non-connection) recruiters.
+- Persisting Outreach/Pipeline filter state across navigation.
 
 ---
 
