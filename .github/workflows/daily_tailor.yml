@@ -106,6 +106,15 @@ jobs:
         run: python scripts/enrich_jobs.py --delay 1.5
         continue-on-error: true
 
+      # Prune: delete un-applied listings (status new/queued) older than 30 days
+      # so stale jobs don't pile up in Turso (and the daily reminder stays fresh).
+      - name: Prune stale unreviewed jobs (30d+)
+        env:
+          TURSO_DATABASE_URL:   ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN:     ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: python scripts/cleanup_stale_jobs.py --days 30
+        continue-on-error: true
+
       # Tailor
       # PAUSED 2026-07-21 (if: false) — skipping tailoring for now. Discovery +
       # enrich still run daily and populate Turso; tailoring is done on demand

@@ -1,4 +1,4 @@
-.PHONY: dev api web install build prod local outreach-linkedin
+.PHONY: dev api web install build prod local outreach-linkedin sync-turso tidy
 
 # Dev: open two cmd windows (Windows) running both servers
 dev:
@@ -33,6 +33,17 @@ local:
 # ARGS examples: ARGS="--load" (upsert into recruiters), ARGS="--top 60 --load".
 outreach-linkedin:
 	python scripts/linkedin_outreach.py $(ARGS)
+
+# Push local personal state (tracked jobs, recruiters, outreach) up to Turso so
+# the cloud daily reminder sees it. Needs TURSO_* in .env. ARGS="--dry-run" to
+# preview.
+sync-turso:
+	python scripts/sync_to_turso.py $(ARGS)
+
+# Delete un-applied listings (new/queued) older than 30 days. Targets Turso when
+# TURSO_* is in .env, else the local DB. ARGS="--dry-run" to preview, "--days N".
+tidy:
+	python scripts/cleanup_stale_jobs.py $(ARGS)
 
 # Install all dependencies (Python + Node)
 install:
