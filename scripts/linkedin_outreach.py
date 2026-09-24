@@ -250,28 +250,30 @@ def draft_message(c: Contact) -> str:
     first = (c.first or c.name or "there").strip()
     company = (c.company or "your team").strip()
 
-    # Context sentence — where this company sits in her funnel.
+    # Interviewing is worth stating; otherwise don't claim applications —
+    # ask the contact which openings would be a fit.
     if c.company_tier == TIER_INTERVIEW:
         ctx = f"I'm currently interviewing with {company} for an AI/ML role"
-    elif c.company_tier == TIER_APPLIED:
-        ctx = f"I recently applied to a few AI/ML roles at {company}"
+        if c.role_type in ("hiring_manager", "engineer_referrer"):
+            ask = "Would you be open to referring me, or putting in a good word with the team?"
+        else:
+            ask = "Would you be able to share any insight on the process, or who I should connect with?"
     else:
-        ctx = f"I'm focusing my search on AI/ML teams at {company}"
-
-    # The ask — engineers/managers can refer; recruiters route you to the req.
-    if c.role_type == "hiring_manager":
-        ask = "Would you be open to referring me, or pointing me to the right person on your team?"
-    elif c.role_type == "engineer_referrer":
-        ask = "Would you be open to referring me internally?"
-    else:  # recruiter_relevant / recruiter_generic
-        ask = (f"Would you be the right person to talk to about new-grad AI/ML "
-               f"openings at {company}, or could you point me to the team that's hiring?")
+        ctx = f"{company} is high on my list"
+        if c.role_type == "hiring_manager":
+            ask = ("Is your team hiring, or do you know of any openings that might be a good fit? "
+                   "I'd be grateful for a referral or a pointer to the right person.")
+        elif c.role_type == "engineer_referrer":
+            ask = ("Do you know of any openings on your team, or ones you've heard about, that "
+                   "might be a good fit? I'd be grateful for a referral if so.")
+        else:  # recruiter_relevant / recruiter_generic
+            ask = (f"Are there any new-grad AI/ML openings at {company} you think I'd be a "
+                   f"good fit for, or could you point me to the team that's hiring?")
 
     return (
         f"Hi {first}, hope you've been well! {SENDER_INTRO}. "
         f"{ctx}. {ask} "
-        f"Happy to send my resume and the exact job links to make it easy — "
-        f"thanks so much either way!"
+        f"Happy to send over my resume — thanks so much either way!"
     )
 
 

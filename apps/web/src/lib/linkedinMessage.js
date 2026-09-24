@@ -33,22 +33,30 @@ export function linkedinMessage(recruiter) {
   const company = (recruiter.company || 'your team').trim()
 
   const tier = pipelineTier(recruiter)
-  const ctx = tier === 'interview'
-    ? `I'm currently interviewing with ${company} for an AI/ML role`
-    : tier === 'applied'
-      ? `I recently applied to a few AI/ML roles at ${company}`
-      : `I'm focusing my search on AI/ML teams at ${company}`
-
   const role = classifyRole(recruiter)
-  const ask = role === 'manager'
-    ? 'Would you be open to referring me, or pointing me to the right person on your team?'
-    : role === 'recruiter'
-      ? `Would you be the right person to talk to about new-grad AI/ML openings at ${company}, ` +
-        `or could you point me to the team that's hiring?`
-      : 'Would you be open to referring me internally?'
+
+  // Interviewing is worth stating; otherwise don't claim applications —
+  // ask the contact which openings would be a fit.
+  let ctx, ask
+  if (tier === 'interview') {
+    ctx = `I'm currently interviewing with ${company} for an AI/ML role`
+    ask = role === 'recruiter'
+      ? 'Would you be able to share any insight on the process, or who I should connect with?'
+      : 'Would you be open to referring me, or putting in a good word with the team?'
+  } else {
+    ctx = `${company} is high on my list`
+    ask = role === 'manager'
+      ? 'Is your team hiring, or do you know of any openings that might be a good fit? ' +
+        "I'd be grateful for a referral or a pointer to the right person."
+      : role === 'recruiter'
+        ? `Are there any new-grad AI/ML openings at ${company} you think I'd be a good fit for, ` +
+          `or could you point me to the team that's hiring?`
+        : "Do you know of any openings on your team, or ones you've heard about, that might be " +
+          "a good fit? I'd be grateful for a referral if so."
+  }
 
   return (
     `Hi ${first}, hope you've been well! ${SENDER_INTRO}. ${ctx}. ${ask} ` +
-    `Happy to send my resume and the exact job links to make it easy — thanks so much either way!`
+    `Happy to send over my resume — thanks so much either way!`
   )
 }
