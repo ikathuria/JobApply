@@ -14,12 +14,12 @@
     "authorized_to_work_in_us": true,
     "requires_sponsorship_internship": false,
     "requires_sponsorship_fulltime": true,
-    "visa_status": "F-1 Student Visa (CPT eligible)",
+    "visa_status": "F-1 Student Visa (no CPT; OPT from May 2027)",
     "us_citizen_or_pr": false,
     "will_relocate": true,
     "expected_graduation": "May 2027",
     "gpa": "4.0",
-    "job_search_target": "full-time new-grad and internship AI/ML roles"
+    "job_search_target": "full-time new-grad AI/ML roles; any role type can start from May 2027 (OPT)"
   },
   "education": [
     {
