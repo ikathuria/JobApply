@@ -213,6 +213,52 @@ active search (warm LinkedIn referrals + F-1 sponsor prioritization).
 
 ---
 
+## Quality-over-quantity pivot (planned 2026-10-19)
+
+Strategy: fewer, tailored applications to known H-1B sponsors, Oct–Dec (big-tech
+new-grad window) then Jan–Mar (second wave). Grounded in an analysis of 89 full
+new-grad AI/ML JDs (Aug–Oct 2026): 71% want production/deployment, ~48% agents,
+~47% evals; "machine learning" appears in 71% but 0× in profile.json.
+
+### M38 — Claude CLI tailoring ✅ (done 2026-10-19)
+`llm.provider: claude_cli` — Sonnet via the Claude subscription, local only.
+
+### M39 — Work-auth filter ✅ (done 2026-10-19)
+Regex exclusions for clearance / citizenship / ITAR / "no sponsorship";
+re-checked after enrichment (scrape-time text is a snippet). 28/89 full JDs
+blocked, 0 false positives on applied jobs; 7 queued jobs → skipped.
+
+### M40 — Profile rebuild (needs Ishani's review)
+- Add missing keywords she can defend (ML, deep learning, SQL, Git, Docker,
+  CI/CD, REST APIs, NLP, MCP, FastAPI, LangGraph, Claude Code).
+- Replace the 3 profile projects with the strongest repos (see M42 map), each
+  with tech + quantified bullets.
+
+### M41 — Four base resumes (tracks)
+Priority: **AI/ML Engineer → Software Engineer → Data Scientist → ML Research
+Engineer.** `profile.json` gains `tracks` (summary, skill order, project picks,
+bullet emphasis per track); a title-based classifier picks the track and
+tailoring starts from that base. Also render the 4 base PDFs for quick applies.
+
+### M42 — Portfolio polish (existing repos, before new builds)
+| Track | Lead projects |
+|---|---|
+| AI/ML | Homebase (AmazonDevHack), QALF, FactCheck, CaseSentinel, RealSight |
+| SWE | JobApply, Homebase, Hatch, Aura |
+| Data Science | DistractedDrivingFatalities, python-to-ai — **thin → M43** |
+| Research | AdaptVLA, uav-ugv-cooperative-navigation, QALF, TrustworthyRAG, RealText |
+
+Fix AutoRedTeam / DeepfakeGuard READMEs (AI Studio boilerplate) or drop them;
+decide which private repos go public; no Claude attribution going forward.
+
+### M43 — New data-science project (the one real gap)
+Ranking/recommendation + experimentation on a public dataset: SQL feature
+pipeline (DuckDB), LightGBM/two-tower ranker, MLflow tracking, NDCG/Recall@K,
+simulated A/B test with power analysis + CUPED, small dashboard. Covers SQL,
+statistics, A/B testing, recsys (13% of JDs), feature engineering, MLOps.
+
+---
+
 ## Out of scope / staying as-is
 - Backend pipeline (scrapers, tailoring, auto-apply, inbox, analytics) — no
   functional changes; the refocus is frontend + repo hygiene.

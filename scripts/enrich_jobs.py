@@ -2,7 +2,8 @@
 Re-enriches all Jobright-sourced jobs in the DB using the Jobright detail page.
 
 Updates: title, company, location, salary_range, description, employer URL.
-Marks closed jobs as skipped if they haven't been applied to yet.
+Marks closed jobs — and jobs whose full JD rules out F-1/OPT (clearance,
+citizenship, no sponsorship) — as skipped if they haven't been applied to yet.
 
 Usage:
     python scripts/enrich_jobs.py
@@ -21,6 +22,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from tracker.tracker import init_db, update_status, DB_PATH
 from pipeline.jobright_enricher import enrich_jobright_url
+from pipeline.job_filter import work_auth_blocker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,7 +65,7 @@ def main(delay: float) -> None:
 
     logger.info("Found %d Jobright jobs to re-enrich.", total)
 
-    updated = skipped_closed = errors = 0
+    updated = skipped_closed = skipped_auth = errors = 0
 
     for i, row in enumerate(rows, 1):
         job_id = row["id"]
@@ -83,6 +85,14 @@ def main(delay: float) -> None:
             new_status = "skipped"
             skipped_closed += 1
             logger.info("%s  -> CLOSED (%s), marked skipped", label, enriched.closed_reason)
+        elif current_status in PRE_APPLICATION_STATUSES and (
+            blocker := work_auth_blocker(enriched.description)
+        ):
+            # Scrape-time text is a short snippet; the full JD is the first
+            # chance to see "clearance required" / "no sponsorship".
+            new_status = "skipped"
+            skipped_auth += 1
+            logger.info("%s  -> WORK-AUTH (%r), marked skipped", label, blocker)
         else:
             new_status = current_status
 
@@ -114,8 +124,8 @@ def main(delay: float) -> None:
         time.sleep(delay)
 
     logger.info(
-        "Done. %d updated, %d closed→skipped, %d errors (out of %d total).",
-        updated, skipped_closed, errors, total,
+        "Done. %d updated, %d closed→skipped, %d work-auth→skipped, %d errors (out of %d total).",
+        updated, skipped_closed, skipped_auth, errors, total,
     )
 
 

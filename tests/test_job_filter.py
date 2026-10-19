@@ -154,3 +154,42 @@ def test_intern_and_coop_still_score():
     }
     assert score_job(intern) > 0.0
     assert score_job(coop) > 0.0
+
+
+# ── work-authorization exclusions (F-1 / OPT) ─────────────────────────────────
+
+from pipeline.job_filter import work_auth_blocker  # noqa: E402
+
+
+def test_work_auth_blockers_from_real_jds():
+    for text in [
+        "Active TS/SCI clearance with CI Poly",
+        "US citizenship and eligibility to obtain a US security clearance",
+        "Universal Corporation is unable to provide visa sponsorship for this position",
+        "The company will not sponsor employment visas for this role",
+        "Visa sponsorship is not offered for this role",
+        "authorized to work for any company without sponsorship",
+        "must be legally authorized to work permanently in the country",
+        "Signals\nGrowth Opportunities, No H1B, Security Clearance Required",
+        "Be a U.S. Person (U.S. citizen or permanent resident)",
+        "This role is subject to ITAR",
+    ]:
+        assert work_auth_blocker(text), text
+
+
+def test_opt_compatible_text_is_not_blocked():
+    for text in [
+        "Candidates must be authorized to work in the United States",
+        "We consider all applicants without regard to race or citizenship status",
+        "Experience with military or defense customers",   # 'itar' inside a word
+        "a famous person once said",                       # 'us person' inside words
+        "Signals\nH1B Sponsor Likely",
+        "We sponsor visas for qualified candidates",
+    ]:
+        assert work_auth_blocker(text) is None, text
+
+
+def test_score_zero_for_clearance_job():
+    job = {"title": "Machine Learning Engineer, New Grad", "company": "X",
+           "description": "LLM work. Requires an active Secret clearance."}
+    assert score_job(job) == 0.0

@@ -4,6 +4,7 @@ No LLM needed here — pure keyword/heuristic scoring for Phase 1.
 """
 
 import logging
+import re
 
 from pipeline.sponsorship import is_known_sponsor
 
@@ -58,11 +59,29 @@ EXPERIENCE_REQUIRED = [
 ]
 SENIORITY_PENALTY = 0.25  # multiply the score — sinks senior roles without discarding
 
-EXCLUDE_KEYWORDS = [
-    "no sponsorship", "no visa", "citizens only", "us citizen",
-    "security clearance", "clearance required", "secret clearance",
-    "top secret", "must be authorized",
+# Roles an F-1/OPT candidate can't take: clearance, citizenship / US-person
+# (ITAR), or an explicit "no sponsorship now or in the future". Regexes with word
+# boundaries ("itar" must not hit "military"). Plain "must be authorized to work"
+# is deliberately absent — OPT *is* work authorization. Jobright's own tags
+# ("No H1B", "Citizen Only") ride along in enriched descriptions (Signals).
+EXCLUDE_PATTERNS = [
+    # clearance
+    r"security clearance", r"clearance (is )?required", r"secret clearance",
+    r"top secret", r"\bts/sci\b", r"polygraph", r"public trust",
+    # citizenship / US person
+    r"\bu\.?s\.? citizens?(hip)?\b(?! status)", r"citizens? only",
+    r"citizenship (is )?required", r"\bu\.?s\.? persons?\b", r"\bitar\b",
+    # sponsorship denied
+    r"\bno (visa )?sponsorship\b", r"\bno visa\b", r"\bno h-?1b\b",
+    r"\b(unable to|not able to|cannot|can not|will not|won'?t|does not|doesn'?t|do not|don'?t)"
+    r" (provide |offer |support )?(any )?(visa |employment visa |immigration )?sponsor",
+    r"not (offer|provide)(ing)? (visa )?sponsorship",
+    r"sponsorship (is )?not (offered|available|provided)",
+    r"without (the need for |need for |requiring )?(visa |employer )?sponsorship",
+    r"authorized to work permanently",
+    r"work in the (united states|u\.?s\.?) without restriction",
 ]
+_EXCLUDE_RE = re.compile("|".join(f"(?:{p})" for p in EXCLUDE_PATTERNS), re.I)
 
 # Signals that a role REQUIRES a doctorate. Used only when there's no sign a
 # Master's is accepted (see MASTERS_OK) — so "MS or PhD" roles are kept.
@@ -229,7 +248,15 @@ def _is_too_senior(job: dict, text: str) -> bool:
 
 
 def _is_excluded(text: str) -> bool:
-    return any(kw in text for kw in EXCLUDE_KEYWORDS)
+    return bool(_EXCLUDE_RE.search(text))
+
+
+def work_auth_blocker(text: str) -> str | None:
+    """The phrase that rules a job out for an F-1/OPT candidate (clearance,
+    citizenship, or no sponsorship), or None. Used to re-check a job once its
+    full JD arrives — scrape-time text is often only a short snippet."""
+    m = _EXCLUDE_RE.search(text or "")
+    return m.group(0) if m else None
 
 
 def is_phd_only(text: str) -> bool:
