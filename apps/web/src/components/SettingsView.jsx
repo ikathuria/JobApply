@@ -4,7 +4,7 @@ import { DARK, LIGHT } from '../theme.js'
 import { api } from '../api.js'
 import { Btn, Input, Divider, Spinner, SectionLabel } from './ui/index.jsx'
 
-const PROVIDERS = ['groq', 'gemini', 'anthropic']
+const PROVIDERS = ['groq', 'gemini', 'anthropic', 'claude_cli']
 const SOURCES = [
   { key: 'newgrad_jobs', label: 'newgrad-jobs.com (full-time new-grad)' },
   { key: 'intern_list', label: 'intern-list.com (internships / co-ops)' },
@@ -45,7 +45,7 @@ export default function SettingsView() {
   }
 
   const setLLM = (k, v) => setS({ ...s, llm: { ...s.llm, [k]: v } })
-  const modelField = { groq: 'groq_model', gemini: 'gemini_model', anthropic: 'anthropic_model' }[s.llm.provider]
+  const modelField = { groq: 'groq_model', gemini: 'gemini_model', anthropic: 'anthropic_model', claude_cli: 'claude_cli_model' }[s.llm.provider]
 
   const selectStyle = {
     background: T.card, color: T.text, border: `1px solid ${T.border}`,

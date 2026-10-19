@@ -1131,7 +1131,7 @@ def api_delete_prep(job_id: int) -> dict:
 
 SETTINGS_PATH = ROOT / "config" / "settings.yaml"
 _EDITABLE_SOURCES = ("intern_list", "newgrad_jobs")
-_LLM_PROVIDERS = ("groq", "gemini", "anthropic")
+_LLM_PROVIDERS = ("groq", "gemini", "anthropic", "claude_cli")
 
 
 def _read_settings_file() -> dict:
@@ -1153,6 +1153,7 @@ def api_get_settings() -> dict:
             "groq_model": llm.get("groq_model", ""),
             "gemini_model": llm.get("gemini_model", ""),
             "anthropic_model": llm.get("anthropic_model", ""),
+            "claude_cli_model": llm.get("claude_cli_model", ""),
         },
         "scoring": {"min_score": cfg.get("scoring", {}).get("min_score", 0.0)},
         "filters": {"require_known_sponsor": bool(cfg.get("filters", {}).get("require_known_sponsor", False))},
@@ -1179,7 +1180,7 @@ def api_save_settings(body: SettingsPatch) -> dict:
 
     if body.llm:
         llm = cfg.setdefault("llm", {})
-        for k in ("provider", "groq_model", "gemini_model", "anthropic_model"):
+        for k in ("provider", "groq_model", "gemini_model", "anthropic_model", "claude_cli_model"):
             if body.llm.get(k) is not None:
                 llm[k] = body.llm[k]
     if body.scoring and body.scoring.get("min_score") is not None:

@@ -51,6 +51,8 @@ def complete(system_prompt: str, user_message: str, max_tokens: int = 2000) -> s
         return _gemini(system_prompt, user_message, max_tokens)
     elif provider == "anthropic":
         return _anthropic(system_prompt, user_message, max_tokens)
+    elif provider == "claude_cli":
+        return _claude_cli(system_prompt, user_message, max_tokens)
     else:
         raise ValueError(f"Unknown LLM provider: {provider}. Set llm.provider in settings.yaml.")
 
@@ -159,3 +161,51 @@ def _anthropic(system_prompt: str, user_message: str, max_tokens: int) -> str:
         messages=[{"role": "user", "content": user_message}],
     )
     return response.content[0].text
+
+
+def _claude_cli(system_prompt: str, user_message: str, max_tokens: int) -> str:
+    """Run the local `claude` CLI in print mode — billed to a Claude subscription,
+    not an API key. Local only (needs a logged-in CLI; not available in GHA).
+    max_tokens is unused: the CLI has no output cap flag."""
+    import json
+    import shutil
+    import subprocess
+    import tempfile
+
+    binary = shutil.which("claude")
+    if not binary:
+        raise RuntimeError("claude CLI not found on PATH")
+
+    cfg = _config()
+    env = dict(os.environ)
+    # An API key in the env would override the subscription login and bill the API.
+    env.pop("ANTHROPIC_API_KEY", None)
+    config_dir = cfg.get("claude_cli_config_dir")
+    if config_dir:
+        env["CLAUDE_CONFIG_DIR"] = os.path.expanduser(config_dir)
+
+    cmd = [
+        binary, "-p",
+        "--output-format", "json",
+        "--model", cfg.get("claude_cli_model", "sonnet"),
+        "--system-prompt", system_prompt,
+        "--tools", "",
+        "--strict-mcp-config",
+        "--no-session-persistence",
+    ]
+    # Empty cwd so the project's CLAUDE.md isn't pulled into the prompt.
+    with tempfile.TemporaryDirectory() as cwd:
+        proc = subprocess.run(
+            cmd, input=user_message, capture_output=True, text=True,
+            cwd=cwd, env=env, timeout=cfg.get("claude_cli_timeout", 300),
+        )
+    if proc.returncode != 0:
+        raise RuntimeError(f"claude CLI failed ({proc.returncode}): {proc.stderr.strip() or proc.stdout.strip()}")
+
+    result = json.loads(proc.stdout)
+    if result.get("is_error"):
+        raise RuntimeError(f"claude CLI error: {result.get('result')}")
+    text = result.get("result") or ""
+    if not text:
+        raise RuntimeError("claude CLI returned empty response")
+    return text

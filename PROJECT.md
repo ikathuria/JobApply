@@ -2,7 +2,7 @@
 
 > Living context map. Any LLM or human should be able to read this file alone and understand what the project is, how it's built, and where things are. **Keep it in sync** whenever the stack, structure, conventions, or status changes.
 
-_Last updated: 2026-09-17_
+_Last updated: 2026-10-19_
 
 ---
 
@@ -17,7 +17,7 @@ JobApply is a personal, fully-automated AI/ML job-search pipeline built for Isha
 | Layer | Choice | Version | Notes |
 |---|---|---|---|
 | Scrapers | Python + requests | Python 3.12 | intern-list + newgrad-jobs hit jobright.ai's JSON API (browserless); LinkedIn + Handshake paused (Playwright, disabled) |
-| LLM / Tailoring | Groq (llama-3.1-8b-instant) | Groq API | Free tier; Gemini + Claude are fallbacks via `pipeline/llm_client.py` |
+| LLM / Tailoring | Claude CLI (`claude -p`, Sonnet) | Claude subscription | Default since 2026-10-19, local only; Groq/Gemini/Anthropic API remain selectable via `pipeline/llm_client.py` |
 | Email | Gmail SMTP (smtplib) + optional Hunter.io | — | App password auth; 500 sends/day free |
 | PDF generation | ReportLab | latest | Local, no API |
 | Backend API | FastAPI + Uvicorn | latest | Serves React build + REST API |
@@ -190,6 +190,7 @@ JobApply/
 
 ## Decision log
 
+- 2026-10-19 — Tailoring moved to the Claude CLI (`llm.provider: claude_cli`) — quality over quantity is now the strategy, and llama-3.1-8b produced generic resumes. `claude -p` bills Ishani's Claude subscription (no API key), so per-job tailoring is effectively free at Sonnet quality. Local only: GHA has no logged-in CLI, but no CI job calls the LLM (CI tailoring is paused). `claude_cli_config_dir` picks which logged-in account is billed; the client strips `ANTHROPIC_API_KEY` from the subprocess env so a stray key can't silently switch billing to the API. Runs from an empty temp cwd with tools + MCP disabled. `--bare` deliberately not used — it skips keychain reads, which breaks subscription auth.
 - 2026-09-21 — Inbox-sync GitHub flow for externally-applied jobs — Ishani applies to jobs outside this tool (LinkedIn etc.) and wanted those in the daily email. Rather than per-platform scraping, reused the M20 email-ingest engine (`--scan-inbox --ingest`): application *confirmation emails* arrive regardless of where she applied, so a daily `inbox_sync.yml` (13:00 UTC, before the 14:00 reminder) reconstructs applications from the "job apps" folder into Turso, feeding the reminder + follow-ups. Read-only on the mailbox, precision-biased, opt-in on secrets (IMAP creds default to SMTP). Her responses folder is non-default (`INBOX.job apps.reverts`), so GHA needs `IMAP_MAILBOX` set to it (applied folder default `INBOX.job apps` already matches). Historical LinkedIn apps (in the export's `Job Applications.csv`) are a separate one-time backfill, left as backlog since the email flow covers new applications.
 - 2026-09-21 — Local→Turso sync + daily auto-pruning — resolves the cloud-reminder data gap (see prior entry): `scripts/sync_to_turso.py` mirrors local personal state (tracked jobs upserted by url, recruiters deduped, outreach mirrored with recruiter_id remapped and job_id dropped) up to Turso, so GHA's referral + follow-up sections populate. It never deletes Turso's scraped `new` jobs. The clean end state is convergence: once TURSO_* is in `.env`, the local app (which `load_dotenv()`s at import) reads Turso too, so there's a single DB and the sync becomes a no-op — but the sync also supports the keep-working-locally + periodic-push model. Separately, per Ishani's "keep deleting very old un-applied jobs", the existing `cleanup_stale_jobs.py` (new/queued, 30d+) now runs **daily** in `daily_tailor.yml` instead of monthly, plus `make tidy` on demand. Sync tested with a two-SQLite stand-in (no Turso reachable from the dev env).
 - 2026-09-21 — Daily reminder email via GitHub Actions (Ishani's choice) — a `--remind` command builds a short daily apply/referral/follow-up nudge (`pipeline/daily_reminder.py`), scheduled by `daily_reminder.yml` at 14:00 UTC (~9 AM Central). Chose GHA over local launchd for always-on delivery even when her Mac is off. **Known tradeoff:** GHA reads Turso (daily-scraped jobs), so the Apply/sponsor-jobs section is always fresh, but her applied statuses + LinkedIn recruiters live in the local DB — so the referral/follow-up sections only populate in cloud mode once that state is synced to Turso. Follow-up: sync local personal state to Turso (or converge on one DB). Opt-in on SMTP secrets in GitHub (still needs to be added).

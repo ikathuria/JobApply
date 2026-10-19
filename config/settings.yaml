@@ -100,10 +100,12 @@ handshake:
   email: ''
   password: ''
 llm:
-  provider: groq
+  provider: claude_cli
   groq_model: llama-3.1-8b-instant
   gemini_model: gemini-2.5-flash
   anthropic_model: claude-sonnet-4-6
+  claude_cli_model: sonnet           # used when provider: claude_cli (local only)
+  claude_cli_config_dir: ~/.claude-beti  # which logged-in Claude account the CLI bills
 tracker:
   db_path: tracker/applications.db
 output:
