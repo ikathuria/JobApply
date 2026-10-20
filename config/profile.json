@@ -97,7 +97,9 @@
         "DynamoDB",
         "SQS",
         "Bedrock",
-        "AWS CDK"
+        "AWS CDK",
+        "Function calling",
+        "Structured output"
       ],
       "bullets": [
         "Built a 22-tool MCP backend for an Alexa+ household assistant on AWS (Lambda, DynamoDB, SQS, Bedrock, CDK) at 101 ms p95 latency.",
@@ -113,12 +115,14 @@
       ],
       "tech": [
         "Python",
-        "Neo4j",
+        "Neo4j (graph)",
+        "Vector database",
+        "Embeddings",
         "RAG",
         "Docker"
       ],
       "bullets": [
-        "Built query-adaptive fusion that routes each query across vector, keyword, and graph retrieval by complexity and intent (Neo4j).",
+        "Built query-adaptive fusion that routes each query across vector-database, keyword, and Neo4j graph retrieval by complexity and intent.",
         "Improved NDCG@10 by 14% over vector-only retrieval (0.488 vs 0.423), with 76.4% generative accuracy on DocBench."
       ]
     },
@@ -327,9 +331,13 @@
       "Generative AI",
       "LLMs",
       "RAG",
+      "Vector Databases",
+      "Embeddings",
       "AI Agents",
       "Multi-Agent Systems",
       "MCP",
+      "Structured Output",
+      "Function Calling / Tool Use",
       "LangGraph",
       "LangChain",
       "Fine-Tuning",
@@ -375,7 +383,8 @@
     "data": [
       "Pandas",
       "NumPy",
-      "Tableau"
+      "Tableau",
+      "Neo4j"
     ],
     "cs_fundamentals": [
       "Data Structures & Algorithms",

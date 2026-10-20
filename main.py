@@ -378,8 +378,8 @@ def _slug(text: str) -> str:
 def run_base_resumes() -> None:
     """Render one untailored PDF per resume track (M41) for quick applies."""
     import json
-    from pipeline.pdf_generator import generate_resume_pdf
-    from pipeline.resume_tracks import base_resume
+    from pipeline.pdf_generator import generate_resume_pdf, resume_page_count
+    from pipeline.resume_tracks import base_resume, shrink_to_one_page
 
     profile = json.loads(Path("config/profile.json").read_text())
     out_dir = Path("output/resumes/base")
@@ -388,7 +388,7 @@ def run_base_resumes() -> None:
     for track, spec in tracks:
         label = spec.get("label", track).replace("/", "-").replace(" ", "_")
         path = out_dir / f"Ishani_Kathuria_{label}.pdf"
-        generate_resume_pdf(base_resume(profile, track), path)
+        generate_resume_pdf(shrink_to_one_page(base_resume(profile, track), resume_page_count), path)
         print(f"  {spec.get('label', track):22s} → {path}")
 
 
