@@ -128,6 +128,18 @@ def _get_session() -> requests.Session:
     return _session
 
 
+class JobrightBlocked(Exception):
+    """Jobright served its bot "Security check" page instead of the job — rate
+    limited, *not* closed. Retry later; never mark the job skipped for this."""
+
+
+def _is_challenge(resp_text: str, soup: BeautifulSoup) -> bool:
+    title = (soup.title.string or "") if soup.title else ""
+    return "security check" in title.lower() or (
+        "__NEXT_DATA__" not in resp_text and "security check" in resp_text[:5000].lower()
+    )
+
+
 def enrich_jobright_url(url: str, search_fallback: bool = True) -> JobrightEnrichment:
     """``search_fallback=False`` skips the web search for the employer URL when the
     page doesn't carry it (slow, often rate-limited) — batch enrichment uses that."""
@@ -135,6 +147,8 @@ def enrich_jobright_url(url: str, search_fallback: bool = True) -> JobrightEnric
     resp = sess.get(url, timeout=25)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
+    if _is_challenge(resp.text, soup):
+        raise JobrightBlocked(f"security check served for {url}")
 
     next_data = _load_next_data(soup)
     data_source = ((next_data.get("props") or {}).get("pageProps") or {}).get("dataSource") or {}

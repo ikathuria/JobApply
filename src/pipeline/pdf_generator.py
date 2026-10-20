@@ -118,8 +118,15 @@ def generate_resume_pdf(tailored: dict, output_path: Path) -> Path:
     Returns the path on success.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    doc = SimpleDocTemplate(
-        str(output_path),
+    pages = _build_resume(tailored, str(output_path), SimpleDocTemplate)
+    logger.info(f"Resume PDF saved: {output_path} ({pages} page(s))")
+    return output_path
+
+
+def _build_resume(tailored: dict, target, doc_cls) -> int:
+    """Lay out and build the resume into ``target`` (path or buffer); returns pages."""
+    doc = doc_cls(
+        target,
         pagesize=letter,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
@@ -208,8 +215,13 @@ def generate_resume_pdf(tailored: dict, output_path: Path) -> Path:
         story.append(Paragraph(_safe(" | ".join(tailored["publications"])), s["body"]))
 
     doc.build(story)
-    logger.info(f"Resume PDF saved: {output_path}")
-    return output_path
+    return doc.page
+
+
+def resume_page_count(tailored: dict) -> int:
+    """Pages the resume would render to (built in memory, nothing written)."""
+    import io
+    return _build_resume(tailored, io.BytesIO(), SimpleDocTemplate)
 
 
 def generate_cover_letter_pdf(letter_text: str, job: dict, output_path: Path) -> Path:

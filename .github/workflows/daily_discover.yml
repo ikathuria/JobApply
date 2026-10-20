@@ -54,11 +54,11 @@ jobs:
         continue-on-error: true
 
       - name: Enrich new Jobright jobs
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
           JOBRIGHT_EMAIL:    ${{ secrets.JOBRIGHT_EMAIL }}
           JOBRIGHT_PASSWORD: ${{ secrets.JOBRIGHT_PASSWORD }}
-        run: python scripts/enrich_jobs.py --delay 1.5 --limit 400
+        run: python scripts/enrich_jobs.py --delay 8 --limit 150
         continue-on-error: true
 
       # Delete un-applied listings (new/queued) older than 30 days.

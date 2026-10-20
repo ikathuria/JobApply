@@ -58,6 +58,10 @@ EXPERIENCE_REQUIRED = [
     "5 + years", "minimum of 5 years", "minimum 5 years", "at least 5 years",
 ]
 SENIORITY_PENALTY = 0.25  # multiply the score — sinks senior roles without discarding
+# Full-time is the priority; Summer/Fall 2027 internships stay, ranked below it.
+INTERN_TITLE_RE = re.compile(r"\b(intern|internship|co-?op)\b", re.I)
+INTERN_PENALTY = 0.8
+PHD_TITLE_RE = re.compile(r"\bph\.?d\b", re.I)
 
 # Roles an F-1/OPT candidate can't take: clearance, citizenship / US-person
 # (ITAR), or an explicit "no sponsorship now or in the future". Regexes with word
@@ -126,7 +130,7 @@ def score_job(job: dict) -> float:
     """
     text = _combined_text(job)
 
-    if _is_excluded(text) or is_phd_only(text) or timing_blocker(text):
+    if _is_excluded(text) or is_phd_only(text) or timing_blocker(text) or is_phd_title(job.get("title")):
         return 0.0
 
     # Role gate — must be a new-grad / internship / co-op role (or come from one
@@ -157,6 +161,8 @@ def score_job(job: dict) -> float:
     # ones without discarding them (a mislabeled "II" role still survives).
     if _is_too_senior(job, text):
         score *= SENIORITY_PENALTY
+    if INTERN_TITLE_RE.search(job.get("title", "") or ""):
+        score *= INTERN_PENALTY
 
     return round(min(score, 1.0), 3)
 
@@ -188,7 +194,7 @@ def filter_jobs(
         s = score_job(job)
         if s >= min_score:
             job["score"] = s
-            if skip_phd and is_phd_only(text):
+            if skip_phd and (is_phd_only(text) or is_phd_title(job.get("title"))):
                 job["status"] = "skipped"
                 n_phd += 1
             elif _is_excluded(text) or timing_blocker(text):
@@ -291,3 +297,10 @@ def is_phd_only(text: str) -> bool:
     if any(s in text for s in MASTERS_OK):
         return False
     return any(s in text for s in PHD_REQUIRED)
+
+
+def is_phd_title(title: str) -> bool:
+    """"PhD Intern", "Research Scientist, PhD New Grad" — the title itself targets
+    doctoral candidates (unless it also names a Master's, e.g. "MS/PhD")."""
+    t = (title or "").lower()
+    return bool(PHD_TITLE_RE.search(t)) and not any(s in t for s in MASTERS_OK)

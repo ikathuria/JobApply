@@ -59,6 +59,9 @@ def fetch_jd(url: str, retries: int = 2) -> str:
                 return enriched.description
         except Exception as e:
             logger.warning(f"Jobright enrichment fallback failed for {url}: {e}")
+        # Never scrape the jobright page HTML itself: when rate-limited it is a
+        # bot "Security check" page, which would become the "job description".
+        return ""
 
     for attempt in range(retries + 1):
         try:

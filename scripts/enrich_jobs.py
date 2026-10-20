@@ -9,7 +9,7 @@ citizenship, no sponsorship) — as skipped if they haven't been applied to yet.
 
 Usage:
     python scripts/enrich_jobs.py
-    python scripts/enrich_jobs.py --delay 2.0   # seconds between requests (default 1.5)
+    python scripts/enrich_jobs.py --delay 12    # seconds between requests (default 8)
     python scripts/enrich_jobs.py --limit 100   # at most 100 jobs this run (default 400)
     python scripts/enrich_jobs.py --all         # full refresh of every Jobright job
 """
@@ -25,8 +25,8 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from tracker.tracker import init_db, update_status, DB_PATH
-from pipeline.jobright_enricher import enrich_jobright_url
-from pipeline.job_filter import work_auth_blocker
+from pipeline.jobright_enricher import JobrightBlocked, enrich_jobright_url
+from pipeline.job_filter import timing_blocker, work_auth_blocker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,6 +52,8 @@ def open_db():
     return init_db(DB_PATH)
 
 
+MAX_BLOCKED = 3        # consecutive bot checks before giving up for this run
+BACKOFF_SECONDS = 30   # first back-off; doubles per consecutive block
 UNENRICHED_MAX_CHARS = 800  # scrape-time snippets are ~300 chars; enriched JDs are longer
 
 
@@ -77,7 +79,7 @@ def main(delay: float, limit: int = 400, everything: bool = False) -> None:
 
     logger.info("Found %d Jobright jobs to re-enrich.", total)
 
-    updated = skipped_closed = skipped_auth = errors = 0
+    updated = skipped_closed = skipped_auth = errors = blocked = blocked_streak = 0
 
     for i, row in enumerate(rows, 1):
         job_id = row["id"]
@@ -87,6 +89,19 @@ def main(delay: float, limit: int = 400, everything: bool = False) -> None:
 
         try:
             enriched = enrich_jobright_url(source_url, search_fallback=False)
+            blocked_streak = 0
+        except JobrightBlocked:
+            # Bot check = rate limited. Back off; give up for this run after
+            # MAX_BLOCKED in a row and leave the rest for the next run.
+            blocked_streak += 1
+            blocked += 1
+            if blocked_streak >= MAX_BLOCKED:
+                logger.warning("%s  BLOCKED %d× in a row — stopping; rest left for next run", label, blocked_streak)
+                break
+            wait = BACKOFF_SECONDS * 2 ** (blocked_streak - 1)
+            logger.info("%s  BLOCKED (security check) — backing off %ds", label, wait)
+            time.sleep(wait)
+            continue
         except Exception as exc:
             logger.warning("%s  ERROR: %s", label, exc)
             errors += 1
@@ -99,12 +114,13 @@ def main(delay: float, limit: int = 400, everything: bool = False) -> None:
             logger.info("%s  -> CLOSED (%s), marked skipped", label, enriched.closed_reason)
         elif current_status in PRE_APPLICATION_STATUSES and (
             blocker := work_auth_blocker(enriched.description)
+            or timing_blocker(f"{enriched.title} {enriched.description}")
         ):
             # Scrape-time text is a short snippet; the full JD is the first
-            # chance to see "clearance required" / "no sponsorship".
+            # chance to see "clearance required" / "no sponsorship" / "Spring 2027".
             new_status = "skipped"
             skipped_auth += 1
-            logger.info("%s  -> WORK-AUTH (%r), marked skipped", label, blocker)
+            logger.info("%s  -> BLOCKED (%r), marked skipped", label, blocker)
         else:
             new_status = current_status
 
@@ -136,15 +152,15 @@ def main(delay: float, limit: int = 400, everything: bool = False) -> None:
         time.sleep(delay)
 
     logger.info(
-        "Done. %d updated, %d closed→skipped, %d work-auth→skipped, %d errors (out of %d total).",
-        updated, skipped_closed, skipped_auth, errors, total,
+        "Done. %d updated, %d closed→skipped, %d blocked→skipped, %d rate-limited, %d errors (of %d).",
+        updated, skipped_closed, skipped_auth, blocked, errors, total,
     )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Enrich Jobright jobs from their detail pages.")
-    parser.add_argument("--delay", type=float, default=1.5,
-                        help="Seconds to wait between requests (default: 1.5)")
+    parser.add_argument("--delay", type=float, default=8.0,
+                        help="Seconds between requests (default 8 — jobright bot-checks fast crawls)")
     parser.add_argument("--limit", type=int, default=400, help="Max jobs this run (default: 400)")
     parser.add_argument("--all", action="store_true", help="Re-enrich every Jobright job")
     args = parser.parse_args()

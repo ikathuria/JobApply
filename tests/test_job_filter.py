@@ -235,3 +235,18 @@ def test_blocked_jobs_are_skipped_not_left_in_new():
     ]
     out = {j["company"]: j.get("status") for j in filter_jobs(jobs)}
     assert out == {"X": "skipped", "Y": "skipped", "Z": None}
+
+
+def test_phd_titles_are_phd_only_unless_ms_named():
+    from pipeline.job_filter import is_phd_title
+    assert is_phd_title("PhD Intern, AI Applied Scientist (2027)")
+    assert is_phd_title("Research Scientist - PhD New College Grad")
+    assert not is_phd_title("Research Intern (MS/PhD)")
+    assert not is_phd_title("Machine Learning Engineer")
+
+
+def test_full_time_outranks_equivalent_internship():
+    base = {"company": "X", "source": "newgrad-jobs.com", "description": "LLM RAG agentic python"}
+    ft = score_job({**base, "title": "Machine Learning Engineer"})
+    intern = score_job({**base, "title": "Machine Learning Engineer Intern - Summer 2027"})
+    assert ft > intern > 0

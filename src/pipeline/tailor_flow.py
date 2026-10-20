@@ -36,13 +36,16 @@ def job_dir(job: dict) -> Path:
 
 def _enrich(conn, job: dict) -> dict:
     """Refresh a Jobright job from its detail page; raises TailorError if closed."""
-    from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
+    from pipeline.jobright_enricher import JobrightBlocked, enrich_jobright_url, is_jobright_url
 
     source_url = job.get("source_url") or job.get("url") or ""
     if not is_jobright_url(source_url):
         return job
     try:
         e = enrich_jobright_url(source_url)
+    except JobrightBlocked:
+        logger.warning("Jobright rate-limited job %s; using the stored description", job["id"])
+        return {**job, "_jobright_blocked": True}
     except Exception as exc:  # network hiccup: tailor from what we have
         logger.warning("Could not enrich job %s: %s", job["id"], exc)
         return job
@@ -74,6 +77,8 @@ def _jd_text(job: dict) -> str:
     stored = job.get("description") or ""
     text = fetched if len(fetched) >= len(stored) else stored
     if len(text) < MIN_JD_CHARS:
+        if job.get("_jobright_blocked"):
+            raise TailorError("Jobright is rate-limiting right now — try again in a few minutes")
         raise TailorError("Could not get a full job description — check the URL")
     return text
 
@@ -99,6 +104,7 @@ def tailor_job(conn, job: dict, cover_letter: bool = False) -> dict:
     tailored = tailor_resume(job, jd)
     if not tailored:
         raise TailorError("Tailoring failed — see logs")
+    tailored = _one_page(tailored)
 
     out = job_dir(job)
     out.mkdir(parents=True, exist_ok=True)
@@ -115,6 +121,12 @@ def tailor_job(conn, job: dict, cover_letter: bool = False) -> dict:
                   description=jd[:5000], ats_score=None)
     return {"message": f"Tailored for {job.get('company')} ({tailored.get('track', 'ai_ml')} track)",
             "resume_path": str(resume_path.relative_to(ROOT))}
+
+
+def _one_page(tailored: dict) -> dict:
+    from pipeline.pdf_generator import resume_page_count
+    from pipeline.resume_tracks import shrink_to_one_page
+    return shrink_to_one_page(tailored, resume_page_count)
 
 
 def _load(job: dict) -> tuple[Path, dict, str]:
@@ -137,6 +149,7 @@ def ats_job(conn, job: dict) -> dict:
     out, tailored, jd = _load(job)
     result = ats_check(job, jd, tailored)
     if result["improved"]:
+        result["best"] = _one_page(result["best"])
         (out / "tailored.json").write_text(json.dumps(result["best"], indent=1), encoding="utf-8")
         generate_resume_pdf(result["best"], out / "resume.pdf")
     report = {**result["report"], "history": result["history"],

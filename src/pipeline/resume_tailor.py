@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 
 from pipeline.llm_client import complete
-from pipeline.resume_tracks import classify_track, track_profile
+from pipeline.resume_tracks import classify_track, fit_one_page, track_profile
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,9 @@ INSTRUCTIONS:
   keyword-matched before a human reads them
 - For software/ML engineering roles, surface coding + CS-fundamentals and distributed-systems-at-scale
   signal; for research / scientist roles, foreground publications and research experience near the top
-- Select the 2-3 most relevant projects for this specific role
+- ONE PAGE: the 2 most relevant roles only (max 5 bullets for the main role), exactly 3
+  projects with 2 bullets each, 4 skill categories; each bullet one line (~120 characters)
+- Select the 3 most relevant projects for this specific role
 - For skills, promote categories most relevant to the JD to the top
 - Write a 2-sentence professional summary tailored to the specific role
 - "why_fit" is 1-2 sentences for use as a cover letter hook; make it specific to the company/role
@@ -159,7 +161,7 @@ present in the profile — never add a keyword the profile does not support."""
                 raw = raw[4:]
             raw = raw.strip()
 
-        tailored = json.loads(raw)
+        tailored = fit_one_page(json.loads(raw))
 
         # Inject static fields the LLM doesn't change
         tailored.update({

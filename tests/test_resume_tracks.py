@@ -52,3 +52,28 @@ def test_base_resume_has_pdf_fields_and_respects_limits():
     for k in ("name", "email", "summary", "experience", "projects", "skills", "education"):
         assert r[k], k
     assert len(r["projects"]) <= BASE_RESUME_PROJECTS
+
+
+def test_fit_one_page_caps_sections():
+    from pipeline.resume_tracks import fit_one_page
+    big = {
+        "experience": [{"company": c, "bullets": ["b"] * 8} for c in "ABCD"],
+        "projects": [{"name": n, "bullets": ["b"] * 4} for n in "PQRS"],
+        "skills": {f"c{i}": ["x"] for i in range(7)},
+    }
+    r = fit_one_page(big)
+    assert len(r["experience"]) == 2 and all(len(e["bullets"]) <= 5 for e in r["experience"])
+    assert len(r["projects"]) == 3 and all(len(p["bullets"]) == 2 for p in r["projects"])
+    assert len(r["skills"]) == 4
+
+
+def test_shrink_to_one_page_trims_until_it_fits():
+    from pipeline.resume_tracks import shrink_to_one_page
+    r = {"summary": "One. Two. Three. Four.",
+         "experience": [{"company": "AWS", "bullets": ["b"] * 5}],
+         "projects": [{"name": n, "bullets": ["x", "y"]} for n in "PQR"], "skills": {}}
+    size = lambda d: len(d["summary"]) + sum(len(e["bullets"]) for e in d["experience"]) \
+        + sum(len(p["bullets"]) for p in d["projects"])
+    out = shrink_to_one_page(r, lambda d: 1 if size(d) <= 18 else 2)
+    assert out["summary"] == "One. Two."
+    assert size(out) <= 18 and len(out["projects"]) == 3   # stopped as soon as it fit

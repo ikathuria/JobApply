@@ -90,6 +90,12 @@ make build            # after editing apps/web/src
 - Applying is manual (auto-apply archived 2026-10-20); the tool tailors, scores, tracks.
 - Four resume tracks chosen by job title (2026-10-19); DeepfakeGuard kept off the resume
   until its detector is real.
+- Tailored resumes are forced to one page: prompt limits + `fit_one_page` caps + render-and-
+  trim (`shrink_to_one_page` with `pdf_generator.resume_page_count`).
+- Jobright bot-checks fast crawls (2026-10-20): its "Security check" page raises
+  `JobrightBlocked` — never treat it as "closed" (that once skipped 158 live jobs).
+  Enrichment runs at 8 s/request with back-off and stops after 3 blocks; JD fetch never
+  scrapes jobright HTML. Setting `JOBRIGHT_EMAIL/PASSWORD` in `.env` may help locally.
 
 ## Status / next
 See `PLAN.md`.

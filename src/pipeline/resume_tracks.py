@@ -23,7 +23,7 @@ BASE_SKILL_CATEGORIES = 4
 # own tracks; AI/ML before SWE so "Software Engineer, Applied AI" stays AI/ML.
 _TRACK_PATTERNS = [
     ("data_science", r"data scien|analyst|analytics|statistic|\bquant"),
-    ("research", r"research|scientist|\bphd\b"),
+    ("research", r"research|scientist"),
     ("ai_ml", r"machine learning|\bml\b|\bai\b|artificial intelligence|\bllm|genai|generative"
               r"|\bnlp\b|computer vision|deep learning|mlops|\bagent|perception"),
     ("swe", r"software|\bsde\b|developer|back-?end|front-?end|full.?stack|platform"
@@ -90,3 +90,44 @@ def base_resume(profile: dict, track: str) -> dict:
         "track": track,
     })
     return resume
+
+
+def fit_one_page(resume: dict) -> dict:
+    """Cap a tailored resume to the base one-page limits (roles, projects, bullets,
+    skill categories). The LLM is asked for this too; this makes it a guarantee."""
+    out = dict(resume)
+    out["experience"] = [
+        {**e, "bullets": e.get("bullets", [])[:5]}
+        for e in resume.get("experience", [])[:BASE_RESUME_EXPERIENCE]
+    ]
+    out["projects"] = [
+        {**p, "bullets": p.get("bullets", [])[:BASE_PROJECT_BULLETS]}
+        for p in resume.get("projects", [])[:BASE_RESUME_PROJECTS]
+    ]
+    skills = resume.get("skills") or {}
+    out["skills"] = dict(list(skills.items())[:BASE_SKILL_CATEGORIES])
+    return out
+
+
+def _two_sentences(text: str) -> str:
+    parts = re.split(r"(?<=[.!?])\s+", text.strip())
+    return " ".join(parts[:2])
+
+
+def shrink_to_one_page(resume: dict, page_count) -> dict:
+    """Trim a resume until ``page_count(resume) == 1``: summary → 2 sentences, then
+    the last project's 2nd bullet, the main role's 5th bullet, the last project.
+    Least-relevant content goes first (the LLM orders by relevance)."""
+    r = copy.deepcopy(fit_one_page(resume))
+    steps = [
+        lambda r: r.update(summary=_two_sentences(r.get("summary", ""))),
+        lambda r: r["projects"] and r["projects"][-1].update(bullets=r["projects"][-1]["bullets"][:1]),
+        lambda r: r["experience"] and r["experience"][0].update(bullets=r["experience"][0]["bullets"][:4]),
+        lambda r: r.update(projects=r["projects"][:2]),
+        lambda r: r["experience"] and r["experience"][0].update(bullets=r["experience"][0]["bullets"][:3]),
+    ]
+    for step in steps:
+        if page_count(r) <= 1:
+            break
+        step(r)
+    return r
