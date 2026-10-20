@@ -92,10 +92,12 @@ make build            # after editing apps/web/src
   until its detector is real.
 - Tailored resumes are forced to one page: prompt limits + `fit_one_page` caps + render-and-
   trim (`shrink_to_one_page` with `pdf_generator.resume_page_count`).
+- Dashboard UI follows `BRAND.md` (Greenbar, 2026-10-20): tokens in `apps/web/src/tokens.css`;
+  ATS score shown in list rows + drawer; `sort=ats` on `/api/jobs`.
 - Jobright bot-checks fast crawls (2026-10-20): its "Security check" page raises
   `JobrightBlocked` — never treat it as "closed" (that once skipped 158 live jobs).
   Enrichment runs at 8 s/request with back-off and stops after 3 blocks; JD fetch never
   scrapes jobright HTML. Setting `JOBRIGHT_EMAIL/PASSWORD` in `.env` may help locally.
 
 ## Status / next
-See `PLAN.md`.
+Greenbar rebrand merged 2026-10-20. See `HANDOFF.md`, then `PLAN.md`.
