@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { DARK, LIGHT } from '../../theme.js'
+import { DARK, LIGHT, alpha } from '../../theme.js'
 import { EmptyState, Spinner, StatusBadge, Tag } from '../ui/index.jsx'
 
 export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision }) {
@@ -92,7 +92,7 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
                   <div style={{
                     position: 'absolute',
                     inset: '34px 30px 10px',
-                    borderRadius: 18,
+                    borderRadius: 2,
                     border: `1px solid ${T.border}`,
                     background: T.surface,
                     opacity: 0.55,
@@ -120,10 +120,10 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    borderRadius: 20,
-                    border: `1px solid ${intent === 'approve' ? '#22C55E' : intent === 'skip' ? '#EF4444' : T.border}`,
+                    borderRadius: 2,
+                    border: `1px solid ${intent === 'approve' ? 'var(--ok)' : intent === 'skip' ? 'var(--bad)' : T.border}`,
                     background: T.card,
-                    boxShadow: dark ? '0 24px 80px rgba(0,0,0,0.35)' : '0 24px 70px rgba(42,42,80,0.15)',
+                    boxShadow: 'var(--shadow-float)',
                     padding: 24,
                     cursor: busy ? 'wait' : drag.active ? 'grabbing' : 'grab',
                     touchAction: 'pan-y',
@@ -137,9 +137,9 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
                     position: 'absolute',
                     top: 18,
                     left: 18,
-                    border: '2px solid #EF4444',
-                    color: '#EF4444',
-                    borderRadius: 10,
+                    border: '2px solid var(--bad)',
+                    color: 'var(--bad)',
+                    borderRadius: 2,
                     padding: '7px 12px',
                     fontSize: 12,
                     fontWeight: 900,
@@ -153,9 +153,9 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
                     position: 'absolute',
                     top: 18,
                     right: 18,
-                    border: '2px solid #22C55E',
-                    color: '#22C55E',
-                    borderRadius: 10,
+                    border: '2px solid var(--ok)',
+                    color: 'var(--ok)',
+                    borderRadius: 2,
                     padding: '7px 12px',
                     fontSize: 12,
                     fontWeight: 900,
@@ -172,9 +172,9 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
                     <div style={{
                       width: 58,
                       height: 58,
-                      borderRadius: 16,
-                      background: score >= 0.75 ? '#22C55E18' : score >= 0.55 ? '#F59E0B18' : '#EF444418',
-                      border: `1px solid ${score >= 0.75 ? '#22C55E40' : score >= 0.55 ? '#F59E0B40' : '#EF444440'}`,
+                      borderRadius: 2,
+                      background: score >= 0.75 ? 'color-mix(in srgb, var(--ok) 9%, transparent)' : score >= 0.55 ? 'color-mix(in srgb, var(--warn) 9%, transparent)' : 'color-mix(in srgb, var(--bad) 9%, transparent)',
+                      border: `1px solid ${score >= 0.75 ? 'color-mix(in srgb, var(--ok) 25%, transparent)' : score >= 0.55 ? 'color-mix(in srgb, var(--warn) 25%, transparent)' : 'color-mix(in srgb, var(--bad) 25%, transparent)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -250,35 +250,35 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 14 }}>
                 <button onClick={() => decide('skipped')} disabled={busy} style={{
                   height: 46,
-                  borderRadius: 12,
-                  border: '1px solid #EF444440',
-                  background: T.danger + '14',
-                  color: '#EF4444',
+                  borderRadius: 2,
+                  border: '1px solid color-mix(in srgb, var(--bad) 25%, transparent)',
+                  background: alpha(T.danger, 8),
+                  color: 'var(--bad)',
                   fontSize: 13,
                   fontWeight: 900,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: busy ? 'wait' : 'pointer',
                 }}>Remove</button>
                 <button onClick={() => onOpenJob({ ...topJob, _openTab: 'edit' })} style={{
                   height: 46,
-                  borderRadius: 12,
+                  borderRadius: 2,
                   border: `1px solid ${T.border}`,
                   background: T.card,
                   color: T.text,
                   fontSize: 13,
                   fontWeight: 800,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: 'pointer',
                 }}>Edit details</button>
                 <button onClick={() => decide('approved')} disabled={busy} style={{
                   height: 46,
-                  borderRadius: 12,
-                  border: '1px solid #22C55E40',
-                  background: '#22C55E',
-                  color: '#fff',
+                  borderRadius: 2,
+                  border: '1px solid color-mix(in srgb, var(--ok) 25%, transparent)',
+                  background: 'var(--ok)',
+                  color: 'var(--on-accent)',
                   fontSize: 13,
                   fontWeight: 900,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: busy ? 'wait' : 'pointer',
                 }}>Approve</button>
               </div>
@@ -286,7 +286,7 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
 
             <aside style={{
               border: `1px solid ${T.border}`,
-              borderRadius: 14,
+              borderRadius: 2,
               background: T.surface,
               padding: 16,
             }}>
@@ -304,13 +304,13 @@ export default function ReviewDeck({ jobs, loading, dark, onOpenJob, onDecision 
                 <button onClick={() => onOpenJob(topJob)} style={{
                   width: '100%',
                   padding: '9px 10px',
-                  borderRadius: 10,
+                  borderRadius: 2,
                   border: `1px solid ${T.border}`,
                   background: 'transparent',
                   color: T.accent,
                   fontSize: 12,
                   fontWeight: 800,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: 'pointer',
                 }}>Open full details</button>
               </div>

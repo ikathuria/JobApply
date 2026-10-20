@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback, useContext, useMemo } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT } from '../theme.js'
+import { DARK, LIGHT, alpha } from '../theme.js'
 import { api } from '../api.js'
 import { linkedinMessage } from '../lib/linkedinMessage.js'
 import { Card, Btn, Input, Textarea, EmptyState, Spinner, SectionLabel, Divider, Toast } from './ui/index.jsx'
 
 const OUTREACH_STATUSES = ['draft', 'sent', 'replied', 'bounced', 'ignored']
 const STATUS_COLOR = {
-  draft:   '#8A847A',
-  sent:    '#5B88B5',
-  replied: '#5B8C44',
-  bounced: '#B4452C',
-  ignored: '#B5AFA3',
+  draft:   'var(--muted)',
+  sent:    'var(--info)',
+  replied: 'var(--ok)',
+  bounced: 'var(--bad)',
+  ignored: 'var(--muted)',
 }
 
 function fmtDate(s) {
@@ -216,7 +216,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
   }
   const selectStyle = {
     background: T.card, color: T.text, border: `1px solid ${T.border}`,
-    borderRadius: 8, padding: '8px 10px', fontSize: 12.5, fontWeight: 600,
+    borderRadius: 2, padding: '8px 10px', fontSize: 12.5, fontWeight: 600,
     cursor: 'pointer', outline: 'none', maxWidth: 150,
   }
 
@@ -225,17 +225,16 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
       {/* Follow-up reminder banner */}
       {followups.length > 0 && (
         <div style={{
-          margin: '14px 20px 0', padding: '10px 16px', borderRadius: 10,
-          background: 'rgba(196,152,64,0.14)', border: `1px solid ${T.warning}50`,
+          margin: '14px 20px 0', padding: '10px 16px', borderRadius: 2,
+          background: 'var(--warn-soft)', border: `1px solid ${alpha(T.warning, 31)}`,
           color: T.text, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 16 }}>⏰</span>
           <span style={{ fontWeight: 700 }}>{followups.length} follow-up{followups.length !== 1 ? 's' : ''} due:</span>
           {followups.map(f => (
             <button key={f.id}
               onClick={() => selectRecruiter(f.recruiter_id)}
               style={{
-                background: 'transparent', border: `1px solid ${T.warning}55`, borderRadius: 14,
+                background: 'transparent', border: `1px solid ${alpha(T.warning, 33)}`, borderRadius: 2,
                 padding: '2px 10px', fontSize: 12, color: T.text, cursor: 'pointer',
               }}>
               {f.recruiter_name}{f.company ? ` · ${f.company}` : ''} ({fmtDate(f.follow_up_date)})
@@ -247,11 +246,11 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
       {/* Reach-out context banner */}
       {reachOutJob && (
         <div style={{
-          margin: '14px 20px 0', padding: '10px 16px', borderRadius: 10,
-          background: T.accentBg, border: `1px solid ${T.accent}40`,
+          margin: '14px 20px 0', padding: '10px 16px', borderRadius: 2,
+          background: T.accentBg, border: `1px solid ${alpha(T.accent, 25)}`,
           color: T.text, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <span>✉️ Reaching out about <b>{reachOutJob.title}</b>{reachOutJob.company ? ` @ ${reachOutJob.company}` : ''}</span>
+          <span>Reaching out about <b>{reachOutJob.title}</b>{reachOutJob.company ? ` @ ${reachOutJob.company}` : ''}</span>
           <span style={{ flex: 1 }} />
           <button onClick={clearReachOut} style={{ background: 'transparent', border: 'none', color: T.muted, cursor: 'pointer', fontSize: 16 }}>×</button>
         </div>
@@ -276,7 +275,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                 <Input value={form.title} onChange={v => setForm({ ...form, title: v })} placeholder="Title" />
                 <Textarea value={form.notes} onChange={v => setForm({ ...form, notes: v })} placeholder="Notes" rows={2} />
                 <Btn onClick={submitAdd} disabled={adding}>
-                  {adding ? <Spinner size={14} color="#fff" /> : 'Save recruiter'}
+                  {adding ? <Spinner size={14} color="var(--on-accent)" /> : 'Save recruiter'}
                 </Btn>
               </div>
             </Card>
@@ -290,11 +289,11 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                 placeholder="Search name / company / title"
                 style={{ flex: 1 }}
               />
-              <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)} style={selectStyle}>
+              <select aria-label="Filter by company" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)} style={selectStyle}>
                 <option value="">All companies ({companyOptions.length})</option>
                 {companyOptions.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select value={messagedFilter} onChange={e => setMessagedFilter(e.target.value)} style={{ ...selectStyle, maxWidth: 130 }}>
+              <select aria-label="Filter by messaged status" value={messagedFilter} onChange={e => setMessagedFilter(e.target.value)} style={{ ...selectStyle, maxWidth: 130 }}>
                 <option value="all">Any status</option>
                 <option value="no">Not messaged</option>
                 <option value="yes">Messaged</option>
@@ -325,7 +324,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
             )}
             {filteredRecruiters.map(r => (
               <Card key={r.id} onClick={() => selectRecruiter(r.id)}
-                style={selectedId === r.id ? { borderColor: T.accent, boxShadow: `0 0 0 3px ${T.accent}18` } : {}}>
+                style={selectedId === r.id ? { borderColor: T.accent, boxShadow: `0 0 0 3px ${alpha(T.accent, 9)}` } : {}}>
                 <div style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{r.name}</div>
                 <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
                   {[r.title, r.company].filter(Boolean).join(' · ') || '—'}
@@ -364,7 +363,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
 
               {!selected.email && !selected.linkedin_url && (
                 <div style={{ marginTop: 10, fontSize: 12, color: T.warning }}>
-                  ⚠ Add an email for this recruiter before sending.
+                  Add an email for this recruiter before sending.
                 </div>
               )}
 
@@ -380,7 +379,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                     <Btn variant="primary" onClick={copyLinkedin} disabled={!liDraft.trim()}>Copy message</Btn>
                     <Btn variant="secondary" onClick={openLinkedin}>Open profile ↗</Btn>
                     <Btn variant="success" onClick={markMessaged} disabled={logging}>
-                      {logging ? <Spinner size={14} color="#fff" /> : 'Mark as messaged'}
+                      {logging ? <Spinner size={14} color="var(--on-accent)" /> : 'Mark as messaged'}
                     </Btn>
                   </div>
                   <div style={{ fontSize: 11, color: T.muted, marginTop: 8 }}>
@@ -403,7 +402,7 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                   <Textarea value={composer.body} onChange={v => setComposer({ ...composer, body: v })} rows={12} />
                   <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                     <Btn variant="success" onClick={sendComposer} disabled={sending || !selected.email}>
-                      {sending ? <Spinner size={14} color="#fff" /> : 'Send email'}
+                      {sending ? <Spinner size={14} color="var(--on-accent)" /> : 'Send email'}
                     </Btn>
                     <Btn variant="ghost" onClick={() => setComposer(null)} disabled={sending}>Discard</Btn>
                   </div>
@@ -432,12 +431,12 @@ export default function OutreachView({ reachOutJob, clearReachOut }) {
                           {o.follow_up_date ? ` · follow up ${fmtDate(o.follow_up_date)}` : ''}
                         </div>
                       </div>
-                      <select
+                      <select aria-label="Outreach status"
                         value={o.status}
                         onChange={e => changeStatus(o.id, e.target.value)}
                         style={{
                           background: T.card, color: STATUS_COLOR[o.status] || T.text,
-                          border: `1px solid ${T.border}`, borderRadius: 8, padding: '5px 8px',
+                          border: `1px solid ${T.border}`, borderRadius: 2, padding: '5px 8px',
                           fontSize: 12, fontWeight: 700, cursor: 'pointer', outline: 'none',
                         }}>
                         {OUTREACH_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}

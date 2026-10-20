@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DARK, LIGHT } from '../../theme.js'
+import { DARK, LIGHT, alpha } from '../../theme.js'
 import { Btn } from '../ui/index.jsx'
 import { api } from '../../api.js'
 
@@ -108,11 +108,11 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
   }
 
   // ── Shared styles ──
-  const overlay = { position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center' }
-  const modal   = { background: T.card, border: `1px solid ${T.border}`, borderRadius:14, padding:'28px 32px', width:560, maxWidth:'95vw', boxShadow:'0 24px 64px rgba(0,0,0,0.4)' }
+  const overlay = { position:'fixed', inset:0, zIndex:1000, background:'var(--scrim)', display:'flex', alignItems:'center', justifyContent:'center' }
+  const modal   = { background: T.surface, border: `1px solid ${T.border}`, borderRadius: 4, padding:'28px 32px', width:560, maxWidth:'95vw', boxShadow:'var(--shadow-float)' }
   const lbl     = { fontSize:11, fontWeight:700, color:T.muted, textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:5 }
-  const inp     = { width:'100%', padding:'8px 12px', borderRadius:8, border:`1px solid ${T.border}`, background: T.card, color:T.text, fontSize:13, fontFamily:'Inter, system-ui, sans-serif', outline:'none', boxSizing:'border-box' }
-  const tabBtn  = active => ({ padding:'6px 16px', borderRadius:6, border:'none', cursor:'pointer', fontFamily:'Inter, system-ui, sans-serif', fontSize:12, fontWeight: active ? 700 : 500, background: active ? T.accent : 'transparent', color: active ? '#fff' : T.muted, transition:'all 0.12s' })
+  const inp     = { width:'100%', padding:'8px 12px', borderRadius: 2, border:`1px solid ${T.border}`, background: T.card, color:T.text, fontSize:13, fontFamily:'var(--font-text)', outline:'none', boxSizing:'border-box' }
+  const tabBtn  = active => ({ padding:'6px 16px', borderRadius: 2, border:'none', cursor:'pointer', fontFamily:'var(--font-text)', fontSize:12, fontWeight: active ? 700 : 500, background: active ? T.accent : 'transparent', color: active ? 'var(--on-accent)' : T.muted, transition:'all 0.12s' })
 
   return (
     <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -124,7 +124,7 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
         </div>
 
         {/* Tab switcher */}
-        <div style={{ display:'flex', gap:4, marginBottom:20, background: T.surface, borderRadius:8, padding:4 }}>
+        <div style={{ display:'flex', gap:4, marginBottom:20, background: T.surface, borderRadius: 2, padding:4 }}>
           <button style={tabBtn(tab === 'manual')} onClick={() => { setTab('manual'); setError('') }}>Single Job</button>
           <button style={tabBtn(tab === 'csv')}   onClick={() => { setTab('csv');   setCsvError('') }}>CSV Bulk</button>
         </div>
@@ -163,7 +163,7 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
               <textarea style={{ ...inp, resize:'vertical', minHeight:64 }} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Referral from Jane, apply before May 1…" />
             </div>
           </div>
-          {error && <div style={{ marginTop:10, fontSize:12, color:'#EF4444' }}>{error}</div>}
+          {error && <div style={{ marginTop:10, fontSize:12, color:'var(--bad)' }}>{error}</div>}
           <div style={{ display:'flex', gap:10, marginTop:20 }}>
             <Btn variant="primary" onClick={submitManual} disabled={saving}>{saving ? 'Importing…' : 'Import Job'}</Btn>
             <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
@@ -173,7 +173,7 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
         {/* ── CSV tab ── */}
         {tab === 'csv' && (<>
           {/* Template download */}
-          <div style={{ background: T.surface, border:`1px solid ${T.border}`, borderRadius:8, padding:'12px 14px', marginBottom:16, fontSize:12, color:T.muted, lineHeight:1.6 }}>
+          <div style={{ background: T.surface, border:`1px solid ${T.border}`, borderRadius: 2, padding:'12px 14px', marginBottom:16, fontSize:12, color:T.muted, lineHeight:1.6 }}>
             Expected columns: <code style={{ color:T.text }}>{CSV_COLUMNS.join(', ')}</code><br/>
             Only <strong>title</strong> and <strong>company</strong> are required.{' '}
             <span style={{ color:T.accent, cursor:'pointer', textDecoration:'underline' }} onClick={downloadTemplate}>Download template ↓</span>
@@ -183,17 +183,17 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
           <div style={{ marginBottom:14 }}>
             <div style={lbl}>Select CSV file</div>
             <input type="file" accept=".csv,text/csv" onChange={onFileChange}
-              style={{ fontSize:12, color:T.text, fontFamily:'Inter, system-ui, sans-serif' }} />
+              style={{ fontSize:12, color:T.text, fontFamily:'var(--font-text)' }} />
           </div>
 
           {/* Preview table */}
           {csvRows.length > 0 && (
             <div style={{ marginBottom:14 }}>
               <div style={{ fontSize:11, color:T.muted, marginBottom:6 }}>{csvRows.length} row{csvRows.length !== 1 ? 's' : ''} ready to import</div>
-              <div style={{ maxHeight:160, overflowY:'auto', border:`1px solid ${T.border}`, borderRadius:8 }}>
+              <div style={{ maxHeight:160, overflowY:'auto', border:`1px solid ${T.border}`, borderRadius: 2 }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
                   <thead>
-                    <tr style={{ background: dark ? '#1A1A28' : '#F0F0F8' }}>
+                    <tr style={{ background: dark ? 'var(--surface-2)' : 'var(--surface-2)' }}>
                       {['title','company','status','date_applied'].map(h => (
                         <th key={h} style={{ padding:'6px 10px', textAlign:'left', color:T.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', borderBottom:`1px solid ${T.border}` }}>{h}</th>
                       ))}
@@ -201,11 +201,11 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
                   </thead>
                   <tbody>
                     {csvRows.slice(0, 50).map((r, i) => (
-                      <tr key={i} style={{ borderBottom:`1px solid ${T.border}20` }}>
+                      <tr key={i} style={{ borderBottom:`1px solid ${alpha(T.border, 13)}` }}>
                         <td style={{ padding:'5px 10px', color:T.text, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.title}</td>
                         <td style={{ padding:'5px 10px', color:T.text }}>{r.company}</td>
                         <td style={{ padding:'5px 10px', color:T.muted }}>{r.status || 'applied'}</td>
-                        <td style={{ padding:'5px 10px', color:T.muted, fontFamily:'JetBrains Mono, monospace' }}>{r.date_applied || '—'}</td>
+                        <td style={{ padding:'5px 10px', color:T.muted, fontFamily:'var(--font-mono)' }}>{r.date_applied || '—'}</td>
                       </tr>
                     ))}
                     {csvRows.length > 50 && (
@@ -217,8 +217,8 @@ export default function ImportModal({ dark, onClose, onSuccess }) {
             </div>
           )}
 
-          {csvError  && <div style={{ marginBottom:10, fontSize:12, color:'#EF4444' }}>{csvError}</div>}
-          {csvStatus && <div style={{ marginBottom:10, fontSize:12, color: csvStatus.startsWith('Done') ? '#22C55E' : T.muted }}>{csvStatus}</div>}
+          {csvError  && <div style={{ marginBottom:10, fontSize:12, color:'var(--bad)' }}>{csvError}</div>}
+          {csvStatus && <div style={{ marginBottom:10, fontSize:12, color: csvStatus.startsWith('Done') ? 'var(--ok)' : T.muted }}>{csvStatus}</div>}
 
           <div style={{ display:'flex', gap:10, marginTop:4 }}>
             <Btn variant="primary" onClick={submitCSV} disabled={!csvRows.length || importing}>

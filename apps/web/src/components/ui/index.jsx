@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react'
 import { ThemeCtx } from '../ThemeContext.jsx'
-import { DARK, LIGHT, STATUS_META } from '../../theme.js'
+import { DARK, LIGHT, STATUS_META, ATS_TARGET, alpha, atsColor } from '../../theme.js'
 
 // ── Score bar ─────────────────────────────────────────────────────────────────
 export function ScoreBar({ score, height = 4, showLabel = false }) {
@@ -14,7 +14,7 @@ export function ScoreBar({ score, height = 4, showLabel = false }) {
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: height, transition: 'width 0.4s ease' }} />
       </div>
       {showLabel && (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color, fontWeight: 700, minWidth: 32 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color, fontWeight: 700, minWidth: 32 }}>
           {pct}%
         </span>
       )}
@@ -23,19 +23,48 @@ export function ScoreBar({ score, height = 4, showLabel = false }) {
 }
 
 // ── Status badge ──────────────────────────────────────────────────────────────
+// Mono uppercase label; Ready and Offer are solid fills (BRAND.md › Components).
 export function StatusBadge({ status, size = 'sm' }) {
-  const meta = STATUS_META[status] || { label: status, color: '#888', bg: '#88888820' }
-  const pad = size === 'sm' ? '2px 8px' : '3px 12px'
+  const meta = STATUS_META[status] || { label: status, color: 'var(--muted)', bg: 'transparent' }
+  const pad = size === 'sm' ? '3px 8px' : '4px 12px'
   const fs  = size === 'sm' ? 11 : 12
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: pad, borderRadius: 20, fontSize: fs, fontWeight: 700,
-      color: meta.color, background: meta.bg, letterSpacing: '0.03em',
-      border: `1px solid ${meta.color}30`, whiteSpace: 'nowrap',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      padding: pad, borderRadius: 2, fontSize: fs, fontWeight: 600,
+      fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em',
+      color: meta.fill ? 'var(--on-accent)' : meta.color,
+      background: meta.fill ? meta.color : meta.bg,
+      border: `1px solid ${meta.fill ? meta.color : alpha(meta.color, 35)}`,
+      whiteSpace: 'nowrap', minWidth: 76,
     }}>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color, flexShrink: 0 }} />
       {meta.label}
+    </span>
+  )
+}
+
+// ── ATS score ─────────────────────────────────────────────────────────────────
+// Mono number + thin bar with a tick at the 90 target. null → a "run" prompt.
+export function AtsScore({ score, onRun, width = 92 }) {
+  if (score == null) {
+    return (
+      <span title="No ATS score yet. Open the job and run it."
+        onClick={onRun}
+        style={{
+          width, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--muted)',
+          textDecoration: 'underline dotted', textUnderlineOffset: 3, cursor: onRun ? 'pointer' : 'default',
+        }}>run</span>
+    )
+  }
+  const color = atsColor(score)
+  return (
+    <span title={`ATS ${score}/100 · target ${ATS_TARGET}`}
+      style={{ width, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <b style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color, minWidth: 22, fontVariantNumeric: 'tabular-nums' }}>{score}</b>
+      <span style={{ position: 'relative', flex: 1, height: 4, background: 'var(--line)' }}>
+        <span className="gb-fill" style={{ position: 'absolute', inset: 0, width: `${score}%`, background: color }} />
+        <span style={{ position: 'absolute', left: `${ATS_TARGET}%`, top: -3, bottom: -3, width: 1.5, background: 'var(--ink)' }} />
+      </span>
     </span>
   )
 }
@@ -48,17 +77,18 @@ export function Btn({ children, variant = 'primary', onClick, style = {}, disabl
   const base = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     gap: 6, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-    fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600, borderRadius: 8,
+    fontFamily: 'var(--font-text)', fontWeight: 600, borderRadius: 2,
     transition: 'all 0.15s ease', opacity: disabled ? 0.5 : 1,
     fontSize:  size === 'sm' ? 12 : size === 'lg' ? 15 : 13,
     padding:   size === 'sm' ? '5px 12px' : size === 'lg' ? '13px 24px' : '8px 16px',
+    minHeight: size === 'sm' ? 32 : size === 'lg' ? 48 : 40,
   }
   const variants = {
-    primary:   { background: hov ? T.accent + 'CC' : T.accent, color: '#fff' },
-    secondary: { background: hov ? T.border : T.card, color: T.text, border: `1px solid ${T.border}` },
-    ghost:     { background: hov ? T.accentBg : 'transparent', color: T.muted },
-    danger:    { background: hov ? T.danger + 'CC' : T.danger, color: '#fff' },
-    success:   { background: hov ? T.success + 'CC' : T.success, color: '#fff' },
+    primary:   { background: hov ? 'var(--accent-hover)' : T.accent, color: T.onAccent },
+    secondary: { background: hov ? T.fill : T.surface, color: T.text, border: `1px solid ${T.border}` },
+    ghost:     { background: hov ? T.fill : 'transparent', color: T.text2 },
+    danger:    { background: hov ? alpha(T.danger, 80) : T.danger, color: 'var(--on-accent)' },
+    success:   { background: hov ? alpha(T.success, 80) : T.success, color: 'var(--on-accent)' },
   }
   return (
     <button style={{ ...base, ...variants[variant], ...style }}
@@ -75,9 +105,9 @@ export function Tag({ children, style = {} }) {
   const T = dark ? DARK : LIGHT
   return (
     <span style={{
-      display: 'inline-block', padding: '2px 8px', borderRadius: 5,
-      fontSize: 11, fontWeight: 600, fontFamily: 'JetBrains Mono, monospace',
-      background: T.border, color: T.muted, ...style,
+      display: 'inline-block', padding: '2px 8px', borderRadius: 2,
+      fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-mono)',
+      background: T.fill, color: T.muted, ...style,
     }}>
       {children}
     </span>
@@ -96,11 +126,10 @@ export function Card({ children, style = {}, onClick, noPad = false }) {
       onKeyDown={onClick ? (e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onClick())) : undefined}
       onMouseEnter={() => onClick && setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        background: T.card, border: `1px solid ${hov && onClick ? T.accent + '60' : T.border}`,
-        borderRadius: 12, padding: noPad ? 0 : '16px 20px',
+        background: T.card, border: `1px solid ${hov && onClick ? T.accent : T.border}`,
+        borderRadius: 2, padding: noPad ? 0 : '16px 20px',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'border-color 0.15s, box-shadow 0.15s',
-        boxShadow: hov && onClick ? `0 0 0 3px ${T.accent}18` : dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+        transition: 'border-color var(--dur-1) var(--ease)',
         ...style,
       }}>
       {children}
@@ -125,8 +154,8 @@ export function Input({ value, onChange, placeholder, style = {}, icon, type = '
           padding: icon ? '9px 12px 9px 36px' : '9px 12px',
           background: T.card,
           border: `1px solid ${T.border}`,
-          borderRadius: 8, color: T.text, fontSize: 13,
-          fontFamily: 'Inter, system-ui, sans-serif', outline: 'none',
+          borderRadius: 2, color: T.text, fontSize: 13,
+          fontFamily: 'var(--font-text)', outline: 'none',
         }}
       />
     </div>
@@ -143,8 +172,8 @@ export function Textarea({ value, onChange, placeholder, rows = 4, style = {} })
         width: '100%', boxSizing: 'border-box', padding: '9px 12px',
         background: T.card,
         border: `1px solid ${T.border}`,
-        borderRadius: 8, color: T.text, fontSize: 13,
-        fontFamily: 'Inter, system-ui, sans-serif', outline: 'none', resize: 'vertical',
+        borderRadius: 2, color: T.text, fontSize: 13,
+        fontFamily: 'var(--font-text)', outline: 'none', resize: 'vertical',
         ...style,
       }}
     />
@@ -164,7 +193,7 @@ export function SectionLabel({ children, style = {} }) {
   const T = dark ? DARK : LIGHT
   return (
     <div style={{
-      fontSize: 11, fontWeight: 700, color: T.muted,
+      fontSize: 11, fontWeight: 600, color: T.muted, fontFamily: 'var(--font-mono)',
       textTransform: 'uppercase', letterSpacing: '0.08em',
       marginBottom: 10, ...style,
     }}>
@@ -203,9 +232,9 @@ export function Toast({ toast }) {
   return (
     <div role="status" aria-live="polite" style={{
       position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
-      padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
+      padding: '12px 18px', borderRadius: 2, fontSize: 13, fontWeight: 600, color: 'var(--on-accent)',
       background: toast.kind === 'err' ? T.danger : T.success,
-      boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+      boxShadow: 'var(--shadow-float)',
     }}>
       {toast.msg}
     </div>
@@ -217,10 +246,9 @@ export function EmptyState({ icon = '◌', title, sub, action }) {
   const { dark } = useContext(ThemeCtx)
   const T = dark ? DARK : LIGHT
   return (
-    <div style={{ textAlign: 'center', padding: '60px 24px', color: T.muted }}>
-      <div style={{ fontSize: 36, marginBottom: 14 }}>{icon}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 6 }}>{title}</div>
-      {sub && <div style={{ fontSize: 12, marginBottom: action ? 20 : 0 }}>{sub}</div>}
+    <div style={{ padding: '48px 28px', color: T.muted, borderTop: `1px solid ${T.rule}` }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6 }}>{title}</div>
+      {sub && <div style={{ fontSize: 13, marginBottom: action ? 20 : 0 }}>{sub}</div>}
       {action}
     </div>
   )

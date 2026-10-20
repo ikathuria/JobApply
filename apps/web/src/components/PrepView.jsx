@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT } from '../theme.js'
+import { DARK, LIGHT, alpha } from '../theme.js'
 import { api } from '../api.js'
 import { Card, Btn, EmptyState, Spinner, SectionLabel, Divider, StatusBadge, Tag, Toast } from './ui/index.jsx'
 
@@ -110,7 +110,7 @@ export default function PrepView({ focusJobId } = {}) {
           )}
           {jobs?.map(j => (
             <Card key={j.id} onClick={() => selectJob(j)}
-              style={selectedId === j.id ? { borderColor: T.accent, boxShadow: `0 0 0 3px ${T.accent}18` } : {}}>
+              style={selectedId === j.id ? { borderColor: T.accent, boxShadow: `0 0 0 3px ${alpha(T.accent, 9)}` } : {}}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ fontWeight: 700, fontSize: 13.5, color: T.text, minWidth: 0 }}>{j.title}</div>
                 <StatusBadge status={j.status} />
@@ -143,7 +143,7 @@ export default function PrepView({ focusJobId } = {}) {
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Btn size="sm" variant={c ? 'secondary' : 'primary'} onClick={() => generate(selected.id)} disabled={generating}>
-                  {generating ? <Spinner size={14} color="#fff" /> : c ? 'Regenerate' : 'Generate prep'}
+                  {generating ? <Spinner size={14} color="var(--on-accent)" /> : c ? 'Regenerate' : 'Generate prep'}
                 </Btn>
               </div>
             </div>

@@ -1,129 +1,109 @@
-import { useState, useContext } from 'react'
-import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT, STATUS_META, NEXT_ACTION } from '../theme.js'
-import { StatusBadge, Tag } from './ui/index.jsx'
+import { useState } from 'react'
+import { NEXT_ACTION } from '../theme.js'
+import { StatusBadge, Tag, AtsScore } from './ui/index.jsx'
+
+// Columns (.gb-grid in index.css): match/checkbox · role · ATS · status · next action
+
+const matchColor = score => score >= 0.75 ? 'var(--ok)' : score >= 0.55 ? 'var(--warn)' : 'var(--bad)'
+
+export function JobListHeader() {
+  const head = {
+    fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: 'var(--muted)',
+    textTransform: 'uppercase', letterSpacing: '0.07em',
+  }
+  return (
+    <div className="gb-grid" style={{ ...head, padding: '10px 12px 8px', borderBottom: '1px solid var(--line-strong)', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 1 }}>
+      <span style={{ textAlign: 'center' }}>Match</span>
+      <span>Role</span>
+      <span>ATS</span>
+      <span className="gb-col-status" style={{ textAlign: 'center' }}>Status</span>
+      <span className="gb-col-next" />
+    </div>
+  )
+}
 
 export default function JobRow({ job, onSelect, selected, checked, onCheck, multiSelectMode }) {
-  const { dark } = useContext(ThemeCtx)
-  const T = dark ? DARK : LIGHT
   const [hov, setHov] = useState(false)
 
   const score = job.score ?? 0
   const pct   = Math.round(score * 100)
-  const scoreColor = score >= 0.75 ? T.success : score >= 0.55 ? T.warning : T.danger
-  const next = NEXT_ACTION[job.status] || { label: 'View →', color: T.muted }
+  const next  = NEXT_ACTION[job.status] || { label: 'View →', color: 'var(--muted)' }
 
-  // Show checkbox when: any item is selected (multi-select mode), or hovering
+  // Checkbox replaces the match number when hovering or in multi-select mode
   const showCheck = multiSelectMode || hov || checked
 
   return (
     <div
+      className={`gb-row gb-grid${selected || checked ? ' is-selected' : ''}`}
+      role="button" tabIndex={0}
       onClick={() => multiSelectMode ? onCheck(job.id) : onSelect(job)}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), multiSelectMode ? onCheck(job.id) : onSelect(job))}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '10px 16px', borderRadius: 8, cursor: 'pointer',
-        transition: 'all 0.12s',
-        background: checked
-          ? (dark ? '#8B5CF615' : '#F3F0FF')
-          : selected
-            ? T.accentBg
-            : hov
-              ? (dark ? '#1E1E2E' : '#F0F0FA')
-              : 'transparent',
-        borderLeft: checked
-          ? '2px solid #8B5CF6'
-          : selected
-            ? `2px solid ${T.accent}`
-            : '2px solid transparent',
-        marginBottom: 1,
+        padding: '10px 12px', cursor: 'pointer',
+        borderLeft: `3px solid ${selected || checked ? 'var(--accent)' : 'transparent'}`,
       }}
     >
-      {/* Score circle — doubles as checkbox in multi-select mode */}
-      <div
+      {/* Match score — doubles as checkbox in multi-select mode */}
+      <span
+        aria-hidden="true"
+        title={checked ? 'Deselect' : 'Select'}
         onClick={e => { e.stopPropagation(); onCheck?.(job.id) }}
-        style={{ position: 'relative', width: 36, height: 36, flexShrink: 0, cursor: onCheck ? 'pointer' : 'default' }}
+        style={{
+          height: 30, padding: 0, borderRadius: 2, cursor: onCheck ? 'pointer' : 'default',
+          fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+          display: 'grid', placeItems: 'center',
+          background: checked ? 'var(--accent)' : 'var(--surface)',
+          border: `1px solid ${checked ? 'var(--accent)' : 'var(--line)'}`,
+          color: checked ? 'var(--on-accent)' : showCheck ? 'var(--muted)' : matchColor(score),
+        }}
       >
-        {/* Score ring (fades when checkbox is shown) */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          borderRadius: '50%',
-          background: `conic-gradient(${scoreColor} ${pct * 3.6}deg, ${dark ? '#252538' : '#E2E2EE'} 0deg)`,
-          opacity: showCheck ? 0 : 1,
-          transition: 'opacity 0.15s',
-        }} />
-        {/* Inner score number */}
-        <div style={{
-          position: 'absolute', inset: 5,
-          borderRadius: '50%',
-          background: checked ? '#8B5CF620' : selected ? T.accentBg : (dark ? T.surface : '#fff'),
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 9, fontWeight: 800, color: scoreColor,
-          fontFamily: 'JetBrains Mono, monospace',
-          opacity: showCheck ? 0 : 1,
-          transition: 'opacity 0.15s',
-        }}>{pct}</div>
-
-        {/* Checkbox overlay */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          borderRadius: '50%',
-          background: checked ? '#8B5CF6' : (dark ? '#252538' : '#E8E8F4'),
-          border: `2px solid ${checked ? '#8B5CF6' : (dark ? '#444' : '#C8C8DC')}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          opacity: showCheck ? 1 : 0,
-          transition: 'opacity 0.15s, background 0.15s',
-        }}>
-          {checked && (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2.5 7L5.5 10L11.5 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </div>
-      </div>
+        {checked ? (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
+          </svg>
+        ) : showCheck ? '☐' : pct}
+      </span>
 
       {/* Title + company */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ minWidth: 0 }}>
         <div style={{
-          fontSize: 13, fontWeight: 600, color: T.text,
+          fontSize: 14, fontWeight: 600, color: 'var(--ink)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          {job.starred ? <span style={{ color: '#F59E0B', fontSize: 10 }}>★</span> : null}
+          {job.starred ? <span aria-label="Starred" style={{ color: 'var(--warn)', marginRight: 6 }}>★</span> : null}
           {job.title}
         </div>
-        <div style={{ fontSize: 11, color: T.muted, display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, flexWrap: 'nowrap' }}>
-          <span style={{ fontWeight: 600 }}>{job.company}</span>
+        <div style={{ fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          <span style={{ fontWeight: 600, color: 'var(--ink-2)' }}>{job.company}</span>
           {job.known_sponsor && (
             <span title="Known H-1B sponsor" style={{
-              fontSize: 9, fontWeight: 800, color: T.success,
-              background: `${T.success}1A`, border: `1px solid ${T.success}40`,
-              borderRadius: 5, padding: '0 5px', whiteSpace: 'nowrap', letterSpacing: '0.03em',
+              fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ok)',
+              border: '1px solid currentColor', padding: '0 5px', flexShrink: 0,
             }}>H-1B</span>
           )}
-          <span>·</span>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.location}</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.location}</span>
           {job.interview_date && (
-            <span style={{ color: '#EC4899', fontWeight: 600, whiteSpace: 'nowrap' }}>
-              · 🎤 {job.interview_date?.slice(0, 10)}
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--info)', fontWeight: 600, flexShrink: 0 }}>
+              interview {job.interview_date.slice(0, 10)}
             </span>
           )}
+          {(hov || selected) && !multiSelectMode && job.source && <Tag>{job.source}</Tag>}
         </div>
       </div>
 
-      {/* Source tag */}
-      {(hov || selected) && !multiSelectMode && <Tag>{job.source}</Tag>}
+      <AtsScore score={job.ats_score} />
 
-      {/* Status badge */}
-      <StatusBadge status={job.status} />
+      <div className="gb-col-status" style={{ display: 'flex', justifyContent: 'center' }}><StatusBadge status={job.status} /></div>
 
       {/* Action hint — hidden in multi-select mode */}
-      {(hov || selected) && !multiSelectMode && (
-        <div style={{ fontSize: 11, fontWeight: 700, color: next.color, whiteSpace: 'nowrap', minWidth: 60, textAlign: 'right' }}>
-          {next.label}
-        </div>
-      )}
+      <div className="gb-col-next" style={{
+        fontSize: 12, fontWeight: 600, color: next.color, whiteSpace: 'nowrap', textAlign: 'right',
+        opacity: (hov || selected) && !multiSelectMode ? 1 : 0, transition: 'opacity var(--dur-1) var(--ease)',
+      }}>
+        {next.label}
+      </div>
     </div>
   )
 }

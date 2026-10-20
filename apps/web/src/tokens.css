@@ -1,0 +1,94 @@
+/* ══════════════════════════════════════════════════
+   GREENBAR — design tokens (source of truth; see BRAND.md)
+   Light is primary. Dark is applied with body.dark.
+══════════════════════════════════════════════════ */
+:root {
+  /* Neutrals */
+  --bg:          #F5F7F3;
+  --surface:     #FFFFFF;
+  --surface-2:   #EEF2EE;
+  --band:        #E5EFE6;   /* greenbar row band */
+  --row-hover:   #D9E8DC;
+  --row-sel:     #CDE3D2;
+  --ink:         #14191A;
+  --ink-2:       #2F3A36;
+  --muted:       #56625D;
+  --faint:       #7A8680;   /* non-text only: placeholders, disabled, rules */
+  --line:        #D5DDD6;
+  --line-strong: #14191A;   /* ledger rules */
+
+  /* Brand */
+  --accent:       #1D6B45;  /* forest */
+  --accent-hover: #175838;
+  --accent-soft:  #DCEBDF;
+  --on-accent:    #FFFFFF;
+
+  /* Signal (status + data only) */
+  --ok:        #1D6B45;  --ok-soft:   #DCEBDF;
+  --warn:      #8F5400;  --warn-soft: #FFF1D6;
+  --bad:       #B42318;  --bad-soft:  #FBE3E0;
+  --info:      #1F5F8B;  --info-soft: #DFEAF3;
+
+  /* Sidebar (always dark ink) */
+  --side-bg:     #14191A;
+  --side-ink:    #E9EFEA;
+  --side-muted:  #9FACA5;
+  --side-line:   #2E3834;
+  --side-active: #1D6B45;
+
+  /* Type */
+  --font-text:    "IBM Plex Sans", system-ui, sans-serif;
+  --font-display: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, monospace;
+  --fs-xs: 11px;  --fs-sm: 12px;  --fs-md: 14px;  --fs-lg: 16px;
+  --fs-xl: 20px;  --fs-2xl: 26px; --fs-3xl: 34px; --fs-num: 64px;
+
+  /* Space (4px base) */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 28px; --s-8: 40px;
+
+  /* Shape */
+  --r-1: 2px;   /* everything */
+  --r-2: 4px;   /* floating layers only: drawer, modal, popover */
+  --shadow-float: 0 12px 40px rgba(20,25,26,0.16), 0 2px 6px rgba(20,25,26,0.08);
+  --scrim: rgba(20,25,26,0.45);
+
+  /* Motion */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --ease:  cubic-bezier(0.2, 0, 0, 1);
+}
+
+body.dark {
+  --bg:          #0F1412;
+  --surface:     #151C19;
+  --surface-2:   #1A2420;
+  --band:        #18231D;
+  --row-hover:   #1C2C23;
+  --row-sel:     #1E3328;
+  --ink:         #E3EBE5;
+  --ink-2:       #C2CEC6;
+  --muted:       #93A39A;
+  --faint:       #6E7D75;
+  --line:        #2A3631;
+  --line-strong: #C2CEC6;
+
+  --accent:       #5DBB8C;
+  --accent-hover: #74C99C;
+  --accent-soft:  #1E3328;
+  --on-accent:    #0B1A12;
+
+  --ok:        #5DBB8C;  --ok-soft:   #1E3328;
+  --warn:      #E3A548;  --warn-soft: #2E2414;
+  --bad:       #F28B7D;  --bad-soft:  #34191A;
+  --info:      #7DB6E0;  --info-soft: #172A38;
+
+  --side-bg:     #0A0E0C;
+  --side-ink:    #E3EBE5;
+  --side-muted:  #93A39A;
+  --side-line:   #222C28;
+  --side-active: #1D6B45;
+
+  --shadow-float: 0 12px 40px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  --scrim: rgba(0,0,0,0.6);
+}

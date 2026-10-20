@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT } from '../theme.js'
+import { DARK, LIGHT, alpha } from '../theme.js'
 import { api } from '../api.js'
 import { Card, Btn, EmptyState, Spinner, SectionLabel, Tag, Toast } from './ui/index.jsx'
 
@@ -51,7 +51,7 @@ function windowMeta(c, T) {
     case 'closing_soon':
       return { text: `Closing in ${c.days_until_close}d · ${fmtDate(c.closes)}`, color: T.warning }
     case 'upcoming':
-      return { text: `Opens ${fmtDate(c.opens)} · in ${c.days_until_open}d`, color: '#5B88B5' }
+      return { text: `Opens ${fmtDate(c.opens)} · in ${c.days_until_open}d`, color: 'var(--info)' }
     default:
       return { text: 'Closed for this cycle', color: T.muted }
   }
@@ -153,19 +153,18 @@ export default function TimelineView({ onReachOut, onOpenRoles }) {
       {/* Due-reminder banner */}
       {due.length > 0 && (
         <div style={{
-          margin: '14px 20px 0', padding: '10px 16px', borderRadius: 10,
-          background: 'rgba(196,152,64,0.14)', border: `1px solid ${T.warning}50`,
+          margin: '14px 20px 0', padding: '10px 16px', borderRadius: 2,
+          background: 'var(--warn-soft)', border: `1px solid ${alpha(T.warning, 31)}`,
           color: T.text, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 16 }}>⏰</span>
           <span style={{ fontWeight: 700 }}>{due.length} reminder{due.length !== 1 ? 's' : ''} due:</span>
           {due.map(r => (
             <button key={r.id} onClick={() => dismissDue(r)} title="Click to mark done"
               style={{
-                background: 'transparent', border: `1px solid ${T.warning}55`, borderRadius: 14,
+                background: 'transparent', border: `1px solid ${alpha(T.warning, 33)}`, borderRadius: 2,
                 padding: '2px 10px', fontSize: 12, color: T.text, cursor: 'pointer',
               }}>
-              {r.kind === 'reach_out' ? '🤝' : '✉️'} {r.company} ({fmtDate(r.due_date)}) ✓
+              {r.kind === 'reach_out' ? 'Reach out:' : 'Apply:'} {r.company} ({fmtDate(r.due_date)}) ✓
             </button>
           ))}
         </div>
@@ -210,8 +209,8 @@ export default function TimelineView({ onReachOut, onOpenRoles }) {
                         </div>
                         <span style={{
                           flexShrink: 0, fontSize: 11, fontWeight: 700, color: wm.color,
-                          background: wm.color + '1F', border: `1px solid ${wm.color}40`,
-                          borderRadius: 20, padding: '3px 9px', whiteSpace: 'nowrap',
+                          background: wm.color + '1F', border: `1px solid ${alpha(wm.color, 25)}`,
+                          borderRadius: 2, padding: '3px 9px', whiteSpace: 'nowrap',
                         }}>
                           {wm.text}
                         </span>
@@ -220,19 +219,19 @@ export default function TimelineView({ onReachOut, onOpenRoles }) {
                       {/* badges */}
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {c.sponsor && (
-                          <Tag style={{ background: T.success + '1F', color: T.success }}>H-1B sponsor</Tag>
+                          <Tag style={{ background: alpha(T.success, 12), color: T.success }}>H-1B sponsor</Tag>
                         )}
                         {c.has_contact
-                          ? <Tag style={{ background: T.accent + '1F', color: T.accent }}>✓ contact</Tag>
+                          ? <Tag style={{ background: alpha(T.accent, 12), color: T.accent }}>✓ contact</Tag>
                           : null}
                         <button onClick={() => c.open_roles > 0 && onOpenRoles?.(c.name)}
                           disabled={!c.open_roles}
                           style={{
-                            border: 'none', borderRadius: 5, padding: '2px 8px',
-                            fontSize: 11, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace',
+                            border: 'none', borderRadius: 2, padding: '2px 8px',
+                            fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)',
                             cursor: c.open_roles ? 'pointer' : 'default',
-                            background: c.open_roles ? '#5B88B51F' : T.border,
-                            color: c.open_roles ? '#5B88B5' : T.muted,
+                            background: c.open_roles ? 'color-mix(in srgb, var(--info) 12%, transparent)' : T.border,
+                            color: c.open_roles ? 'var(--info)' : T.muted,
                           }}>
                           {c.open_roles} open role{c.open_roles !== 1 ? 's' : ''}{c.open_roles ? ' →' : ''}
                         </button>
@@ -245,10 +244,10 @@ export default function TimelineView({ onReachOut, onOpenRoles }) {
                       {/* actions */}
                       <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 2 }}>
                         <Btn size="sm" variant={applySet ? 'success' : 'secondary'} onClick={() => toggleReminder(c, 'apply')}>
-                          {applySet ? '✓ Apply reminder' : '⏰ Remind: apply'}
+                          {applySet ? '✓ Apply reminder' : 'Remind: apply'}
                         </Btn>
                         <Btn size="sm" variant={reachSet ? 'success' : 'secondary'} onClick={() => toggleReminder(c, 'reach_out')}>
-                          {reachSet ? '✓ Reach-out reminder' : '🤝 Remind: referral'}
+                          {reachSet ? '✓ Reach-out reminder' : 'Remind: referral'}
                         </Btn>
                         <Btn size="sm" variant="ghost" onClick={() => onReachOut?.(c.name)}>Reach out</Btn>
                         {c.careers_url && (

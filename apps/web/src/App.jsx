@@ -27,7 +27,7 @@ export default function App() {
     ? 'pipeline'
     : stored.screen
 
-  const [dark, setDarkRaw]     = useState(stored.dark !== false)
+  const [dark, setDarkRaw]     = useState(stored.dark === true)  // Greenbar is light-first
   const [screen, setScreenRaw] = useState(initialScreen)
   const [tab, setTabRaw]       = useState(stored.tab || 'new')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -108,7 +108,7 @@ export default function App() {
         />
 
         <div className="app-main">
-          <Topbar screen={screen} />
+          <Topbar screen={screen} stats={stats} />
 
           <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {screen === 'pipeline' && (

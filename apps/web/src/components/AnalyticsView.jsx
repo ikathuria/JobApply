@@ -18,20 +18,20 @@ export default function AnalyticsView({ stats }) {
     ((s.applied ?? 0) + (s.oa ?? 0) + (s.interview ?? 0) + (s.offer ?? 0) + (s.rejected ?? 0))
 
   const funnel = [
-    { label: 'Discovered',  value: s.total        ?? 0, color: '#6366F1' },
-    { label: 'Applied',     value: totalApplied,          color: '#3B82F6' },
-    { label: 'OA',          value: s.oa           ?? 0, color: '#F59E0B' },
-    { label: 'Interview',   value: s.interview    ?? 0, color: '#EC4899' },
-    { label: 'Offer',       value: s.offer        ?? 0, color: '#10B981' },
+    { label: 'Discovered',  value: s.total        ?? 0, color: 'var(--ink-2)' },
+    { label: 'Applied',     value: totalApplied,          color: 'var(--info)' },
+    { label: 'OA',          value: s.oa           ?? 0, color: 'var(--warn)' },
+    { label: 'Interview',   value: s.interview    ?? 0, color: 'var(--info)' },
+    { label: 'Offer',       value: s.offer        ?? 0, color: 'var(--ok)' },
   ]
   const maxVal = funnel[0].value || 1
 
   const safe = n => Math.max(n, 1)
   const conversionRows = [
-    { from: 'Discovered → Applied', rate: ((totalApplied / safe(s.total)) * 100).toFixed(1),       color: '#3B82F6' },
-    { from: 'Applied → OA',         rate: (((s.oa??0) / safe(totalApplied)) * 100).toFixed(1),     color: '#F59E0B' },
-    { from: 'OA → Interview',       rate: (((s.interview??0) / safe(s.oa??0)) * 100).toFixed(1),  color: '#EC4899' },
-    { from: 'Interview → Offer',    rate: (((s.offer??0) / safe(s.interview??0)) * 100).toFixed(1), color: '#10B981' },
+    { from: 'Discovered → Applied', rate: ((totalApplied / safe(s.total)) * 100).toFixed(1),       color: 'var(--info)' },
+    { from: 'Applied → OA',         rate: (((s.oa??0) / safe(totalApplied)) * 100).toFixed(1),     color: 'var(--warn)' },
+    { from: 'OA → Interview',       rate: (((s.interview??0) / safe(s.oa??0)) * 100).toFixed(1),  color: 'var(--info)' },
+    { from: 'Interview → Offer',    rate: (((s.offer??0) / safe(s.interview??0)) * 100).toFixed(1), color: 'var(--ok)' },
   ]
 
   // ── Data-driven Sankey SVG ────────────────────────────────────────────────
@@ -92,7 +92,7 @@ export default function AnalyticsView({ stats }) {
   const maxStageCount = stageEntries[0]?.[1] || 1
 
   return (
-    <div style={{ padding: '28px 32px', overflowY: 'auto', height: '100%' }}>
+    <div tabIndex={0} aria-label="Analytics" style={{ padding: '28px 32px', overflowY: 'auto', height: '100%' }}>
       <div className="page-title" style={{ marginBottom: 4 }}>Pipeline Analytics</div>
       <div style={{ fontSize: 13, color: T.muted, marginBottom: 28 }}>New-Grad AI/ML Job Search · 2026–27</div>
 
@@ -100,11 +100,11 @@ export default function AnalyticsView({ stats }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
         {[
           { label: 'Total Discovered', value: s.total     ?? 0, color: T.accent },
-          { label: 'Applied',          value: totalApplied,      color: '#3B82F6' },
-          { label: 'In Pipeline',      value: (s.oa ?? 0) + (s.interview ?? 0), color: '#EC4899' },
-          { label: 'Offers',           value: s.offer     ?? 0, color: '#10B981' },
+          { label: 'Applied',          value: totalApplied,      color: 'var(--info)' },
+          { label: 'In Pipeline',      value: (s.oa ?? 0) + (s.interview ?? 0), color: 'var(--info)' },
+          { label: 'Offers',           value: s.offer     ?? 0, color: 'var(--ok)' },
         ].map(st => (
-          <div key={st.label} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '16px 20px' }}>
+          <div key={st.label} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '16px 20px' }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: st.color, letterSpacing: '-0.03em' }}>{st.value}</div>
             <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 4 }}>{st.label}</div>
           </div>
@@ -113,7 +113,7 @@ export default function AnalyticsView({ stats }) {
 
       <div className="analytics-grid-main">
         {/* Funnel */}
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '20px 24px' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 20 }}>Application Funnel</div>
           {funnel.map((stage, i) => {
             const width = (stage.value / maxVal) * 100
@@ -123,9 +123,9 @@ export default function AnalyticsView({ stats }) {
               <div key={stage.label} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 11, color: T.muted, width: 76, flexShrink: 0 }}>{stage.label}</div>
-                  <div style={{ flex: 1, height: 22, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ width: `${width}%`, height: '100%', background: stage.color, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8, transition: 'width 0.6s ease', minWidth: stage.value > 0 ? 28 : 0 }}>
-                      <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>{stage.value}</span>
+                  <div style={{ flex: 1, height: 22, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ width: `${width}%`, height: '100%', background: stage.color, borderRadius: 2, display: 'flex', alignItems: 'center', paddingLeft: 8, transition: 'width 0.6s ease', minWidth: stage.value > 0 ? 28 : 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--on-accent)', fontFamily: 'var(--font-mono)' }}>{stage.value}</span>
                     </div>
                   </div>
                   {i > 0 && dropPct > 0 && (
@@ -139,35 +139,35 @@ export default function AnalyticsView({ stats }) {
 
         {/* Conversion rates + rejected breakdown */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '18px 20px' }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '18px 20px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 14 }}>Conversion Rates</div>
             {conversionRows.map(row => (
               <div key={row.from} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 11, color: T.muted }}>{row.from}</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: row.color, fontFamily: 'JetBrains Mono, monospace' }}>{row.rate}%</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: row.color, fontFamily: 'var(--font-mono)' }}>{row.rate}%</span>
                 </div>
-                <div style={{ height: 4, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(parseFloat(row.rate), 100)}%`, height: '100%', background: row.color, borderRadius: 4 }} />
+                <div style={{ height: 4, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(parseFloat(row.rate), 100)}%`, height: '100%', background: row.color, borderRadius: 2 }} />
                 </div>
               </div>
             ))}
           </div>
 
           {/* Rejected card */}
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '18px 20px' }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '18px 20px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 8 }}>Rejected</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#EF4444', letterSpacing: '-0.03em', marginBottom: 8 }}>{s.rejected ?? 0}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--bad)', letterSpacing: '-0.03em', marginBottom: 8 }}>{s.rejected ?? 0}</div>
             {stageEntries.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {stageEntries.slice(0, 4).map(([stage, cnt]) => (
                   <div key={stage}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                       <span style={{ fontSize: 10, color: T.muted }}>{stage}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#EF4444', fontFamily: 'JetBrains Mono, monospace' }}>{cnt}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--bad)', fontFamily: 'var(--font-mono)' }}>{cnt}</span>
                     </div>
                     <div style={{ height: 3, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ width: `${(cnt / (s.rejected || 1)) * 100}%`, height: '100%', background: '#EF4444', borderRadius: 2, opacity: 0.7 }} />
+                      <div style={{ width: `${(cnt / (s.rejected || 1)) * 100}%`, height: '100%', background: 'var(--bad)', borderRadius: 2, opacity: 0.7 }} />
                     </div>
                   </div>
                 ))}
@@ -180,61 +180,61 @@ export default function AnalyticsView({ stats }) {
       </div>
 
       {/* ── Pipeline Flow Sankey — data-driven ─────────────────────────────── */}
-      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '20px 24px', marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Pipeline Flow</div>
         <div style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>Where jobs end up after discovery — band width is proportional to count</div>
         <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: SVG_H }}>
           {/* Segment 1: Discovered → Applied (blue) */}
-          {flowPath(X[0], h0, X[1], h1, '#3B82F6')}
+          {flowPath(X[0], h0, X[1], h1, 'var(--info)')}
           {/* Drop 1: Not applied at all (early rejected/skipped) */}
-          {h1 < h0 && dropPath(X[0], h0, h1, X[1], '#EF4444')}
+          {h1 < h0 && dropPath(X[0], h0, h1, X[1], 'var(--bad)')}
 
           {/* Segment 2: Applied → OA (amber) */}
-          {flowPath(X[1], h1, X[2], h2, '#F59E0B')}
+          {flowPath(X[1], h1, X[2], h2, 'var(--warn)')}
           {/* Drop 2: Applied but no OA (most common rejection) */}
-          {h2 < h1 && dropPath(X[1], h1, h2, X[2], '#6B7280')}
+          {h2 < h1 && dropPath(X[1], h1, h2, X[2], 'var(--muted)')}
 
           {/* Segment 3: OA → Interview (pink) */}
-          {flowPath(X[2], h2, X[3], h3, '#EC4899')}
+          {flowPath(X[2], h2, X[3], h3, 'var(--info)')}
           {/* Drop 3: Got OA but no interview */}
-          {h3 < h2 && dropPath(X[2], h2, h3, X[3], '#EF4444')}
+          {h3 < h2 && dropPath(X[2], h2, h3, X[3], 'var(--bad)')}
 
           {/* Offer sliver at far right */}
           {sc(s.offer ?? 0) > 0 && (
-            <rect x={X[3] - 8} y={TOP} width={8} height={sc(s.offer ?? 0)} fill="#10B981" fillOpacity={0.7} rx={2} />
+            <rect x={X[3] - 8} y={TOP} width={8} height={sc(s.offer ?? 0)} fill="var(--ok)" fillOpacity={0.7} rx={2} />
           )}
 
           {/* Stage labels */}
           {[
-            { x: X[0] + 4,  y: TOP - 2,  val: s.total ?? 0,    sub: 'Discovered', color: '#6366F1' },
-            { x: X[1] + 4,  y: TOP - 2,  val: totalApplied,     sub: 'Applied',    color: '#3B82F6' },
-            { x: X[2] + 4,  y: TOP - 2,  val: oaPlus,           sub: 'OA+',        color: '#F59E0B' },
-            { x: X[3] - 60, y: TOP - 2,  val: intPlus,          sub: 'Interview+', color: '#EC4899' },
+            { x: X[0] + 4,  y: TOP - 2,  val: s.total ?? 0,    sub: 'Discovered', color: 'var(--ink-2)' },
+            { x: X[1] + 4,  y: TOP - 2,  val: totalApplied,     sub: 'Applied',    color: 'var(--info)' },
+            { x: X[2] + 4,  y: TOP - 2,  val: oaPlus,           sub: 'OA+',        color: 'var(--warn)' },
+            { x: X[3] - 60, y: TOP - 2,  val: intPlus,          sub: 'Interview+', color: 'var(--info)' },
           ].map(n => (
             <g key={n.sub}>
-              <text x={n.x} y={n.y + 10} fontFamily="JetBrains Mono, monospace" fontSize="12" fontWeight="800" fill={n.color}>{n.val}</text>
-              <text x={n.x} y={n.y + 21} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#8888A0">{n.sub}</text>
+              <text x={n.x} y={n.y + 10} fontFamily='var(--font-mono)' fontSize="12" fontWeight="800" fill={n.color}>{n.val}</text>
+              <text x={n.x} y={n.y + 21} fontFamily="var(--font-text)" fontSize="9" fill="var(--muted)">{n.sub}</text>
             </g>
           ))}
 
           {/* Drop labels */}
           {(s.total ?? 0) - totalApplied > 0 && (
-            <text x={mx(X[0], X[1])} y={SVG_H - 4} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#EF4444" textAnchor="middle">
+            <text x={mx(X[0], X[1])} y={SVG_H - 4} fontFamily="var(--font-text)" fontSize="9" fill="var(--bad)" textAnchor="middle">
               {(s.total ?? 0) - totalApplied} not applied
             </text>
           )}
           {totalApplied - oaPlus > 0 && (
-            <text x={mx(X[1], X[2])} y={SVG_H - 4} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#6B7280" textAnchor="middle">
+            <text x={mx(X[1], X[2])} y={SVG_H - 4} fontFamily="var(--font-text)" fontSize="9" fill="var(--muted)" textAnchor="middle">
               {totalApplied - oaPlus} no OA
             </text>
           )}
           {oaPlus - intPlus > 0 && (
-            <text x={mx(X[2], X[3])} y={SVG_H - 4} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#EF4444" textAnchor="middle">
+            <text x={mx(X[2], X[3])} y={SVG_H - 4} fontFamily="var(--font-text)" fontSize="9" fill="var(--bad)" textAnchor="middle">
               {oaPlus - intPlus} no interview
             </text>
           )}
           {(s.offer ?? 0) > 0 && (
-            <text x={X[3] - 4} y={TOP + sc(s.offer ?? 0) + 14} fontFamily="Inter, system-ui, sans-serif" fontSize="9" fill="#10B981" textAnchor="end">
+            <text x={X[3] - 4} y={TOP + sc(s.offer ?? 0) + 14} fontFamily="var(--font-text)" fontSize="9" fill="var(--ok)" textAnchor="end">
               {s.offer} offer{s.offer !== 1 ? 's' : ''}
             </text>
           )}
@@ -243,7 +243,7 @@ export default function AnalyticsView({ stats }) {
 
       {/* ── Rejection by Stage breakdown ─────────────────────────────────── */}
       {stageEntries.length > 0 && (
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '20px 24px' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Rejection by Stage</div>
           <div style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>
             Set <em>rejection_stage</em> on rejected jobs to populate this chart
@@ -253,14 +253,14 @@ export default function AnalyticsView({ stats }) {
               <div key={stage}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                   <div style={{ fontSize: 11, color: T.muted, width: 140, flexShrink: 0 }}>{stage}</div>
-                  <div style={{ flex: 1, height: 20, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ flex: 1, height: 20, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{
                       width: `${(cnt / maxStageCount) * 100}%`, height: '100%',
-                      background: '#EF4444', borderRadius: 4, opacity: 0.75,
+                      background: 'var(--bad)', borderRadius: 2, opacity: 0.75,
                       display: 'flex', alignItems: 'center', paddingLeft: 8,
                       transition: 'width 0.6s ease', minWidth: cnt > 0 ? 24 : 0,
                     }}>
-                      <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>{cnt}</span>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--on-accent)', fontFamily: 'var(--font-mono)' }}>{cnt}</span>
                     </div>
                   </div>
                   <div style={{ fontSize: 10, color: T.muted, width: 36, textAlign: 'right', flexShrink: 0 }}>
@@ -277,14 +277,14 @@ export default function AnalyticsView({ stats }) {
       {funnelData && (
         <div className="analytics-grid-even">
           {/* Response rate by known-sponsor status — the core thesis of the pivot */}
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '20px 24px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Response by Sponsor Status</div>
             <div style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>
               Of applications sent, how many advanced (OA / interview / offer) — split by whether the company is a known H-1B sponsor
             </div>
             {[
-              { key: 'sponsor', label: 'Known H-1B sponsor', color: '#10B981' },
-              { key: 'unknown', label: 'Unknown / not listed', color: '#6B7280' },
+              { key: 'sponsor', label: 'Known H-1B sponsor', color: 'var(--ok)' },
+              { key: 'unknown', label: 'Unknown / not listed', color: 'var(--muted)' },
             ].map(({ key, label, color }) => {
               const d = funnelData.by_sponsor?.[key] || { applied: 0, responded: 0 }
               const rate = d.applied ? Math.round((d.responded / d.applied) * 100) : 0
@@ -292,12 +292,12 @@ export default function AnalyticsView({ stats }) {
                 <div key={key} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontSize: 11, color: T.muted }}>{label}</span>
-                    <span style={{ fontSize: 11, fontWeight: 800, color, fontFamily: 'JetBrains Mono, monospace' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
                       {rate}% ({d.responded}/{d.applied})
                     </span>
                   </div>
-                  <div style={{ height: 6, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ width: `${rate}%`, height: '100%', background: color, borderRadius: 4 }} />
+                  <div style={{ height: 6, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ width: `${rate}%`, height: '100%', background: color, borderRadius: 2 }} />
                   </div>
                 </div>
               )
@@ -305,7 +305,7 @@ export default function AnalyticsView({ stats }) {
           </div>
 
           {/* Applications by source */}
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: '20px 24px' }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '20px 24px' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 4 }}>Pipeline by Source</div>
             <div style={{ fontSize: 11, color: T.muted, marginBottom: 16 }}>Total listings discovered per source</div>
             {Object.entries(funnelData.by_source || {})
@@ -317,9 +317,9 @@ export default function AnalyticsView({ stats }) {
                   <div key={src} style={{ marginBottom: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
                       <div style={{ fontSize: 11, color: T.muted, width: 130, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src}</div>
-                      <div style={{ flex: 1, height: 18, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ width: `${(total / max) * 100}%`, height: '100%', background: T.accent, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8, minWidth: 24 }}>
-                          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>{total}</span>
+                      <div style={{ flex: 1, height: 18, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ width: `${(total / max) * 100}%`, height: '100%', background: T.accent, borderRadius: 2, display: 'flex', alignItems: 'center', paddingLeft: 8, minWidth: 24 }}>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--on-accent)', fontFamily: 'var(--font-mono)' }}>{total}</span>
                         </div>
                       </div>
                     </div>

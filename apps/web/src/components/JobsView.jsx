@@ -1,11 +1,10 @@
 import { useState, useMemo, useEffect, useContext } from 'react'
 import { ThemeCtx } from './ThemeContext.jsx'
-import { DARK, LIGHT } from '../theme.js'
+import { DARK, LIGHT, alpha } from '../theme.js'
 import { EmptyState, Spinner } from './ui/index.jsx'
-import JobRow from './JobRow.jsx'
+import JobRow, { JobListHeader } from './JobRow.jsx'
 import { api } from '../api.js'
 import ImportModal from './pipeline/ImportModal.jsx'
-import FocusQueue from './pipeline/FocusQueue.jsx'
 import ReviewDeck from './pipeline/ReviewDeck.jsx'
 import ApprovedDeck from './pipeline/ApprovedDeck.jsx'
 import { TABS, normalizeLocation } from './pipeline/constants.js'
@@ -23,8 +22,6 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
   const [dateTo, setDateTo]                 = useState('')
   const [sponsorsOnly, setSponsorsOnly]     = useState(false)
   const [jobs, setJobs]             = useState([])
-  const [focus, setFocus]           = useState([])
-  const [focusOpen, setFocusOpen]   = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [loading, setLoading]       = useState(true)
   const [showImport, setShowImport] = useState(false)
@@ -92,10 +89,6 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
     }
   }, [tab, minScore, sort, onRefresh])
 
-  // Fetch focus items once
-  useEffect(() => {
-    api.focus().then(setFocus).catch(() => {})
-  }, [onRefresh])
 
   // Client-side filter (search + location + source + date range)
   const filteredJobs = useMemo(() => {
@@ -184,51 +177,36 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
-      {/* Focus queue */}
-      <div style={{ padding: '20px 24px 0', flexShrink: 0 }}>
-        <FocusQueue focus={focus} onSelectJob={onSelectJob} setTab={setTab} dark={dark}
-          open={focusOpen} onToggle={() => setFocusOpen(o => !o)} />
-      </div>
-
       {/* Tab bar */}
-      <div style={{ padding: '0 24px', flexShrink: 0, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <div className="pipe-controls">
+        <div className="pipe-tabs">
         {TABS.map(t => {
           const active = tab === t.id
           const count  = tabCount(t.id)
           return (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button key={t.id} aria-pressed={active} onClick={() => setTab(t.id)}
               style={{
-                padding: '10px 14px', border: 'none', cursor: 'pointer',
-                borderRadius: '8px 8px 0 0', background: 'transparent',
-                fontFamily: 'Inter, system-ui, sans-serif', fontSize: 12,
-                fontWeight: active ? 700 : 500,
-                color: active ? T.accent : T.muted,
-                borderBottom: active ? `2px solid ${T.accent}` : '2px solid transparent',
-                display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.12s',
+                minHeight: 42, padding: '10px 12px', border: 'none', cursor: 'pointer',
+                borderRadius: 0, background: 'transparent',
+                fontFamily: 'var(--font-text)', fontSize: 13,
+                fontWeight: active ? 600 : 500,
+                color: active ? T.text : T.muted,
+                borderBottom: active ? `3px solid ${T.accent}` : '3px solid transparent',
+                display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+                transition: 'color var(--dur-1) var(--ease)',
               }}>
               {t.label}
               {count > 0 && (
                 <span style={{
-                  background: active ? T.accent : T.border,
-                  color: active ? '#fff' : T.muted,
-                  fontSize: 10, fontWeight: 800, borderRadius: 10, padding: '1px 6px',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
+                  color: active ? T.accent : T.muted, fontVariantNumeric: 'tabular-nums',
                 }}>{count}</span>
               )}
             </button>
           )
         })}
-        <div style={{ flex: 1 }} />
-        <button style={{
-          padding: '6px 12px', borderRadius: 6, border: `1px solid ${T.border}`,
-          background: 'transparent', color: T.muted, fontSize: 11, fontWeight: 600,
-          cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif', marginBottom: 2,
-        }} onClick={() => setShowImport(true)}>+ Import</button>
-      </div>
-
-      {/* Filter bar */}
-      <div className="filter-bar">
-        {/* Row 1: search + scope tag + count + deck toggle */}
-        <div className="filter-row">
+        </div>
+        <div className="pipe-tools">
           <div className="filter-search">
             <span className="filter-search-icon">⌕</span>
             <input
@@ -237,48 +215,56 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
               placeholder={`Search ${TABS.find(t => t.id === tab)?.label ?? tab} jobs…`}
             />
           </div>
-          <span className="filter-scope-tag">{TABS.find(t => t.id === tab)?.label ?? tab}</span>
           <span className="filter-count">{filteredJobs.length} {filteredJobs.length === 1 ? 'job' : 'jobs'}</span>
           <button
             onClick={() => setShowFilters(v => !v)}
             aria-expanded={showFilters}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 6,
+              minHeight: 34, padding: '6px 12px', borderRadius: 2,
               border: `1px solid ${showFilters || advancedFilterCount > 0 ? T.accent : T.border}`,
-              background: showFilters ? T.accentBg : 'transparent',
-              color: showFilters || advancedFilterCount > 0 ? T.accent : T.muted,
-              fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              fontFamily: 'Inter, system-ui, sans-serif',
+              background: showFilters ? T.accentBg : T.surface,
+              color: showFilters || advancedFilterCount > 0 ? T.accent : T.text2,
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              fontFamily: 'var(--font-text)',
             }}>
             Filters
             {advancedFilterCount > 0 && (
               <span style={{
-                background: T.accent, color: '#fff', fontSize: 10, fontWeight: 800,
-                borderRadius: 10, padding: '0 6px', lineHeight: '15px',
+                background: T.accent, color: 'var(--on-accent)', fontSize: 10, fontWeight: 800,
+                borderRadius: 2, padding: '0 6px', lineHeight: '15px',
               }}>{advancedFilterCount}</span>
             )}
           </button>
           {(tab === 'ready' || tab === 'approved') && (
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, background: T.surface, borderRadius: 8, padding: 4 }}>
+            <div style={{ display: 'flex', border: `1px solid ${T.border}`, borderRadius: 2 }}>
               {['deck', 'list'].map(mode => (
-                <button key={mode} onClick={() => setReviewMode(mode)} style={{
-                  padding: '7px 12px', border: 'none', borderRadius: 6, cursor: 'pointer',
-                  background: reviewMode === mode ? T.accent : 'transparent',
-                  color: reviewMode === mode ? '#fff' : T.muted,
-                  fontSize: 12, fontWeight: 800, fontFamily: 'Inter, system-ui, sans-serif',
+                <button key={mode} onClick={() => setReviewMode(mode)} aria-pressed={reviewMode === mode} style={{
+                  minHeight: 32, padding: '6px 12px', border: 'none', borderRadius: 0, cursor: 'pointer',
+                  background: reviewMode === mode ? T.accent : T.surface,
+                  color: reviewMode === mode ? 'var(--on-accent)' : T.text2,
+                  fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-text)',
                 }}>
                   {mode === 'deck' ? (tab === 'approved' ? 'Apply deck' : 'Review deck') : 'List'}
                 </button>
               ))}
             </div>
           )}
+          <button onClick={() => setShowImport(true)} style={{
+            minHeight: 34, padding: '6px 12px', borderRadius: 2, border: `1px solid ${T.border}`,
+            background: T.surface, color: T.text2, fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-text)',
+          }}>+ Import</button>
         </div>
-        {/* Row 2: sort + score + location + source + dates + clear — behind "Filters" */}
-        {showFilters && (
+      </div>
+
+      {/* Advanced filters: sort + score + location + source + dates + clear */}
+      {showFilters && (
+        <div className="filter-bar">
           <div className="filter-row">
             <select className="filter-select" value={sort} onChange={e => setSort(e.target.value)}>
-              <option value="score">Score ↓</option>
+              <option value="score">Match ↓</option>
+              <option value="ats">ATS ↓</option>
               <option value="company">Company A–Z</option>
               <option value="starred">Starred first</option>
             </select>
@@ -288,7 +274,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
               <input type="range" min={0} max={1} step={0.05} value={minScore}
                 onChange={e => setMinScore(parseFloat(e.target.value))}
                 style={{ width: 72, accentColor: T.accent }} />
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: T.text, width: 30 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: T.text, width: 30 }}>
                 {Math.round(minScore * 100)}%
               </span>
             </div>
@@ -320,10 +306,10 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
               title="Show only companies that are known H-1B sponsors"
               style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-                borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                fontFamily: 'Inter, system-ui, sans-serif',
+                borderRadius: 2, cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                fontFamily: 'var(--font-text)',
                 border: `1px solid ${sponsorsOnly ? T.success : T.border}`,
-                background: sponsorsOnly ? `${T.success}1A` : 'transparent',
+                background: sponsorsOnly ? `${alpha(T.success, 10)}` : 'transparent',
                 color: sponsorsOnly ? T.success : T.muted,
               }}>
               {sponsorsOnly ? '✓ ' : ''}H-1B sponsors only
@@ -333,8 +319,8 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
               <button className="filter-clear" onClick={clearFilters}>Clear</button>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Job list */}
       {tab === 'ready' && reviewMode === 'deck' ? (
@@ -354,15 +340,15 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           onDecision={handleReviewDecision}
         />
       ) : (
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 24px', position: 'relative' }}>
+      <div className="gb-list" style={{ flex: 1, overflowY: 'auto', padding: '0 16px 24px', position: 'relative' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
-            <Spinner size={28} />
+            <Spinner size={16} />
           </div>
         ) : filteredJobs.length === 0 ? (
-          <EmptyState icon="◌" title="No jobs match these filters" sub="Try adjusting the score slider or search term" />
+          <EmptyState title="No jobs match these filters." sub="Lower the match slider or clear the search." />
         ) : (
-          filteredJobs.map(job => (
+          [<JobListHeader key="_h" />, ...filteredJobs.map(job => (
             <JobRow
               key={job.id}
               job={job}
@@ -372,7 +358,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
               onCheck={toggleSelect}
               multiSelectMode={multiSelectMode}
             />
-          ))
+          ))]
         )}
       </div>
       )}
@@ -385,7 +371,7 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           borderTop: `2px solid ${T.accent}`,
           padding: '12px 20px',
           display: 'flex', alignItems: 'center', gap: 10,
-          boxShadow: '0 -8px 24px rgba(0,0,0,0.15)',
+          boxShadow: 'var(--shadow-float)',
           zIndex: 50, flexWrap: 'wrap',
         }}>
           {/* Clear + count */}
@@ -397,9 +383,9 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           {/* Select all */}
           {selectedIds.size < filteredJobs.length && (
             <button onClick={selectAll} style={{
-              background: 'none', border: `1px solid ${T.border}`, borderRadius: 6,
+              background: 'none', border: `1px solid ${T.border}`, borderRadius: 2,
               padding: '5px 10px', fontSize: 11, fontWeight: 600, color: T.muted,
-              cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif',
+              cursor: 'pointer', fontFamily: 'var(--font-text)',
             }}>
               Select all {filteredJobs.length}
             </button>
@@ -410,32 +396,32 @@ export default function JobsView({ onSelectJob, selectedJob, tab, setTab, stats,
           {/* Tab-contextual primary actions */}
           {tab === 'ready' && (
             <button onClick={() => bulkApply('approved')} disabled={bulkLoading}
-              style={{ background: '#8B7BB8', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, system-ui, sans-serif', opacity: bulkLoading ? 0.7 : 1 }}>
+              style={{ background: 'var(--accent)', color: 'var(--on-accent)', border: 'none', borderRadius: 2, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-text)', opacity: bulkLoading ? 0.7 : 1 }}>
               {bulkLoading ? '…' : `✓ Approve (${selectedIds.size})`}
             </button>
           )}
           {tab === 'approved' && (
             <button onClick={() => bulkApply('applied')} disabled={bulkLoading}
-              style={{ background: '#22C55E', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, system-ui, sans-serif', opacity: bulkLoading ? 0.7 : 1 }}>
+              style={{ background: 'var(--ok)', color: 'var(--on-accent)', border: 'none', borderRadius: 2, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-text)', opacity: bulkLoading ? 0.7 : 1 }}>
               {bulkLoading ? '…' : `✓ Mark Applied (${selectedIds.size})`}
             </button>
           )}
           {tab === 'new' && (
             <button onClick={() => bulkApply('queued')} disabled={bulkLoading}
-              style={{ background: T.accent, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, system-ui, sans-serif', opacity: bulkLoading ? 0.7 : 1 }}>
-              {bulkLoading ? '…' : `✦ Tailor Queue (${selectedIds.size})`}
+              style={{ background: T.accent, color: 'var(--on-accent)', border: 'none', borderRadius: 2, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-text)', opacity: bulkLoading ? 0.7 : 1 }}>
+              {bulkLoading ? '…' : `Tailor ${selectedIds.size} jobs`}
             </button>
           )}
 
           {/* Always available: skip + reject */}
           {['new', 'ready', 'approved', 'all'].includes(tab) && (
             <button onClick={() => bulkApply('skipped')} disabled={bulkLoading}
-              style={{ background: 'none', border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600, color: T.muted, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, system-ui, sans-serif' }}>
+              style={{ background: 'none', border: `1px solid ${T.border}`, borderRadius: 2, padding: '8px 12px', fontSize: 12, fontWeight: 600, color: T.muted, cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-text)' }}>
               ⏭ Skip
             </button>
           )}
           <button onClick={() => bulkApply('rejected')} disabled={bulkLoading}
-            style={{ background: 'none', border: '1px solid #EF444440', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600, color: '#EF4444', cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'Inter, system-ui, sans-serif' }}>
+            style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--bad) 25%, transparent)', borderRadius: 2, padding: '8px 12px', fontSize: 12, fontWeight: 600, color: 'var(--bad)', cursor: bulkLoading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-text)' }}>
             ✕ Reject
           </button>
         </div>

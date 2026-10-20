@@ -49,7 +49,7 @@ export default function SettingsView() {
 
   const selectStyle = {
     background: T.card, color: T.text, border: `1px solid ${T.border}`,
-    borderRadius: 8, padding: '9px 12px', fontSize: 13, width: '100%', outline: 'none',
+    borderRadius: 2, padding: '9px 12px', fontSize: 13, width: '100%', outline: 'none',
   }
   const rowLabel = { fontSize: 12, fontWeight: 600, color: T.text, marginBottom: 5 }
 
@@ -64,7 +64,7 @@ export default function SettingsView() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <div>
           <div style={rowLabel}>Provider</div>
-          <select value={s.llm.provider} onChange={e => setLLM('provider', e.target.value)} style={selectStyle}>
+          <select aria-label="LLM provider" value={s.llm.provider} onChange={e => setLLM('provider', e.target.value)} style={selectStyle}>
             {PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
@@ -135,7 +135,7 @@ export default function SettingsView() {
 
       <div style={{ display: 'flex', gap: 10 }}>
         <Btn variant="primary" onClick={save} disabled={saving}>
-          {saving ? <Spinner size={14} color="#fff" /> : 'Save Settings'}
+          {saving ? <Spinner size={14} color="var(--on-accent)" /> : 'Save Settings'}
         </Btn>
         <Btn variant="secondary" onClick={() => api.getSettings().then(setS)} disabled={saving}>Reload</Btn>
       </div>
@@ -143,9 +143,9 @@ export default function SettingsView() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
-          padding: '12px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
+          padding: '12px 18px', borderRadius: 2, fontSize: 13, fontWeight: 600, color: 'var(--on-accent)',
           background: toast.kind === 'err' ? T.danger : T.success,
-          boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+          boxShadow: 'var(--shadow-float)',
         }}>
           {toast.msg}
         </div>

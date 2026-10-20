@@ -304,6 +304,9 @@ def api_jobs(
 
     if sort == "company":
         jobs.sort(key=lambda j: (j.get("company") or "").lower())
+    elif sort == "ats":
+        # Scored jobs first, best ATS first; unscored keep match-score order.
+        jobs.sort(key=lambda j: (j.get("ats_score") is None, -(j.get("ats_score") or 0), -(j.get("score") or 0)))
     elif sort == "starred":
         jobs.sort(key=lambda j: (j.get("score") or 0), reverse=True)
     else:

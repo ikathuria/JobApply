@@ -1,56 +1,69 @@
-// Design tokens — warm paper/ink palette
-// Light = warm cream paper; Dark = warm dark brown
+// Greenbar design tokens for inline styles. Values are CSS variables defined in
+// tokens.css, so light/dark switching happens in CSS (body.dark) and LIGHT/DARK
+// are the same object. See BRAND.md.
 
-export const LIGHT = {
-  bg:       '#F4F3EE',
-  surface:  '#FFFFFF',
-  card:     '#FAFAF8',
-  border:   '#E4E1D7',
-  text:     '#1F1A14',
-  muted:    '#8A847A',
-  accent:   '#C96442',
-  accentBg: 'rgba(201,100,66,0.10)',
-  success:  '#5B8C44',
-  warning:  '#B57828',
-  danger:   '#B4452C',
-  pink:     '#C28098',
+const TOKENS = {
+  bg:       'var(--bg)',
+  surface:  'var(--surface)',
+  card:     'var(--surface)',
+  fill:     'var(--surface-2)',
+  band:     'var(--band)',
+  rowHover: 'var(--row-hover)',
+  rowSel:   'var(--row-sel)',
+  border:   'var(--line)',
+  rule:     'var(--line-strong)',
+  text:     'var(--ink)',
+  text2:    'var(--ink-2)',
+  muted:    'var(--muted)',
+  faint:    'var(--faint)',
+  accent:   'var(--accent)',
+  accentBg: 'var(--accent-soft)',
+  onAccent: 'var(--on-accent)',
+  success:  'var(--ok)',
+  warning:  'var(--warn)',
+  danger:   'var(--bad)',
+  info:     'var(--info)',
+  pink:     'var(--info)',
+  mono:     'var(--font-mono)',
+  display:  'var(--font-display)',
+  radius:   'var(--r-1)',
+  radiusFloat: 'var(--r-2)',
+  shadowFloat: 'var(--shadow-float)',
+  scrim:    'var(--scrim)',
 }
 
-export const DARK = {
-  bg:       '#1A1714',
-  surface:  '#211E1A',
-  card:     '#2A2520',
-  border:   '#3A342D',
-  text:     '#EDE8DF',
-  muted:    '#8A847A',
-  accent:   '#C96442',
-  accentBg: 'rgba(201,100,66,0.14)',
-  success:  '#6A9068',
-  warning:  '#C49840',
-  danger:   '#B4452C',
-  pink:     '#C28098',
-}
+export const LIGHT = TOKENS
+export const DARK = TOKENS
 
+// Translucent tint of any token: alpha(T.success, 10) → 10% success over transparent.
+export const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`
+
+// ATS tiers: ≥90 meets the target, 75–89 close, <75 far (BRAND.md signature move 3).
+export const ATS_TARGET = 90
+export const atsColor = score =>
+  score >= ATS_TARGET ? 'var(--ok)' : score >= 75 ? 'var(--warn)' : 'var(--bad)'
+
+// Status: mono uppercase labels. `fill` statuses render solid; others as text/outline.
 export const STATUS_META = {
-  new:       { label: 'New',       color: '#5B88B5', bg: 'rgba(91,136,181,0.14)'  },
-  queued:    { label: 'Ready',     color: '#6A9068', bg: 'rgba(106,144,104,0.14)' },
-  approved:  { label: 'Approved',  color: '#8B7BB8', bg: 'rgba(139,123,184,0.14)' },
-  applied:   { label: 'Applied',   color: '#D17847', bg: 'rgba(209,120,71,0.14)'  },
-  oa:        { label: 'OA',        color: '#C49840', bg: 'rgba(196,152,64,0.14)'  },
-  interview: { label: 'Interview', color: '#C28098', bg: 'rgba(194,128,152,0.14)' },
-  offer:     { label: 'Offer',     color: '#5A9DA8', bg: 'rgba(90,157,168,0.14)'  },
-  rejected:  { label: 'Rejected',  color: '#B4452C', bg: 'rgba(180,69,44,0.14)'   },
-  skipped:   { label: 'Skipped',   color: '#B5AFA3', bg: 'rgba(181,175,163,0.14)' },
+  new:       { label: 'New',       color: 'var(--muted)',  bg: 'transparent' },
+  queued:    { label: 'Ready',     color: 'var(--accent)', bg: 'var(--accent-soft)', fill: true },
+  approved:  { label: 'Approved',  color: 'var(--accent)', bg: 'transparent' },
+  applied:   { label: 'Applied',   color: 'var(--ink)',    bg: 'var(--surface-2)' },
+  oa:        { label: 'OA',        color: 'var(--warn)',   bg: 'var(--warn-soft)' },
+  interview: { label: 'Interview', color: 'var(--info)',   bg: 'var(--info-soft)' },
+  offer:     { label: 'Offer',     color: 'var(--ok)',     bg: 'var(--ok-soft)', fill: true },
+  rejected:  { label: 'Rejected',  color: 'var(--bad)',    bg: 'var(--bad-soft)' },
+  skipped:   { label: 'Skipped',   color: 'var(--muted)',  bg: 'transparent' },
 }
 
 export const NEXT_ACTION = {
-  new:       { label: 'Tailor →',  color: '#C96442' },
-  queued:    { label: 'Approve →', color: '#8B7BB8' },
-  approved:  { label: 'Apply →',   color: '#C96442' },
-  applied:   { label: 'Track →',   color: '#D17847' },
-  oa:        { label: 'Update →',  color: '#C49840' },
-  interview: { label: 'Prep →',    color: '#C28098' },
-  offer:     { label: 'View →',    color: '#5A9DA8' },
-  rejected:  { label: 'View →',    color: '#B5AFA3' },
-  skipped:   { label: 'View →',    color: '#B5AFA3' },
+  new:       { label: 'Tailor →',  color: 'var(--accent)' },
+  queued:    { label: 'Approve →', color: 'var(--accent)' },
+  approved:  { label: 'Apply →',   color: 'var(--accent)' },
+  applied:   { label: 'Track →',   color: 'var(--ink-2)' },
+  oa:        { label: 'Update →',  color: 'var(--warn)' },
+  interview: { label: 'Prep →',    color: 'var(--info)' },
+  offer:     { label: 'View →',    color: 'var(--ok)' },
+  rejected:  { label: 'View →',    color: 'var(--muted)' },
+  skipped:   { label: 'View →',    color: 'var(--muted)' },
 }

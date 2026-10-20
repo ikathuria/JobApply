@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { DARK, LIGHT } from '../../theme.js'
+import { DARK, LIGHT, alpha } from '../../theme.js'
 import { EmptyState, Spinner, StatusBadge, Tag } from '../ui/index.jsx'
 import { api } from '../../api.js'
 
@@ -125,24 +125,24 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
             <div style={{ minWidth: 0 }}>
               <div style={{
                 minHeight: 500,
-                borderRadius: 20,
-                border: `1px solid ${opened ? '#22C55E60' : T.border}`,
+                borderRadius: 2,
+                border: `1px solid ${opened ? 'color-mix(in srgb, var(--ok) 38%, transparent)' : T.border}`,
                 background: T.card,
-                boxShadow: dark ? '0 24px 80px rgba(0,0,0,0.35)' : '0 24px 70px rgba(42,42,80,0.15)',
+                boxShadow: 'var(--shadow-float)',
                 padding: 24,
                 position: 'relative',
                 overflow: 'hidden',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
                   <StatusBadge status={topJob.status} />
-                  {opened && <Tag style={{ color: '#22C55E' }}>opened</Tag>}
+                  {opened && <Tag style={{ color: 'var(--ok)' }}>opened</Tag>}
                   <div style={{ flex: 1 }} />
                   <div style={{
                     width: 58,
                     height: 58,
-                    borderRadius: 16,
-                    background: score >= 0.75 ? '#22C55E18' : score >= 0.55 ? '#F59E0B18' : '#EF444418',
-                    border: `1px solid ${score >= 0.75 ? '#22C55E40' : score >= 0.55 ? '#F59E0B40' : '#EF444440'}`,
+                    borderRadius: 2,
+                    background: score >= 0.75 ? 'color-mix(in srgb, var(--ok) 9%, transparent)' : score >= 0.55 ? 'color-mix(in srgb, var(--warn) 9%, transparent)' : 'color-mix(in srgb, var(--bad) 9%, transparent)',
+                    border: `1px solid ${score >= 0.75 ? 'color-mix(in srgb, var(--ok) 25%, transparent)' : score >= 0.55 ? 'color-mix(in srgb, var(--warn) 25%, transparent)' : 'color-mix(in srgb, var(--bad) 25%, transparent)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -206,35 +206,35 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr', gap: 10, marginTop: 14 }}>
                 <button onClick={() => decide('skipped')} disabled={busy} style={{
                   height: 46,
-                  borderRadius: 12,
-                  border: '1px solid #EF444440',
-                  background: T.danger + '14',
-                  color: '#EF4444',
+                  borderRadius: 2,
+                  border: '1px solid color-mix(in srgb, var(--bad) 25%, transparent)',
+                  background: alpha(T.danger, 8),
+                  color: 'var(--bad)',
                   fontSize: 13,
                   fontWeight: 900,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: busy ? 'wait' : 'pointer',
                 }}>Skip</button>
                 <button onClick={() => openPosting(topJob)} disabled={busy} style={{
                   height: 46,
-                  borderRadius: 12,
-                  border: '1px solid rgba(139,123,184,0.28)',
+                  borderRadius: 2,
+                  border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
                   background: T.accent,
-                  color: '#fff',
+                  color: 'var(--on-accent)',
                   fontSize: 13,
                   fontWeight: 900,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: busy ? 'wait' : 'pointer',
                 }}>{hasLink ? 'Open link + download docs' : 'Download docs + details'}</button>
                 <button onClick={() => decide('applied')} disabled={busy} style={{
                   height: 46,
-                  borderRadius: 12,
-                  border: '1px solid #22C55E40',
-                  background: '#22C55E',
-                  color: '#fff',
+                  borderRadius: 2,
+                  border: '1px solid color-mix(in srgb, var(--ok) 25%, transparent)',
+                  background: 'var(--ok)',
+                  color: 'var(--on-accent)',
                   fontSize: 13,
                   fontWeight: 900,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: busy ? 'wait' : 'pointer',
                 }}>Mark applied</button>
               </div>
@@ -242,7 +242,7 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
 
             <aside style={{
               border: `1px solid ${T.border}`,
-              borderRadius: 14,
+              borderRadius: 2,
               background: T.surface,
               padding: 16,
             }}>
@@ -260,13 +260,13 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
                 <button onClick={() => onOpenJob(topJob)} style={{
                   width: '100%',
                   padding: '9px 10px',
-                  borderRadius: 10,
+                  borderRadius: 2,
                   border: `1px solid ${T.border}`,
                   background: 'transparent',
                   color: T.accent,
                   fontSize: 12,
                   fontWeight: 800,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontFamily: 'var(--font-text)',
                   cursor: 'pointer',
                 }}>Open full details</button>
               </div>

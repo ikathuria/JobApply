@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { DARK, LIGHT, STATUS_META } from '../theme.js'
-import { Btn, StatusBadge, ScoreBar, Tag, Textarea, Spinner } from './ui/index.jsx'
+import { DARK, LIGHT, STATUS_META, ATS_TARGET, alpha, atsColor } from '../theme.js'
+import { Btn, StatusBadge, AtsScore, Tag, Textarea, Spinner } from './ui/index.jsx'
 import { api } from '../api.js'
 
 const PIPELINE_STATUSES = ['new', 'queued', 'approved', 'applied', 'oa', 'interview', 'offer']
@@ -21,12 +21,12 @@ function fieldBase(T, dark) {
   return {
     width: '100%',
     padding: '8px 10px',
-    borderRadius: 7,
+    borderRadius: 2,
     border: `1px solid ${T.border}`,
     background: T.card,
     color: T.text,
     fontSize: 12,
-    fontFamily: 'Inter, system-ui, sans-serif',
+    fontFamily: 'var(--font-text)',
     outline: 'none',
     boxSizing: 'border-box',
   }
@@ -72,19 +72,13 @@ function TextField({ label, value, onChange, T, dark, type = 'text', placeholder
 
 function FormSection({ title, sub, children, T, dark }) {
   return (
-    <div style={{
-      background: T.card,
-      border: `1px solid ${T.border}`,
-      borderRadius: 10,
-      padding: '14px 14px 2px',
-      marginBottom: 14,
-    }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: T.text, marginBottom: sub ? 3 : 12 }}>
+    <section style={{ borderTop: `1px solid ${T.border}`, padding: '12px 0 16px' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: sub ? 3 : 10 }}>
         {title}
       </div>
-      {sub && <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5, marginBottom: 12 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.5, marginBottom: 12 }}>{sub}</div>}
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -92,23 +86,23 @@ function FormSection({ title, sub, children, T, dark }) {
 // keeps the drawer from being one long always-expanded form.
 function CollapsibleSection({ title, sub, T, open, onToggle, badge, children }) {
   return (
-    <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, marginBottom: 14, overflow: 'hidden' }}>
+    <section style={{ borderTop: `1px solid ${T.border}` }}>
       <button onClick={onToggle} aria-expanded={open} style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-        padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer',
-        textAlign: 'left', fontFamily: 'Inter, system-ui, sans-serif',
+        width: '100%', display: 'flex', alignItems: 'center', gap: 8, minHeight: 44,
+        padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer',
+        textAlign: 'left', fontFamily: 'var(--font-mono)',
       }}>
-        <span style={{ fontSize: 13, fontWeight: 800, color: T.text, flex: 1 }}>{title}</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', flex: 1 }}>{title}</span>
         {badge}
-        <span style={{ fontSize: 11, color: T.muted, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>▸</span>
+        <span aria-hidden="true" style={{ fontSize: 14, color: T.muted, width: 14, textAlign: 'center', flexShrink: 0 }}>{open ? '−' : '+'}</span>
       </button>
       {open && (
-        <div style={{ padding: '0 14px 14px' }}>
-          {sub && <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5, marginBottom: 12 }}>{sub}</div>}
+        <div style={{ padding: '0 0 16px' }}>
+          {sub && <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.5, marginBottom: 12 }}>{sub}</div>}
           {children}
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -128,10 +122,10 @@ function ConfirmModal({ job, onConfirm, onCancel, dark }) {
   const score = job.score ?? 0
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
-      <div style={{ background: T.surface, borderRadius: 14, width: 480, border: `1px solid ${T.border}`, boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
+      <div style={{ background: T.surface, borderRadius: 4, width: 480, maxWidth: '95vw', border: `1px solid ${T.border}`, boxShadow: 'var(--shadow-float)', overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: '#22C55E20', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E', fontWeight: 900 }}>✓</div>
+          <div style={{ width: 36, height: 36, borderRadius: 2, background: 'color-mix(in srgb, var(--ok) 13%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ok)', fontWeight: 900 }}>✓</div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Mark as manually applied</div>
             <div style={{ fontSize: 12, color: T.muted }}>Use this after submitting outside the apply bot.</div>
@@ -140,25 +134,25 @@ function ConfirmModal({ job, onConfirm, onCancel, dark }) {
         </div>
 
         <div style={{ padding: '20px 24px' }}>
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 2, padding: '14px 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>{job.title}</div>
             <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <span>{job.company}</span>
               {job.location && <span>{job.location}</span>}
-              <span style={{ color: '#22C55E', fontWeight: 700 }}>{Math.round(score * 100)}% match</span>
+              <span style={{ color: 'var(--ok)', fontWeight: 700 }}>{Math.round(score * 100)}% match</span>
             </div>
           </div>
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: T.text, marginBottom: 24 }}>
             <input type="checkbox" onChange={e => setChecked(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: '#22C55E' }} />
+              style={{ width: 16, height: 16, accentColor: 'var(--ok)' }} />
             I submitted this application to <strong>{job.company}</strong>
           </label>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <Btn variant="secondary" onClick={onCancel} style={{ flex: 1 }}>Cancel</Btn>
             <Btn variant="primary" disabled={!checked} onClick={onConfirm}
-              style={{ flex: 2, background: checked ? '#22C55E' : undefined }}>
+              style={{ flex: 2, background: checked ? 'var(--ok)' : undefined }}>
               Confirm applied
             </Btn>
           </div>
@@ -190,13 +184,13 @@ function StatusRail({ job, T, dark, disabled, onChange }) {
                 minWidth: 0,
                 height: 30,
                 border: `1px solid ${active ? meta.color : T.border}`,
-                borderRadius: 7,
-                background: active ? meta.bg : passed ? `${meta.color}18` : T.card,
+                borderRadius: 2,
+                background: active ? meta.bg : passed ? `${alpha(meta.color, 9)}` : T.card,
                 color: active || passed ? meta.color : T.muted,
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 fontSize: 10,
                 fontWeight: active ? 800 : 700,
-                fontFamily: 'Inter, system-ui, sans-serif',
+                fontFamily: 'var(--font-text)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -330,9 +324,9 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   // Show the last stored LLM ATS report (never runs a new check by itself).
   useEffect(() => {
     setLlmAts(null); setLlmAtsErr('')
-    if (activeTab !== 'resume' || !job?.id || !job.resume_path) return
+    if (!job?.id || !job.resume_path) return
     api.atsReport(job.id).then(r => setLlmAts(r && r.score != null ? r : null)).catch(() => {})
-  }, [activeTab, job?.id, job?.resume_path])
+  }, [job?.id, job?.resume_path])
 
   async function runLlmAts() {
     setLlmAtsRunning(true); setLlmAtsErr('')
@@ -390,12 +384,12 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const score = job.score ?? 0
   const primaryAction = {
     new: { label: 'Tailor with AI', color: T.accent, action: handleTailor },
-    queued: { label: 'Approve for apply bot', color: '#8B7BB8', action: () => patchStatus('approved') },
-    approved: { label: 'Mark manually applied', color: '#22C55E', action: () => setShowConfirm(true) },
-    applied: { label: 'Move to OA', color: '#F59E0B', action: () => patchStatus('oa') },
-    oa: { label: 'Move to interview', color: '#EC4899', action: () => patchStatus('interview') },
-    interview: { label: 'Move to offer', color: '#10B981', action: () => patchStatus('offer') },
-    offer: { label: 'Offer received', color: '#10B981', action: null },
+    queued: { label: 'Approve for apply bot', color: T.accent, action: () => patchStatus('approved') },
+    approved: { label: 'Mark manually applied', color: T.accent, action: () => setShowConfirm(true) },
+    applied: { label: 'Move to OA', color: T.accent, action: () => patchStatus('oa') },
+    oa: { label: 'Move to interview', color: T.accent, action: () => patchStatus('interview') },
+    interview: { label: 'Move to offer', color: T.accent, action: () => patchStatus('offer') },
+    offer: { label: 'Offer received', color: T.accent, action: null },
     rejected: null,
     skipped: null,
   }[job.status]
@@ -507,7 +501,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const setEdit = (k, v) => setEditForm(f => ({ ...f, [k]: v }))
   const input = fieldBase(T, dark)
   const drawerTabs = ['overview', 'resume', 'cover letter']
-  const notesRows = Math.min(18, Math.max(8, notes.split('\n').length + Math.ceil(notes.length / 120)))
+  const notesRows = Math.min(18, Math.max(4, notes.split('\n').length + Math.ceil(notes.length / 120)))
 
   // Secondary status moves — one kebab menu instead of a permanent button grid.
   const moreActions = []
@@ -534,7 +528,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
       )}
 
       {narrow && (
-        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 90 }} />
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 90 }} />
       )}
 
       <div style={narrow ? {
@@ -555,17 +549,17 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: T.text, lineHeight: 1.3, marginBottom: 5 }}>
-                {job.starred ? <span style={{ color: '#F59E0B', marginRight: 5 }}>★</span> : null}
+              <div className="mono" style={{ fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>#{job.id}</div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: T.text, lineHeight: 1.15, margin: '0 0 6px' }}>
+                {job.starred ? <span style={{ color: 'var(--warn)', marginRight: 5 }}>★</span> : null}
                 {job.title}
-              </div>
-              <div style={{ fontSize: 12, color: T.muted, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontWeight: 700, color: T.text }}>{job.company || 'Unknown company'}</span>
+              </h2>
+              <div style={{ fontSize: 13, color: T.muted, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontWeight: 600, color: T.text }}>{job.company || 'Unknown company'}</span>
                 {job.known_sponsor && (
                   <span title="Known H-1B sponsor" style={{
-                    fontSize: 9.5, fontWeight: 800, color: T.success,
-                    background: `${T.success}1A`, border: `1px solid ${T.success}40`,
-                    borderRadius: 5, padding: '1px 6px', letterSpacing: '0.03em',
+                    fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: T.success,
+                    border: '1px solid currentColor', padding: '0 5px',
                   }}>H-1B SPONSOR</span>
                 )}
                 {job.location && <><span>·</span><span>{job.location}</span></>}
@@ -577,14 +571,14 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 onClick={() => patchStatus(job.status, { starred: job.starred ? 0 : 1 })}
                 aria-label={job.starred ? 'Unstar' : 'Star'}
                 title={job.starred ? 'Unstar' : 'Star'}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: job.starred ? '#F59E0B' : T.muted, fontSize: 17, padding: 4 }}>
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: job.starred ? 'var(--warn)' : T.muted, fontSize: 17, padding: 4, minWidth: 32, minHeight: 32 }}>
                 {job.starred ? '★' : '☆'}
               </button>
               {moreActions.length > 0 && (
                 <button
                   onClick={() => setMoreOpen(o => !o)}
                   aria-label="More actions" aria-expanded={moreOpen} title="More actions"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 16, padding: 4, lineHeight: 1 }}>
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 16, padding: 4, lineHeight: 1, minWidth: 32, minHeight: 32 }}>
                   ⋮
                 </button>
               )}
@@ -594,8 +588,8 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
               {moreOpen && (
                 <div style={{
                   position: 'absolute', top: '100%', right: 20, marginTop: 4, zIndex: 20,
-                  background: T.card, border: `1px solid ${T.border}`, borderRadius: 8,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.18)', minWidth: 150, overflow: 'hidden',
+                  background: T.card, border: `1px solid ${T.border}`, borderRadius: 2,
+                  boxShadow: 'var(--shadow-float)', minWidth: 150, overflow: 'hidden',
                 }}>
                   {moreActions.map(a => (
                     <button key={a.label}
@@ -603,7 +597,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                       style={{
                         display: 'block', width: '100%', textAlign: 'left', padding: '9px 14px',
                         background: 'none', border: 'none', cursor: 'pointer',
-                        fontFamily: 'Inter, system-ui, sans-serif', fontSize: 12, fontWeight: 600,
+                        fontFamily: 'var(--font-text)', fontSize: 12, fontWeight: 600,
                         color: a.danger ? T.danger : T.text,
                       }}>
                       {a.label}
@@ -611,13 +605,18 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                   ))}
                 </div>
               )}
-              <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18, padding: 4 }}>x</button>
+              <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18, padding: 4, minWidth: 32, minHeight: 32 }}>×</button>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
             <StatusBadge status={job.status} size="md" />
-            <div style={{ flex: 1 }}><ScoreBar score={score} height={5} showLabel /></div>
+            <span className="mono tabular" style={{ fontSize: 12, color: T.muted }}>
+              match <b style={{ color: T.text, fontSize: 14 }}>{Math.round(score * 100)}</b>
+            </span>
+            <span className="mono" style={{ fontSize: 12, color: T.muted, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              ATS <AtsScore score={job.ats_score} width={110} />
+            </span>
           </div>
 
           <StatusRail job={job} T={T} dark={dark} disabled={updating || tailoring} onChange={patchStatus} />
@@ -630,14 +629,15 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 style={{
                   flex: 1,
                   padding: '10px 0',
-                  borderRadius: 8,
+                  borderRadius: 2,
                   border: 'none',
                   cursor: tailoring || updating ? 'not-allowed' : 'pointer',
+                  minHeight: 40,
                   background: primaryAction.color,
-                  color: '#fff',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  fontFamily: 'Inter, system-ui, sans-serif',
+                  color: 'var(--on-accent)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-text)',
                   opacity: tailoring || updating ? 0.7 : 1,
                 }}>
                 {tailoring ? 'Tailoring...' : primaryAction.label}
@@ -664,15 +664,16 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
             }}
               style={{
                 flex: 1,
+                minHeight: 40,
                 padding: '9px 4px',
                 border: 'none',
                 cursor: 'pointer',
                 background: 'transparent',
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: 11,
-                fontWeight: activeTab === t ? 800 : 600,
-                color: activeTab === t ? T.accent : T.muted,
-                borderBottom: activeTab === t ? `2px solid ${T.accent}` : '2px solid transparent',
+                fontFamily: 'var(--font-text)',
+                fontSize: 13,
+                fontWeight: activeTab === t ? 600 : 500,
+                color: activeTab === t ? T.text : T.muted,
+                borderBottom: activeTab === t ? `3px solid ${T.accent}` : '3px solid transparent',
                 textTransform: 'capitalize',
               }}>{t}</button>
           ))}
@@ -681,9 +682,13 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
           {activeTab === 'overview' && trackingForm && (
             <div>
+              {job.resume_path && (
+                <AtsScorePanel report={llmAts} running={llmAtsRunning} error={llmAtsErr}
+                  onRun={runLlmAts} T={T} />
+              )}
               {job.status === 'approved' && (
-                <div style={{ background: 'rgba(139,123,184,0.10)', border: '1px solid rgba(139,123,184,0.30)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: '#8B7BB8', marginBottom: 3 }}>Auto-apply queued</div>
+                <div style={{ background: 'var(--accent-soft)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', borderRadius: 2, padding: '12px 14px', marginBottom: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--accent)', marginBottom: 3 }}>Auto-apply queued</div>
                   <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
                     The apply bot will pick this up on the next scheduled run. Use “Mark manually applied” if you submit it yourself.
                   </div>
@@ -710,7 +715,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                       <TextField label="Job URL" value={editForm.url} onChange={v => setEdit('url', v)} T={T} dark={dark} />
                       <Field label="Starred" T={T}>
                         <label style={{ ...input, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                          <input type="checkbox" checked={editForm.starred} onChange={e => setEdit('starred', e.target.checked)} style={{ accentColor: '#F59E0B' }} />
+                          <input type="checkbox" checked={editForm.starred} onChange={e => setEdit('starred', e.target.checked)} style={{ accentColor: 'var(--warn)' }} />
                           Keep near the top
                         </label>
                       </Field>
@@ -744,7 +749,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
               <FormSection title="Notes" T={T} dark={dark}>
                 <Textarea value={notes} onChange={setNotes} placeholder="Referral notes, next step, application quirks..." rows={notesRows} style={{ lineHeight: 1.6 }} />
                 {notes !== (job.notes || '') && (
-                  <button onClick={saveNotes} style={{ marginTop: 7, background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 800 }}>
+                  <button onClick={saveNotes} style={{ marginTop: 7, minHeight: 32, background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, padding: 0 }}>
                     Save notes
                   </button>
                 )}
@@ -781,22 +786,22 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                   T={T} open={openSections.has('ats')} onToggle={() => toggleSection('ats')}
                   badge={ats && ats.score != null ? (
                     <span style={{
-                      fontSize: 10, fontWeight: 800, fontFamily: 'JetBrains Mono, monospace',
-                      color: ats.score >= 0.7 ? '#10B981' : ats.score >= 0.4 ? '#F59E0B' : '#EF4444',
+                      fontSize: 10, fontWeight: 800, fontFamily: 'var(--font-mono)',
+                      color: ats.score >= 0.7 ? 'var(--ok)' : ats.score >= 0.4 ? 'var(--warn)' : 'var(--bad)',
                     }}>{Math.round(ats.score * 100)}%</span>
                   ) : null}
                 >
                   {atsLoading && <div style={{ fontSize: 12, color: T.muted }}>Analyzing…</div>}
                   {ats && ats.score != null && (() => {
                     const pct = Math.round(ats.score * 100)
-                    const col = pct >= 70 ? '#10B981' : pct >= 40 ? '#F59E0B' : '#EF4444'
+                    const col = pct >= 70 ? 'var(--ok)' : pct >= 40 ? 'var(--warn)' : 'var(--bad)'
                     return (
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                          <div style={{ flex: 1, height: 8, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: col, borderRadius: 4 }} />
+                          <div style={{ flex: 1, height: 8, background: T.border, borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: col, borderRadius: 2 }} />
                           </div>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: col, fontFamily: 'JetBrains Mono, monospace' }}>{pct}%</span>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: col, fontFamily: 'var(--font-mono)' }}>{pct}%</span>
                         </div>
                         <div style={{ fontSize: 11, color: T.muted, marginBottom: 6 }}>
                           {ats.matched.length}/{ats.jd_keywords.length} keywords matched
@@ -806,7 +811,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                             <div style={{ fontSize: 11, fontWeight: 700, color: T.text, marginBottom: 5 }}>Missing:</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                               {ats.missing.map(k => (
-                                <span key={k} style={{ fontSize: 10, fontWeight: 700, color: '#EF4444', background: dark ? '#3B1D1D' : '#FEE2E2', border: `1px solid ${dark ? '#5B2A2A' : '#FECACA'}`, borderRadius: 5, padding: '2px 7px' }}>{k}</span>
+                                <span key={k} style={{ fontSize: 10, fontWeight: 700, color: 'var(--bad)', background: dark ? 'var(--bad-soft)' : 'var(--bad-soft)', border: `1px solid ${dark ? 'color-mix(in srgb, var(--bad) 35%, transparent)' : 'color-mix(in srgb, var(--bad) 35%, transparent)'}`, borderRadius: 2, padding: '2px 7px' }}>{k}</span>
                               ))}
                             </div>
                           </div>
@@ -834,12 +839,10 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 </div>
               ) : (
                 <div style={{ textAlign: 'center' }}>
-                  <AtsScorePanel report={llmAts} running={llmAtsRunning} error={llmAtsErr}
-                    onRun={runLlmAts} T={T} dark={dark} />
                   <iframe
                     key={resumeRev}
                     src={api.resumeUrl(job.id) + (resumeRev ? `?v=${resumeRev}` : '')}
-                    style={{ width: '100%', height: 500, border: 'none', borderRadius: 8 }}
+                    style={{ width: '100%', height: 500, border: 'none', borderRadius: 2 }}
                     title="Resume PDF"
                   />
                   <a href={api.resumeUrl(job.id)} target="_blank" rel="noopener noreferrer"
@@ -869,7 +872,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 </div>
               ) : (
                 <>
-                  <div style={{ display: 'flex', gap: 4, background: T.surface, borderRadius: 8, padding: 4, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', gap: 4, background: T.surface, borderRadius: 2, padding: 4, marginBottom: 12 }}>
                     {['pdf', 'text'].map(mode => (
                       <button
                         key={mode}
@@ -878,13 +881,13 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                           flex: 1,
                           padding: '7px 10px',
                           border: 'none',
-                          borderRadius: 6,
+                          borderRadius: 2,
                           cursor: 'pointer',
                           background: coverLetterMode === mode ? T.accent : 'transparent',
-                          color: coverLetterMode === mode ? '#fff' : T.muted,
+                          color: coverLetterMode === mode ? 'var(--on-accent)' : T.muted,
                           fontSize: 12,
                           fontWeight: 800,
-                          fontFamily: 'Inter, system-ui, sans-serif',
+                          fontFamily: 'var(--font-text)',
                           textTransform: 'capitalize',
                         }}
                       >
@@ -896,7 +899,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                     <div style={{ textAlign: 'center' }}>
                       <iframe
                         src={api.coverLetterPdfUrl(job.id)}
-                        style={{ width: '100%', height: 500, border: 'none', borderRadius: 8 }}
+                        style={{ width: '100%', height: 500, border: 'none', borderRadius: 2 }}
                         title="Cover letter PDF"
                       />
                     </div>
@@ -923,45 +926,91 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
 
 // On-demand LLM ATS check (Sonnet). Below 90 the backend re-tailors with the
 // feedback and keeps the best version; unsupported keywords are real gaps it
-// will not add.
-function AtsScorePanel({ report, running, error, onRun, T, dark }) {
+// will not add. Layout: BRAND.md signature move 3 (score + target gauge).
+const ATS_PARTS = [
+  ['keywords', 'Keywords', 40], ['required', 'Required quals', 25], ['alignment', 'Role alignment', 15],
+  ['preferred', 'Preferred quals', 10], ['impact', 'Quantified impact', 10],
+]
+
+function AtsScorePanel({ report, running, error, onRun, T }) {
   const score = report?.score
-  const col = score == null ? T.muted : score >= 90 ? '#10B981' : score >= 75 ? '#F59E0B' : '#EF4444'
-  const chip = (k, bad) => (
+  const target = report?.target ?? ATS_TARGET
+  const col = score == null ? T.muted : atsColor(score)
+  const head = { fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '14px 0 6px' }
+  const chip = (k, kind) => (
     <span key={k} style={{
-      fontSize: 10, fontWeight: 700, borderRadius: 5, padding: '2px 7px',
-      color: bad ? '#EF4444' : T.muted,
-      background: bad ? (dark ? '#3B1D1D' : '#FEE2E2') : T.surface,
-      border: `1px solid ${bad ? (dark ? '#5B2A2A' : '#FECACA') : T.border}`,
+      fontFamily: 'var(--font-mono)', fontSize: 11, borderRadius: 2, padding: '2px 7px',
+      color: kind === 'gap' ? 'var(--bad)' : T.text2,
+      background: kind === 'ok' ? 'var(--band)' : T.surface,
+      border: kind === 'gap' ? '1px dashed var(--bad)' : `1px solid ${T.border}`,
     }}>{k}</span>
   )
+  const missing = (report?.missing_keywords || []).filter(k => !(report?.unsupported || []).includes(k))
   return (
-    <div style={{ textAlign: 'left', border: `1px solid ${T.border}`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
+    <section aria-label="ATS score" style={{ textAlign: 'left', paddingBottom: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontWeight: 800, fontSize: 12, color: T.text, flex: 1 }}>
-          ATS score {score != null && <span style={{ color: col, fontFamily: 'JetBrains Mono, monospace' }}>{score}/100</span>}
-          {report?.history?.length > 1 && (
-            <span style={{ fontWeight: 600, color: T.muted, marginLeft: 8 }}>
-              ({report.history.join(' → ')}{report.improved ? ', resume updated' : ''})
-            </span>
-          )}
-        </div>
+        <span style={{ ...head, margin: 0, flex: 1 }}>ATS score · Sonnet</span>
         <Btn variant={score == null ? 'primary' : 'secondary'} size="sm" onClick={onRun} disabled={running}>
-          {running ? 'Scoring… (up to ~1 min)' : score == null ? 'Get ATS score' : 'Re-check'}
+          {running ? 'Scoring… (up to ~1 min)' : score == null ? 'Run ATS check' : 'Re-run'}
         </Btn>
       </div>
-      {error && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 6 }}>{error}</div>}
-      {report && report.unsupported?.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 11, color: T.muted, marginBottom: 4 }}>Not in your profile (real gaps, not added):</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{report.unsupported.map(k => chip(k, true))}</div>
+      {error && <div style={{ fontSize: 12, color: 'var(--bad)', marginTop: 6 }}>{error}</div>}
+      {score == null && !running && (
+        <p style={{ fontSize: 13, color: T.muted, margin: '8px 0 0' }}>
+          Not scored yet. Below {target}, it re-tailors with the feedback (max 2 rounds) and keeps the best resume.
+        </p>
+      )}
+      {score != null && (<>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+            <span className="mono tabular" style={{ fontSize: 'var(--fs-num)', fontWeight: 700, lineHeight: 1, color: col }}>{score}</span>
+            <span className="mono" style={{ fontSize: 14, color: T.muted }}>/100</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ position: 'relative', height: 8, background: T.border }}>
+              <div className="gb-fill" style={{ position: 'absolute', inset: 0, width: `${score}%`, background: col }} />
+              <div title={`Target ${target}`} style={{ position: 'absolute', left: `${target}%`, top: -5, bottom: -5, width: 2, background: T.text }} />
+            </div>
+            <p style={{ fontSize: 12, color: T.muted, margin: '10px 0 0', lineHeight: 1.45 }}>
+              {score >= target
+                ? `Meets the ${target} target.`
+                : `${target - score} points under the ${target} target${report.history?.length > 1 ? ` after ${report.history.length - 1} re-tailor round${report.history.length > 2 ? 's' : ''}` : ''}.`}
+              {report.history?.length > 1 && <> <span className="mono">{report.history.join(' → ')}</span>{report.improved ? ', resume updated.' : '.'}</>}
+            </p>
+          </div>
         </div>
-      )}
-      {report && report.suggestions?.length > 0 && score < 90 && (
-        <ul style={{ fontSize: 11, color: T.muted, margin: '8px 0 0', paddingLeft: 16 }}>
-          {report.suggestions.slice(0, 3).map((t, i) => <li key={i}>{t}</li>)}
-        </ul>
-      )}
-    </div>
+        {report.breakdown && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 14 }}>
+            {ATS_PARTS.filter(([k]) => report.breakdown[k] != null).map(([k, label, max]) => (
+              <div key={k} style={{ display: 'grid', gridTemplateColumns: '120px 1fr 44px', gap: 10, alignItems: 'center', fontSize: 12, color: T.text2 }}>
+                <span>{label}</span>
+                <div style={{ height: 6, background: T.border }}>
+                  <div className="gb-fill" style={{ width: `${Math.min(100, report.breakdown[k] / max * 100)}%`, height: '100%', background: T.accent }} />
+                </div>
+                <span className="mono tabular" style={{ textAlign: 'right' }}>{report.breakdown[k]}/{max}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {report.matched_keywords?.length > 0 && (<>
+          <div style={head}>Matched <span style={{ color: T.text }}>{report.matched_keywords.length}</span></div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{report.matched_keywords.map(k => chip(k, 'ok'))}</div>
+        </>)}
+        {missing.length > 0 && (<>
+          <div style={head}>Missing, can add <span style={{ color: T.text }}>{missing.length}</span></div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{missing.map(k => chip(k))}</div>
+        </>)}
+        {report.unsupported?.length > 0 && (<>
+          <div style={head}>Real gaps, not added <span style={{ color: T.text }}>{report.unsupported.length}</span></div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{report.unsupported.map(k => chip(k, 'gap'))}</div>
+        </>)}
+        {report.suggestions?.length > 0 && score < target && (<>
+          <div style={head}>Fixes</div>
+          <ol style={{ fontSize: 13, color: T.text2, margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4, lineHeight: 1.45 }}>
+            {report.suggestions.slice(0, 3).map((t, i) => <li key={i}>{t}</li>)}
+          </ol>
+        </>)}
+      </>)}
+    </section>
   )
 }
