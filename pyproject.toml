@@ -19,12 +19,12 @@ dynamic = ["dependencies"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["api*", "pipeline*", "scrapers*", "tracker*", "auto_apply*"]
+include = ["api*", "pipeline*", "scrapers*", "tracker*"]
 
 [tool.setuptools.dynamic]
-# Single source of truth for runtime deps — render.yaml and GHA still install
-# via `pip install -r requirements.txt`.
+# Single source of truth for runtime deps — GHA installs via `pip install -r requirements.txt`.
 dependencies = { file = ["requirements.txt"] }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]

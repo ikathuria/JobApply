@@ -1,24 +1,17 @@
 """
 JobApply - Orchestrator
-Phases:
-  1. Discover  - scrape job listings
-  2. Filter    - score and store in DB
-  3. Tailor    - fetch JD, generate tailored resume + cover letter PDF
-  4. Apply     - auto-fill ATS forms with human confirmation before submit
+  1. Discover  - scrape job listings (intern-list, newgrad-jobs, Google Careers)
+  2. Filter    - score; skip non-sponsors, work-auth blockers, pre-OPT start dates
+  3. Tailor    - per job: track resume via the Claude CLI (Haiku) → PDF
+  4. Review    - dashboard: optional ATS score (Sonnet), cover letter on demand
+  5. Apply     - by hand, then track status in the dashboard
 
 Usage:
-  python main.py                          # discover + filter (all sources)
-  python main.py --source intern_list     # single source
-  python main.py --source newgrad_jobs
-  python main.py --source google_careers  # Google Careers (US + India, browserless)
-  python main.py --source linkedin        # PAUSED (disabled in config)
-  python main.py --tailor                 # tailor top unreviewed jobs
-  python main.py --tailor --limit 5       # tailor top N jobs
-  python main.py --recruiters             # scrape LinkedIn recruiters for DB companies
-  python main.py --recruiters --limit 10  # cap companies scraped this run
-  python main.py --apply                  # apply to approved jobs (you confirm each)
-  python main.py --apply --dry-run        # fill forms + screenshot, never submit
-  python main.py --apply --limit 5        # apply to top N approved jobs
+  python main.py                          # discover + filter (all enabled sources)
+  python main.py --source newgrad_jobs    # single source
+  python main.py --tailor --limit 5       # tailor top N new jobs
+  python main.py --base-resumes           # render the 4 untailored track PDFs
+  python main.py --recruiters --limit 10  # scrape LinkedIn recruiters for DB companies
   python main.py --stats                  # show tracker stats
 """
 
@@ -112,7 +105,9 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
         from scrapers.newgrad_jobs_scraper import scrape_newgrad_jobs
 
         logger.info("=== Scraping newgrad-jobs.com ===")
-        jobs = scrape_newgrad_jobs(max_rows=300)
+        cfg = sources["newgrad_jobs"]
+        jobs = scrape_newgrad_jobs(max_rows=cfg.get("max_per_vertical", 300),
+                                   verticals=cfg.get("verticals", ["ml_ai"]))
         logger.info(f"newgrad-jobs.com: {len(jobs)} raw listings")
         all_jobs.extend(jobs)
 
@@ -128,34 +123,6 @@ def run_discovery(config: dict, source: str | None = None) -> list[dict]:
             max_per_query=gc_cfg.get("max_per_query", 200),
         )
         logger.info(f"Google Careers: {len(jobs)} raw listings")
-        all_jobs.extend(jobs)
-
-    if source in (None, "linkedin") and sources.get("linkedin", {}).get("enabled"):
-        from scrapers.linkedin_scraper import scrape_linkedin_sync
-
-        logger.info("=== Scraping LinkedIn ===")
-        li_cfg = sources["linkedin"]
-        jobs = scrape_linkedin_sync(
-            query=li_cfg.get("search_query", "AI ML internship"),
-            location="United States",
-            easy_apply_only=li_cfg.get("easy_apply_only", True),
-            max_jobs=li_cfg.get("max_jobs", 60),
-            headless=_CI_HEADLESS,   # headed locally, headless in GHA
-        )
-        logger.info(f"LinkedIn: {len(jobs)} raw listings")
-        all_jobs.extend(jobs)
-
-    if source in (None, "handshake") and sources.get("handshake", {}).get("enabled"):
-        from scrapers.handshake_scraper import scrape_handshake_sync
-
-        logger.info("=== Scraping Handshake ===")
-        hs_cfg = sources["handshake"]
-        jobs = scrape_handshake_sync(
-            queries=hs_cfg.get("queries"),
-            max_jobs=hs_cfg.get("max_jobs", 80),
-            headless=_CI_HEADLESS,   # headed locally, headless in GHA
-        )
-        logger.info(f"Handshake: {len(jobs)} raw listings")
         all_jobs.extend(jobs)
 
     return all_jobs
@@ -303,128 +270,31 @@ def run_scrape_recruiters(config: dict, limit: int | None = None, guess_emails: 
 
 # -- Phase 2: Tailoring --------------------------------------------------------
 
-def run_tailor(limit: int = 10) -> None:
-    """
-    For the top-scored unreviewed jobs:
-      1. Fetch full JD from URL
-      2. Generate tailored resume JSON via LLM
-      3. Generate cover letter via LLM
-      4. Render both to PDF
-      5. Mark job as 'queued' in tracker
-    """
-    from pipeline.jd_fetcher import fetch_jd
-    from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
-    from pipeline.resume_tailor import tailor_resume
-    from pipeline.cover_letter import generate_cover_letter
-    from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
+def run_tailor(limit: int = 10, cover_letter: bool = False) -> None:
+    """Tailor the top-scored new jobs (pipeline.tailor_flow): enrich → JD →
+    work-auth recheck → tailored resume (Haiku) → PDF → queued. Cover letters and
+    the ATS score are on demand from the dashboard, to save usage."""
+    from pipeline.tailor_flow import TailorError, tailor_job
 
     conn = _open_db()
     jobs = get_jobs(conn, status=STATUS_NEW, limit=limit)
-
     if not jobs:
         print("No new jobs to tailor. Run discovery first.")
         conn.close()
         return
 
     print(f"\n-- Tailoring {len(jobs)} jobs -------------------------------")
-
     for job in jobs:
         job = dict(job)
-        title_slug = _slug(f"{job['company']}_{job['title']}")
-        job_dir = OUTPUT_DIR / title_slug
-        job_dir.mkdir(parents=True, exist_ok=True)
+        print(f"\n  - {job['title']} @ {job['company'] or 'N/A'}  (score {job['score']:.2f})")
+        try:
+            res = tailor_job(conn, job, cover_letter=cover_letter)
+            print(f"     {res['message']} → {res['resume_path']}")
+        except TailorError as e:
+            print(f"     [!] {e}")
 
-        print(f"\n  - {job['title']} @ {job['company'] or 'N/A'}")
-        print(f"     Score: {job['score']:.2f} | {job['url']}")
-
-        if is_jobright_url(job.get("source_url") or job.get("url")):
-            print("     Enriching Jobright detail page...")
-            try:
-                source_url = job.get("source_url") or job["url"]
-                enriched = enrich_jobright_url(source_url)
-                new_status = STATUS_SKIPPED if enriched.is_closed else job["status"]
-                update_status(
-                    conn,
-                    job["id"],
-                    new_status,
-                    title=enriched.title or job["title"],
-                    company=enriched.company or job.get("company"),
-                    location=enriched.location or job.get("location"),
-                    salary_range=enriched.salary_range or job.get("salary_range"),
-                    description=enriched.description or job.get("description"),
-                    source_url=source_url,
-                    url=enriched.employer_url or job["url"],
-                )
-                job.update(
-                    {
-                        "title": enriched.title or job["title"],
-                        "company": enriched.company or job.get("company"),
-                        "location": enriched.location or job.get("location"),
-                        "salary_range": enriched.salary_range or job.get("salary_range"),
-                        "description": enriched.description or job.get("description"),
-                        "source_url": source_url,
-                        "url": enriched.employer_url or job["url"],
-                        "status": new_status,
-                    }
-                )
-                if enriched.is_closed:
-                    print(f"     [!] Marked skipped: {enriched.closed_reason}")
-                    continue
-            except Exception as e:
-                logger.warning(f"Could not enrich Jobright job {job['id']}: {e}")
-
-        # 1. Fetch JD
-        print("     Fetching job description...")
-        jd_text = fetch_jd(job["url"])
-        if not jd_text:
-            logger.warning(f"Could not fetch JD for job {job['id']} - skipping tailoring.")
-            print("     [!] Could not fetch JD - skipping.")
-            continue
-
-        # Update description in DB
-        conn.execute(
-            "UPDATE jobs SET description = ?, updated_at = datetime('now') WHERE id = ?",
-            (jd_text[:5000], job["id"]),
-        )
-        conn.commit()
-
-        # 2. Tailor resume
-        print("     Generating tailored resume...")
-        tailored = tailor_resume(job, jd_text)
-        if not tailored:
-            print("     [!] Resume tailoring failed - skipping.")
-            continue
-
-        # 3. Cover letter
-        print("     Generating cover letter...")
-        letter_text = generate_cover_letter(job, jd_text, tailored.get("why_fit", ""))
-
-        # 4. Render PDFs
-        resume_path = job_dir / "resume.pdf"
-        cover_path = job_dir / "cover_letter.pdf"
-
-        generate_resume_pdf(tailored, resume_path)
-        if letter_text:
-            generate_cover_letter_pdf(letter_text, job, cover_path)
-            # Save plain text too for easy editing
-            (job_dir / "cover_letter.txt").write_text(letter_text, encoding="utf-8")
-
-        # 5. Mark queued
-        update_status(
-            conn,
-            job["id"],
-            STATUS_QUEUED,
-            resume_path=str(resume_path),
-            notes=f"why_fit: {tailored.get('why_fit', '')}",
-        )
-
-        print(f"     - Resume  - {resume_path}")
-        if letter_text:
-            print(f"     - Cover   - {cover_path}")
-
-    stats = get_stats(conn)
     print("\n-- Updated tracker stats -----------------------")
-    for status, count in sorted(stats.items()):
+    for status, count in sorted(get_stats(conn).items()):
         print(f"  {status:<12} : {count}")
     print()
     conn.close()
@@ -662,14 +532,12 @@ def run_base_resumes() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
-    parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "google_careers", "linkedin", "handshake"])
+    parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "google_careers"])
     parser.add_argument("--tailor", action="store_true", help="Generate tailored resumes for top new jobs")
     parser.add_argument("--recruiters", action="store_true",
                         help="Scrape LinkedIn recruiters for the companies in your jobs DB")
     parser.add_argument("--guess-emails", action="store_true",
                         help="With --recruiters: resolve emails (Prospeo by LinkedIn URL + finder waterfall)")
-    parser.add_argument("--apply",   action="store_true", help="Apply to approved jobs (you confirm each submit)")
-    parser.add_argument("--dry-run", action="store_true", help="Fill forms + screenshot, never submit")
     parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
     parser.add_argument("--stats", action="store_true", help="Show tracker stats")
     parser.add_argument("--enrich-ready", action="store_true", help="Refresh ready jobs from Jobright detail pages")
@@ -707,9 +575,6 @@ def main() -> None:
         )
     elif args.tailor:
         run_tailor(limit=args.limit)
-    elif args.apply:
-        from auto_apply.apply_runner import run_apply
-        run_apply(limit=args.limit, dry_run=args.dry_run)
     elif args.scan_inbox:
         run_scan_inbox(limit=args.limit if "--limit" in sys.argv else 500,
                        ingest=args.ingest, days=args.days)

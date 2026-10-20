@@ -1,5 +1,7 @@
 """
-Re-enriches all Jobright-sourced jobs in the DB using the Jobright detail page.
+Enriches Jobright-sourced jobs from their detail page: by default only
+pre-application jobs that still carry the short scrape-time snippet (newest
+first, capped by --limit); --all re-enriches every Jobright job.
 
 Updates: title, company, location, salary_range, description, employer URL.
 Marks closed jobs — and jobs whose full JD rules out F-1/OPT (clearance,
@@ -8,6 +10,8 @@ citizenship, no sponsorship) — as skipped if they haven't been applied to yet.
 Usage:
     python scripts/enrich_jobs.py
     python scripts/enrich_jobs.py --delay 2.0   # seconds between requests (default 1.5)
+    python scripts/enrich_jobs.py --limit 100   # at most 100 jobs this run (default 400)
+    python scripts/enrich_jobs.py --all         # full refresh of every Jobright job
 """
 
 import argparse
@@ -48,15 +52,23 @@ def open_db():
     return init_db(DB_PATH)
 
 
-def main(delay: float) -> None:
+UNENRICHED_MAX_CHARS = 800  # scrape-time snippets are ~300 chars; enriched JDs are longer
+
+
+def main(delay: float, limit: int = 400, everything: bool = False) -> None:
     conn = open_db()
 
-    rows = conn.execute("""
+    where = "source_url LIKE '%jobright.ai/jobs/info/%'"
+    if not everything:
+        where += (f" AND status IN ('new', 'queued', 'approved')"
+                  f" AND LENGTH(COALESCE(description, '')) < {UNENRICHED_MAX_CHARS}")
+    rows = conn.execute(f"""
         SELECT id, title, company, status, url, source_url
         FROM jobs
-        WHERE source_url LIKE '%jobright.ai/jobs/info/%'
-        ORDER BY id
-    """).fetchall()
+        WHERE {where}
+        ORDER BY id DESC
+        LIMIT ?
+    """, (limit,)).fetchall()
 
     total = len(rows)
     if total == 0:
@@ -74,7 +86,7 @@ def main(delay: float) -> None:
         label = f"[{i}/{total}] #{job_id} {row['company']} — {row['title'][:50]}"
 
         try:
-            enriched = enrich_jobright_url(source_url)
+            enriched = enrich_jobright_url(source_url, search_fallback=False)
         except Exception as exc:
             logger.warning("%s  ERROR: %s", label, exc)
             errors += 1
@@ -130,8 +142,10 @@ def main(delay: float) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Re-enrich all Jobright jobs in the DB.")
+    parser = argparse.ArgumentParser(description="Enrich Jobright jobs from their detail pages.")
     parser.add_argument("--delay", type=float, default=1.5,
                         help="Seconds to wait between requests (default: 1.5)")
+    parser.add_argument("--limit", type=int, default=400, help="Max jobs this run (default: 400)")
+    parser.add_argument("--all", action="store_true", help="Re-enrich every Jobright job")
     args = parser.parse_args()
-    main(args.delay)
+    main(args.delay, limit=args.limit, everything=args.all)

@@ -1,5 +1,6 @@
 """
-Unified LLM client — wraps Groq, Gemini, and Anthropic behind one interface.
+Unified LLM client — Claude CLI (default, subscription-billed), Groq, Gemini and
+Anthropic API behind one ``complete()`` call.
 Provider is set via config/settings.yaml (llm.provider).
 """
 
@@ -38,10 +39,15 @@ def get_provider_model() -> str:
     return f"{provider}:{model}" if model else provider
 
 
-def complete(system_prompt: str, user_message: str, max_tokens: int = 2000) -> str:
+def complete(system_prompt: str, user_message: str, max_tokens: int = 2000,
+             model: str | None = None) -> str:
     """
     Send a system + user message to the configured LLM.
     Returns the response text, or raises on failure.
+
+    ``model`` overrides the configured model for the claude_cli provider only
+    (e.g. Haiku for bulk tailoring, Sonnet for the on-demand ATS check); other
+    providers always use their configured model.
     """
     provider = _config().get("provider", "gemini").lower()
 
@@ -52,7 +58,7 @@ def complete(system_prompt: str, user_message: str, max_tokens: int = 2000) -> s
     elif provider == "anthropic":
         return _anthropic(system_prompt, user_message, max_tokens)
     elif provider == "claude_cli":
-        return _claude_cli(system_prompt, user_message, max_tokens)
+        return _claude_cli(system_prompt, user_message, max_tokens, model)
     else:
         raise ValueError(f"Unknown LLM provider: {provider}. Set llm.provider in settings.yaml.")
 
@@ -163,7 +169,8 @@ def _anthropic(system_prompt: str, user_message: str, max_tokens: int) -> str:
     return response.content[0].text
 
 
-def _claude_cli(system_prompt: str, user_message: str, max_tokens: int) -> str:
+def _claude_cli(system_prompt: str, user_message: str, max_tokens: int,
+                model: str | None = None) -> str:
     """Run the local `claude` CLI in print mode — billed to a Claude subscription,
     not an API key. Local only (needs a logged-in CLI; not available in GHA).
     max_tokens is unused: the CLI has no output cap flag."""
@@ -187,7 +194,7 @@ def _claude_cli(system_prompt: str, user_message: str, max_tokens: int) -> str:
     cmd = [
         binary, "-p",
         "--output-format", "json",
-        "--model", cfg.get("claude_cli_model", "sonnet"),
+        "--model", model or cfg.get("claude_cli_model", "haiku"),
         "--system-prompt", system_prompt,
         "--tools", "",
         "--strict-mcp-config",
@@ -208,4 +215,12 @@ def _claude_cli(system_prompt: str, user_message: str, max_tokens: int) -> str:
     text = result.get("result") or ""
     if not text:
         raise RuntimeError("claude CLI returned empty response")
+    usage = result.get("usage") or {}
+    logger.info(
+        "claude_cli %s: %d in / %d out tokens (API-equivalent $%.4f, billed to subscription)",
+        model or cfg.get("claude_cli_model", "haiku"),
+        usage.get("input_tokens", 0) + usage.get("cache_creation_input_tokens", 0)
+        + usage.get("cache_read_input_tokens", 0),
+        usage.get("output_tokens", 0), result.get("total_cost_usd") or 0,
+    )
     return text

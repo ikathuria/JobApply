@@ -30,8 +30,8 @@ SAMPLE_ROWS = [
 ]
 
 
-def test_targets_newgrad_category():
-    assert ng.CATEGORY == "newgrad:us:ml_ai"
+def test_defaults_to_ml_ai_vertical():
+    assert ng.DEFAULT_VERTICALS == ("ml_ai",)
     assert ng.SOURCE == "newgrad-jobs.com"
 
 
@@ -39,8 +39,16 @@ def test_scrape_passes_category_and_source_to_minisite():
     with patch.object(ng, "scrape_minisite", return_value=SAMPLE_ROWS) as mock:
         result = ng.scrape_newgrad_jobs(max_rows=50)
 
-    mock.assert_called_once_with(ng.CATEGORY, ng.SOURCE, 50)
+    mock.assert_called_once_with("newgrad:us:ml_ai", ng.SOURCE, 50)
     assert result == SAMPLE_ROWS
+
+
+def test_multiple_verticals_are_deduplicated_by_url():
+    with patch.object(ng, "scrape_minisite", return_value=SAMPLE_ROWS) as mock:
+        result = ng.scrape_newgrad_jobs(max_rows=50, verticals=["ml_ai", "swe"])
+
+    assert [c.args[0] for c in mock.call_args_list] == ["newgrad:us:ml_ai", "newgrad:us:swe"]
+    assert len(result) == len({j["url"] for j in SAMPLE_ROWS})
 
 
 def test_scraped_jobs_have_required_keys():

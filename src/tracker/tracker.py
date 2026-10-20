@@ -116,6 +116,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         ("recruiter",       "TEXT DEFAULT NULL"),
         ("salary_range",    "TEXT DEFAULT NULL"),
         ("follow_up_date",  "TEXT DEFAULT NULL"),
+        ("ats_score",       "INTEGER DEFAULT NULL"),  # on-demand LLM ATS score (0-100)
     ]:
         try:
             conn.execute(f"ALTER TABLE jobs ADD COLUMN {_col} {_def}")
@@ -284,7 +285,7 @@ def update_status(conn: sqlite3.Connection, job_id: int, status: str, **kwargs) 
     allowed = {
         "resume_path", "cover_letter", "notes", "date_applied",
         "starred", "interview_date", "recruiter", "salary_range",
-        "follow_up_date", "rejection_stage",
+        "follow_up_date", "rejection_stage", "ats_score",
         # direct-edit fields
         "title", "company", "location", "url", "source_url", "score", "description",
     }

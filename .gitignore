@@ -6,7 +6,6 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 logs/
-output/apply_screenshots/
 # Generated tailoring artifacts — regenerated per run, no longer committed
 output/resumes/*
 !output/resumes/.gitkeep

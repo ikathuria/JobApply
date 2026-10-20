@@ -193,3 +193,45 @@ def test_score_zero_for_clearance_job():
     job = {"title": "Machine Learning Engineer, New Grad", "company": "X",
            "description": "LLM work. Requires an active Secret clearance."}
     assert score_job(job) == 0.0
+
+
+# ── start-date gate: nothing before OPT (May 2027) ────────────────────────────
+
+from pipeline.job_filter import timing_blocker  # noqa: E402
+
+
+def test_pre_opt_roles_are_blocked():
+    for text in [
+        "Systems Software Engineer, AI and Cloud - New College Grad 2026",
+        "Machine Learning Engineer Intern (Summer 2026)",
+        "Research Intern, Fall 2026",
+        "AI Applied Research Internship - Spring 2027",
+        "ML Scientist PhD Intern, Winter 2027",
+        "Class of 2026 rotational program",
+        "Start date: January 2027",
+    ]:
+        assert timing_blocker(text), text
+
+
+def test_post_opt_roles_pass():
+    for text in [
+        "Software Engineer, New Grad 2027",
+        "Machine Learning Engineer Intern - Summer 2027",
+        "Research Intern, Fall 2027",
+        "Machine Learning Engineer",
+        "Founded in 2026, we build LLM agents",
+    ]:
+        assert timing_blocker(text) is None, text
+
+
+def test_blocked_jobs_are_skipped_not_left_in_new():
+    jobs = [
+        {"title": "ML Engineer, New Grad 2026", "company": "X", "source": "newgrad-jobs.com",
+         "description": "LLM work"},
+        {"title": "ML Engineer, New Grad", "company": "Y", "source": "newgrad-jobs.com",
+         "description": "LLM work. Requires an active Secret clearance."},
+        {"title": "ML Engineer, New Grad", "company": "Z", "source": "newgrad-jobs.com",
+         "description": "LLM and RAG work"},
+    ]
+    out = {j["company"]: j.get("status") for j in filter_jobs(jobs)}
+    assert out == {"X": "skipped", "Y": "skipped", "Z": None}

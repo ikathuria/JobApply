@@ -408,78 +408,49 @@ def api_bulk_patch(body: BulkPatch) -> dict:
 
 @app.post("/api/jobs/{job_id}/tailor")
 def api_tailor(job_id: int) -> dict:
-    conn = db()
-    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
-    if not row:
-        raise HTTPException(404, "Job not found")
-    job = dict(row)
+    from pipeline.tailor_flow import TailorError, tailor_job
+
+    job = _job_or_404(job_id)
+    try:
+        return {"status": "ok", **tailor_job(db(), job)}
+    except TailorError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/jobs/{job_id}/ats-score")
+def api_ats_score(job_id: int) -> dict:
+    """On-demand ATS score (Sonnet); re-tailors below 90 and keeps the best."""
+    from pipeline.tailor_flow import TailorError, ats_job
 
     try:
-        from pipeline.jd_fetcher import fetch_jd
-        from pipeline.jobright_enricher import enrich_jobright_url, is_jobright_url
-        from pipeline.resume_tailor import tailor_resume
-        from pipeline.cover_letter import generate_cover_letter
-        from pipeline.pdf_generator import generate_resume_pdf, generate_cover_letter_pdf
+        return ats_job(db(), _job_or_404(job_id))
+    except TailorError as e:
+        raise HTTPException(400, str(e))
 
-        source_url = job.get("source_url") or job.get("url") or ""
-        if is_jobright_url(source_url):
-            enriched = enrich_jobright_url(source_url)
-            if enriched.is_closed:
-                update_status(conn, job_id, STATUS_SKIPPED, source_url=source_url)
-                raise HTTPException(400, f"Job is closed: {enriched.closed_reason}")
-            update_status(
-                conn,
-                job_id,
-                job["status"],
-                title=enriched.title or job["title"],
-                company=enriched.company or job.get("company"),
-                location=enriched.location or job.get("location"),
-                salary_range=enriched.salary_range or job.get("salary_range"),
-                description=enriched.description or job.get("description"),
-                source_url=source_url,
-                url=enriched.employer_url or job["url"],
-            )
-            job.update(
-                {
-                    "title": enriched.title or job["title"],
-                    "company": enriched.company or job.get("company"),
-                    "location": enriched.location or job.get("location"),
-                    "salary_range": enriched.salary_range or job.get("salary_range"),
-                    "description": enriched.description or job.get("description"),
-                    "source_url": source_url,
-                    "url": enriched.employer_url or job["url"],
-                }
-            )
 
-        jd_text = fetch_jd(job["url"])
-        if not jd_text:
-            raise HTTPException(400, "Could not fetch job description — check URL")
+@app.get("/api/jobs/{job_id}/ats-score")
+def api_get_ats_score(job_id: int) -> dict:
+    from pipeline.tailor_flow import ats_report
 
-        tailored = tailor_resume(job, jd_text)
-        if not tailored:
-            raise HTTPException(500, "Tailoring failed — check API key in Streamlit secrets")
+    return ats_report(_job_or_404(job_id)) or {"score": None}
 
-        slug = re.sub(r"[^a-z0-9_]", "", f"{job.get('company', '')}{job['title']}".lower().replace(" ", "_"))[:60]
-        job_dir = OUTPUT_DIR / slug
-        job_dir.mkdir(parents=True, exist_ok=True)
-        resume_path = job_dir / "resume.pdf"
 
-        letter_text = generate_cover_letter(job, jd_text, tailored.get("why_fit", ""))
-        generate_resume_pdf(tailored, resume_path)
+@app.post("/api/jobs/{job_id}/cover_letter")
+def api_generate_cover_letter(job_id: int) -> dict:
+    """Generate a cover letter on demand (not part of default tailoring — saves usage)."""
+    from pipeline.tailor_flow import TailorError, write_cover_letter
 
-        if letter_text:
-            generate_cover_letter_pdf(letter_text, job, job_dir / "cover_letter.pdf")
-            (job_dir / "cover_letter.txt").write_text(letter_text, encoding="utf-8")
+    try:
+        return {"status": "ok", "text": write_cover_letter(_job_or_404(job_id))}
+    except TailorError as e:
+        raise HTTPException(400, str(e))
 
-        update_status(conn, job_id, STATUS_QUEUED, resume_path=str(resume_path))
-        return {"status": "ok", "message": f"Tailored for {job.get('company')}"}
 
-    except (ImportError, ModuleNotFoundError) as e:
-        raise HTTPException(503, f"Pipeline module unavailable: {e}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(500, str(e))
+def _job_or_404(job_id: int) -> dict:
+    row = db().execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Job not found")
+    return dict(row)
 
 
 # ── Resume PDF ────────────────────────────────────────────────────────────────

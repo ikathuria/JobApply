@@ -83,6 +83,20 @@ EXCLUDE_PATTERNS = [
 ]
 _EXCLUDE_RE = re.compile("|".join(f"(?:{p})" for p in EXCLUDE_PATTERNS), re.I)
 
+# Roles that start before OPT does (May 2027) — no CPT, so nothing earlier is
+# workable: new-grad programs for the class of 2026 or earlier, any 2026 term,
+# Winter/Spring 2027 terms, and explicit Jan–Apr 2027 start dates. Summer/Fall
+# 2027 and undated roles pass.
+TIMING_PATTERNS = [
+    r"\b(new|recent|college|university|campus)[ -]grad\w*\W{1,3}(class of )?(20)?2[0-6]\b",
+    r"\b20(2[0-6])\b\W{1,3}(new|recent|college|university|campus)[ -]grad",
+    r"\bclass of 20(2[0-6])\b",
+    r"\b(summer|fall|autumn|winter|spring)\W{0,2}(20)?2[0-6]\b",
+    r"\b(winter|spring)\W{0,2}(20)?27\b",
+    r"\bstart(ing|s)?( date)?\W{1,3}(in |on )?(jan|feb|mar|apr)[a-z]*\.? (\d{1,2},? )?2027\b",
+]
+_TIMING_RE = re.compile("|".join(f"(?:{p})" for p in TIMING_PATTERNS), re.I)
+
 # Signals that a role REQUIRES a doctorate. Used only when there's no sign a
 # Master's is accepted (see MASTERS_OK) — so "MS or PhD" roles are kept.
 PHD_REQUIRED = [
@@ -112,7 +126,7 @@ def score_job(job: dict) -> float:
     """
     text = _combined_text(job)
 
-    if _is_excluded(text) or is_phd_only(text):
+    if _is_excluded(text) or is_phd_only(text) or timing_blocker(text):
         return 0.0
 
     # Role gate — must be a new-grad / internship / co-op role (or come from one
@@ -167,6 +181,7 @@ def filter_jobs(
     """
     scored = []
     n_phd = 0
+    n_blocked = 0
     n_nonsponsor = 0
     for job in jobs:
         text = _combined_text(job)
@@ -176,6 +191,10 @@ def filter_jobs(
             if skip_phd and is_phd_only(text):
                 job["status"] = "skipped"
                 n_phd += 1
+            elif _is_excluded(text) or timing_blocker(text):
+                # score 0 alone still lands in "new" when min_score is 0
+                job["status"] = "skipped"
+                n_blocked += 1
             elif require_sponsor and not is_known_sponsor(job.get("company", "")):
                 job["status"] = "skipped"
                 n_nonsponsor += 1
@@ -185,6 +204,7 @@ def filter_jobs(
     logger.info(
         f"Filtered {len(scored)} / {len(jobs)} jobs above score {min_score}"
         + (f"; {n_phd} PhD-only tagged skipped" if n_phd else "")
+        + (f"; {n_blocked} work-auth/start-date blocked → skipped" if n_blocked else "")
         + (f"; {n_nonsponsor} non-sponsor tagged skipped" if n_nonsponsor else "")
     )
     return scored
@@ -249,6 +269,12 @@ def _is_too_senior(job: dict, text: str) -> bool:
 
 def _is_excluded(text: str) -> bool:
     return bool(_EXCLUDE_RE.search(text))
+
+
+def timing_blocker(text: str) -> str | None:
+    """The phrase showing a role starts before OPT (May 2027), or None."""
+    m = _TIMING_RE.search(text or "")
+    return m.group(0) if m else None
 
 
 def work_auth_blocker(text: str) -> str | None:

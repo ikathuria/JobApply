@@ -112,10 +112,13 @@ Respond ONLY with valid JSON matching this exact schema (no markdown, no code fe
 }}"""
 
 
-def tailor_resume(job: dict, jd_text: str) -> dict | None:
+def tailor_resume(job: dict, jd_text: str, feedback: dict | None = None) -> dict | None:
     """
     Generate a tailored resume for the given job using the configured LLM.
     Returns tailored resume dict, or None on failure.
+
+    ``feedback`` is an ATS report (pipeline.ats_score) on a previous version; the
+    rewrite then targets its missing keywords — only where the profile backs them.
     """
     profile = _load_profile()
     track = classify_track(job)
@@ -136,9 +139,17 @@ JOB URL: {job.get('url', '')}
 
 JOB DESCRIPTION:
 {jd_text[:6000]}"""
+    if feedback:
+        user_message += f"""
+
+ATS FEEDBACK ON THE PREVIOUS VERSION (score {feedback.get('score')}/100):
+- Missing keywords the profile supports: {', '.join(feedback.get('addable', [])) or 'none'}
+- Suggestions: {'; '.join(feedback.get('suggestions', [])[:5]) or 'none'}
+Rewrite to close these gaps using the JD's exact wording. Use ONLY skills and experience
+present in the profile — never add a keyword the profile does not support."""
 
     try:
-        raw = complete(system_prompt, user_message, max_tokens=4000)
+        raw = complete(system_prompt, user_message, max_tokens=4000)  # configured model (Haiku)
 
         # Strip markdown code fences if the model wraps output
         raw = raw.strip()

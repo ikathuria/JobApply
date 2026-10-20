@@ -128,7 +128,9 @@ def _get_session() -> requests.Session:
     return _session
 
 
-def enrich_jobright_url(url: str) -> JobrightEnrichment:
+def enrich_jobright_url(url: str, search_fallback: bool = True) -> JobrightEnrichment:
+    """``search_fallback=False`` skips the web search for the employer URL when the
+    page doesn't carry it (slow, often rate-limited) — batch enrichment uses that."""
     sess = _get_session()
     resp = sess.get(url, timeout=25)
     resp.raise_for_status()
@@ -149,7 +151,9 @@ def enrich_jobright_url(url: str) -> JobrightEnrichment:
         or ((schema_data.get("hiringOrganization") or {}).get("sameAs"))
         or ""
     ).strip()
-    employer_url = _extract_origin_url(soup) or _find_employer_url(title, company, company_url)
+    employer_url = _extract_origin_url(soup) or (
+        _find_employer_url(title, company, company_url) if search_fallback else ""
+    )
     valid_through = str(schema_data.get("validThrough") or "").strip()
     closed_reason = _detect_closed_reason(resp.text, soup, valid_through)
 

@@ -237,6 +237,12 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const [editMsg, setEditMsg] = useState('')
   const [ats, setAts] = useState(null)
   const [atsLoading, setAtsLoading] = useState(false)
+  const [llmAts, setLlmAts] = useState(null)          // on-demand Sonnet ATS report
+  const [llmAtsRunning, setLlmAtsRunning] = useState(false)
+  const [llmAtsErr, setLlmAtsErr] = useState('')
+  const [resumeRev, setResumeRev] = useState(0)        // bumps to reload the PDF iframe
+  const [clExists, setClExists] = useState(null)
+  const [clGenerating, setClGenerating] = useState(false)
   const [openSections, setOpenSections] = useState(new Set())
   const [moreOpen, setMoreOpen] = useState(false)
   const [narrow, setNarrow] = useState(false)
@@ -315,9 +321,44 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
 
   useEffect(() => {
     if (activeTab === 'cover letter' && job?.resume_path) {
-      api.coverLetter(job.id).then(setCoverLetter).catch(() => setCoverLetter(''))
+      api.coverLetter(job.id)
+        .then(t => { setCoverLetter(t); setClExists(true) })
+        .catch(() => { setCoverLetter(''); setClExists(false) })
     }
   }, [activeTab, job?.id, job?.resume_path])
+
+  // Show the last stored LLM ATS report (never runs a new check by itself).
+  useEffect(() => {
+    setLlmAts(null); setLlmAtsErr('')
+    if (activeTab !== 'resume' || !job?.id || !job.resume_path) return
+    api.atsReport(job.id).then(r => setLlmAts(r && r.score != null ? r : null)).catch(() => {})
+  }, [activeTab, job?.id, job?.resume_path])
+
+  async function runLlmAts() {
+    setLlmAtsRunning(true); setLlmAtsErr('')
+    try {
+      const r = await api.atsScore(job.id)
+      setLlmAts(r)
+      if (r.improved) setResumeRev(v => v + 1)
+      setJob(j => ({ ...j, ats_score: r.score }))
+    } catch (e) {
+      setLlmAtsErr(e.message)
+    } finally {
+      setLlmAtsRunning(false)
+    }
+  }
+
+  async function generateCoverLetter() {
+    setClGenerating(true)
+    try {
+      const r = await api.genCL(job.id)
+      setCoverLetter(r.text); setClExists(true)
+    } catch (e) {
+      setTailorMsg(e.message)
+    } finally {
+      setClGenerating(false)
+    }
+  }
 
   useEffect(() => {
     if (job) {
@@ -793,8 +834,11 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
                 </div>
               ) : (
                 <div style={{ textAlign: 'center' }}>
+                  <AtsScorePanel report={llmAts} running={llmAtsRunning} error={llmAtsErr}
+                    onRun={runLlmAts} T={T} dark={dark} />
                   <iframe
-                    src={api.resumeUrl(job.id)}
+                    key={resumeRev}
+                    src={api.resumeUrl(job.id) + (resumeRev ? `?v=${resumeRev}` : '')}
                     style={{ width: '100%', height: 500, border: 'none', borderRadius: 8 }}
                     title="Resume PDF"
                   />
@@ -812,8 +856,16 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
               {!job.resume_path ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: T.muted }}>
                   <div style={{ fontWeight: 700, marginBottom: 6, color: T.text }}>No cover letter yet</div>
-                  <div style={{ fontSize: 12, marginBottom: 20 }}>Generated automatically when you tailor this job.</div>
+                  <div style={{ fontSize: 12, marginBottom: 20 }}>Tailor the resume first; cover letters are generated on demand.</div>
                   <Btn variant="primary" onClick={handleTailor} disabled={tailoring}>Tailor now</Btn>
+                </div>
+              ) : clExists === false ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: T.muted }}>
+                  <div style={{ fontWeight: 700, marginBottom: 6, color: T.text }}>No cover letter yet</div>
+                  <div style={{ fontSize: 12, marginBottom: 20 }}>Only generate one if the application asks for it.</div>
+                  <Btn variant="primary" onClick={generateCoverLetter} disabled={clGenerating}>
+                    {clGenerating ? 'Writing…' : 'Generate cover letter'}
+                  </Btn>
                 </div>
               ) : (
                 <>
@@ -865,5 +917,51 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
         </div>
       </div>
     </>
+  )
+}
+
+
+// On-demand LLM ATS check (Sonnet). Below 90 the backend re-tailors with the
+// feedback and keeps the best version; unsupported keywords are real gaps it
+// will not add.
+function AtsScorePanel({ report, running, error, onRun, T, dark }) {
+  const score = report?.score
+  const col = score == null ? T.muted : score >= 90 ? '#10B981' : score >= 75 ? '#F59E0B' : '#EF4444'
+  const chip = (k, bad) => (
+    <span key={k} style={{
+      fontSize: 10, fontWeight: 700, borderRadius: 5, padding: '2px 7px',
+      color: bad ? '#EF4444' : T.muted,
+      background: bad ? (dark ? '#3B1D1D' : '#FEE2E2') : T.surface,
+      border: `1px solid ${bad ? (dark ? '#5B2A2A' : '#FECACA') : T.border}`,
+    }}>{k}</span>
+  )
+  return (
+    <div style={{ textAlign: 'left', border: `1px solid ${T.border}`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ fontWeight: 800, fontSize: 12, color: T.text, flex: 1 }}>
+          ATS score {score != null && <span style={{ color: col, fontFamily: 'JetBrains Mono, monospace' }}>{score}/100</span>}
+          {report?.history?.length > 1 && (
+            <span style={{ fontWeight: 600, color: T.muted, marginLeft: 8 }}>
+              ({report.history.join(' → ')}{report.improved ? ', resume updated' : ''})
+            </span>
+          )}
+        </div>
+        <Btn variant={score == null ? 'primary' : 'secondary'} size="sm" onClick={onRun} disabled={running}>
+          {running ? 'Scoring… (up to ~1 min)' : score == null ? 'Get ATS score' : 'Re-check'}
+        </Btn>
+      </div>
+      {error && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 6 }}>{error}</div>}
+      {report && report.unsupported?.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 11, color: T.muted, marginBottom: 4 }}>Not in your profile (real gaps, not added):</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{report.unsupported.map(k => chip(k, true))}</div>
+        </div>
+      )}
+      {report && report.suggestions?.length > 0 && score < 90 && (
+        <ul style={{ fontSize: 11, color: T.muted, margin: '8px 0 0', paddingLeft: 16 }}>
+          {report.suggestions.slice(0, 3).map((t, i) => <li key={i}>{t}</li>)}
+        </ul>
+      )}
+    </div>
   )
 }

@@ -1,0 +1,67 @@
+name: Daily Discovery
+
+# Scrape → filter (sponsor, work-auth, start date) → Turso, then enrich new
+# Jobright jobs with their full JD and prune stale ones. Tailoring is local-only
+# (Claude CLI on Ishani's Mac), so nothing is committed back to the repo.
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  # 4 PM CDT (21:00 UTC) daily
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: 'Sources to run (all / intern_list / newgrad_jobs)'
+        default: 'all'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-22.04
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN:   ${{ secrets.TURSO_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e . --no-deps   # src-layout packages importable for `python main.py`
+
+      # Each source runs independently so one failure never blocks the others.
+      - name: Discover - intern-list.com
+        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'intern_list' }}
+        run: python main.py --source intern_list
+        continue-on-error: true
+
+      - name: Discover - newgrad-jobs.com
+        if: ${{ github.event.inputs.sources == 'all' || github.event.inputs.sources == '' || github.event.inputs.sources == 'newgrad_jobs' }}
+        run: python main.py --source newgrad_jobs
+        continue-on-error: true
+
+      - name: Enrich new Jobright jobs
+        timeout-minutes: 20
+        env:
+          JOBRIGHT_EMAIL:    ${{ secrets.JOBRIGHT_EMAIL }}
+          JOBRIGHT_PASSWORD: ${{ secrets.JOBRIGHT_PASSWORD }}
+        run: python scripts/enrich_jobs.py --delay 1.5 --limit 400
+        continue-on-error: true
+
+      # Delete un-applied listings (new/queued) older than 30 days.
+      - name: Prune stale unreviewed jobs (30d+)
+        run: python scripts/cleanup_stale_jobs.py --days 30
+        continue-on-error: true
