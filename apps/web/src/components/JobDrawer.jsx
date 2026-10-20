@@ -8,7 +8,7 @@ const PIPELINE_STATUSES = ['new', 'queued', 'approved', 'applied', 'oa', 'interv
 const STATUS_HELP = {
   new: 'Found, not tailored yet',
   queued: 'Tailored and ready to review',
-  approved: 'Approved for the apply bot',
+  approved: 'Approved: ready to apply',
   applied: 'Submitted',
   oa: 'Online assessment received',
   interview: 'Interview scheduled',
@@ -128,7 +128,7 @@ function ConfirmModal({ job, onConfirm, onCancel, dark }) {
           <div style={{ width: 36, height: 36, borderRadius: 2, background: 'color-mix(in srgb, var(--ok) 13%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ok)', fontWeight: 900 }}>✓</div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: T.text }}>Mark as manually applied</div>
-            <div style={{ fontSize: 12, color: T.muted }}>Use this after submitting outside the apply bot.</div>
+            <div style={{ fontSize: 12, color: T.muted }}>Use this after you submit the application.</div>
           </div>
           <button onClick={onCancel} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 18 }}>x</button>
         </div>
@@ -384,7 +384,7 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
   const score = job.score ?? 0
   const primaryAction = {
     new: { label: 'Tailor with AI', color: T.accent, action: handleTailor },
-    queued: { label: 'Approve for apply bot', color: T.accent, action: () => patchStatus('approved') },
+    queued: { label: 'Approve to apply', color: T.accent, action: () => patchStatus('approved') },
     approved: { label: 'Mark manually applied', color: T.accent, action: () => setShowConfirm(true) },
     applied: { label: 'Move to OA', color: T.accent, action: () => patchStatus('oa') },
     oa: { label: 'Move to interview', color: T.accent, action: () => patchStatus('interview') },
@@ -688,9 +688,9 @@ export default function JobDrawer({ job: initialJob, onClose, dark, onRefresh, o
               )}
               {job.status === 'approved' && (
                 <div style={{ background: 'var(--accent-soft)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', borderRadius: 2, padding: '12px 14px', marginBottom: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--accent)', marginBottom: 3 }}>Auto-apply queued</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--accent)', marginBottom: 3 }}>Approved</div>
                   <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
-                    The apply bot will pick this up on the next scheduled run. Use “Mark manually applied” if you submit it yourself.
+                    Open the posting and apply, then use “Mark manually applied”.
                   </div>
                 </div>
               )}

@@ -1,16 +1,18 @@
+PY := .venv/bin/python
+
 .PHONY: local dev api web build install test discover tailor base-resumes outreach-linkedin tidy
 
 # Daily use: serve the committed React build + API on localhost:8000, reading the
 # live DB from .env (Turso if set, else local SQLite).
 local:
-	uvicorn api.main:app --port 8000
+	$(PY) -m uvicorn api.main:app --port 8000
 
 # Dev: API with hot-reload + Vite dev server (Ctrl-C stops both)
 dev:
-	uvicorn api.main:app --reload --port 8000 & npm run dev; kill %1
+	$(PY) -m uvicorn api.main:app --reload --port 8000 & npm run dev; kill %1
 
 api:
-	uvicorn api.main:app --reload --port 8000
+	$(PY) -m uvicorn api.main:app --reload --port 8000
 
 web:
 	npm run dev
@@ -20,30 +22,30 @@ build:
 	npm run build
 
 install:
-	pip install -r requirements.txt
-	pip install -e .
+	$(PY) -m pip install -r requirements.txt
+	$(PY) -m pip install -e .
 	npm run install:web
 
 test:
-	python -m pytest -q
+	$(PY) -m pytest -q
 
 # Scrape + filter all enabled sources now (GitHub Actions also does this daily)
 discover:
-	python main.py
+	$(PY) main.py
 
 # Tailor the top N new jobs with the Claude CLI (Haiku). N=5 by default.
 tailor:
-	python main.py --tailor --limit $(or $(N),5)
+	$(PY) main.py --tailor --limit $(or $(N),5)
 
 # Render the 4 untailored track resumes → output/resumes/base/
 base-resumes:
-	python main.py --base-resumes
+	$(PY) main.py --base-resumes
 
 # Rank LinkedIn connections into a referral worklist (reads data/linkedin/Connections.csv).
 # ARGS examples: ARGS="--load", ARGS="--top 60 --load".
 outreach-linkedin:
-	python scripts/linkedin_outreach.py $(ARGS)
+	$(PY) scripts/linkedin_outreach.py $(ARGS)
 
 # Delete un-applied listings (new/queued) older than 30 days. ARGS="--dry-run", "--days N".
 tidy:
-	python scripts/cleanup_stale_jobs.py $(ARGS)
+	$(PY) scripts/cleanup_stale_jobs.py $(ARGS)

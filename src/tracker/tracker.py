@@ -21,7 +21,7 @@ def _utcnow_iso() -> str:
 
 STATUS_NEW = "new"               # discovered, not yet reviewed
 STATUS_QUEUED = "queued"         # tailored, awaiting human review
-STATUS_APPROVED = "approved"     # human approved — ready for GHA auto-apply
+STATUS_APPROVED = "approved"     # human approved — ready to apply manually
 STATUS_SKIPPED = "skipped"       # manually skipped
 STATUS_APPLIED = "applied"       # application submitted
 STATUS_OA = "oa"                 # online assessment received
