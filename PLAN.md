@@ -19,8 +19,11 @@ you're about to submit.
 ## Open
 
 ### M42 — Portfolio polish
-- Decide which private repos go public (TrustworthyRAG, AdaptVLA, uav-ugv, Aura are on
-  resumes but can't be linked while private).
+- Public/private decisions (2026-10-20): AdaptVLA and uav-ugv stay private (papers in
+  progress; revisit once on arXiv). Aura stays private (planned monetizable app). On
+  resumes/portfolio describe these without code links ("code available on request"), or
+  link a demo/landing page for Aura. TrustworthyRAG: audit done, see below; it is a
+  thesis + paper project, so the owner decides.
 - AutoRedTeam / DeepfakeGuard: being rebuilt with real evals in their own repos
   (`~/GitHub/Personal/AutoRedTeam`, `…/DeepfakeGuard`, each has PLAN.md). Re-add
   DeepfakeGuard to `profile.json` only once its detector is real.
