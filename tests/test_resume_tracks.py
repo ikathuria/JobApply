@@ -72,8 +72,10 @@ def test_shrink_to_one_page_trims_until_it_fits():
     r = {"summary": "One. Two. Three. Four.",
          "experience": [{"company": "AWS", "bullets": ["b"] * 5}],
          "projects": [{"name": n, "bullets": ["x", "y"]} for n in "PQR"], "skills": {}}
-    size = lambda d: len(d["summary"]) + sum(len(e["bullets"]) for e in d["experience"]) \
-        + sum(len(p["bullets"]) for p in d["projects"])
+
+    def size(d):
+        return (len(d["summary"]) + sum(len(e["bullets"]) for e in d["experience"])
+                + sum(len(p["bullets"]) for p in d["projects"]))
     out = shrink_to_one_page(r, lambda d: 1 if size(d) <= 18 else 2)
     assert out["summary"] == "One. Two."
     assert size(out) <= 18 and len(out["projects"]) == 3   # stopped as soon as it fit
