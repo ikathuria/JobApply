@@ -4,7 +4,19 @@
 **Status:** Done, merged to `master` and pushed.
 
 ## Next step
-Pick the next PLAN.md milestone (M42 portfolio polish is the quickest) → verify by `make local` and opening http://localhost:8000.
+Do these first, in order, then move on to PLAN.md (M42 portfolio polish is the quickest):
+1. **Recreate `.venv`.** It was moved from `~/GitHub/JobApply`, so its scripts point at a dead interpreter path.
+   Run `rm -rf .venv && python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/pip install -e .`
+   → verify `.venv/bin/uvicorn --version` and `.venv/bin/pytest -q` both run.
+2. **Make `make` independent of the shell PATH.** In `Makefile`, add `PY := .venv/bin/python` and replace the bare
+   `python`/`pip`/`uvicorn` calls with `$(PY)`, `$(PY) -m pip` and `$(PY) -m uvicorn`. The local/dev/api targets
+   also need `PYTHONPATH=src` or `--app-dir src` if `pip install -e .` doesn't cover `api.main`.
+   → verify `make test` (250 pass) and `make local` serves http://localhost:8000.
+3. **Remove the auto-apply leftovers from the UI.** Auto-apply was archived (PROJECT.md), but `apps/web/src/components/JobDrawer.jsx` still says:
+   L11 "Approved for the apply bot", L387 "Approve for apply bot", L691–693 "Auto-apply queued … apply bot will pick
+   this up", and L131 mentions "outside the ap…". Reword them for manual applying, e.g. "Approve to apply" and
+   "Approved: open the posting and apply, then mark applied". Also grep `src/` for any leftover auto-apply text
+   (the `/api/focus` labels). → verify with `make build`, check `grep -rni "apply bot\|auto-apply" apps/web/src src` is clean, then commit.
 
 ## Done this session
 - Greenbar brand: `BRAND.md` + `apps/web/src/tokens.css` (single source of truth); `theme.js` maps to CSS vars (e2af6a1)
@@ -20,11 +32,10 @@ Pick the next PLAN.md milestone (M42 portfolio polish is the quickest) → verif
 
 ## Open threads
 - Only job #19024 has an ATS score (79); all other rows show "run" until scored (each run = one Sonnet call).
-- UI copy still says "Approve for apply bot" / "Auto-apply queued" although auto-apply was archived (PROJECT.md decision) — candidate cleanup.
 - Analytics flow chart still uses translucent fills; other secondary screens only got the token restyle, not a layout pass.
 
 ## Gotchas
-- `.venv` scripts have stale shebangs (venv moved from `~/GitHub/JobApply`): `make local`/`make test` fail with `python: No such file`. Workaround: `PATH="$PWD/.venv/bin:$PATH" make test`; server: `PYTHONPATH=src .venv/bin/python -m uvicorn api.main:app --port 8000`. Real fix: recreate the venv.
+- `.venv` scripts have stale shebangs (venv moved from `~/GitHub/JobApply`): `make local`/`make test` fail with `python: No such file`. Workaround until Next step 1–2 is done: `PATH="$PWD/.venv/bin:$PATH" make test`; server: `PYTHONPATH=src .venv/bin/python -m uvicorn api.main:app --port 8000`.
 - Playwright wants chromium build 1228; cached build is 1243 — pass `executable_path` to `~/Library/Caches/ms-playwright/chromium_headless_shell-1243/...`.
 
 ## Read first
