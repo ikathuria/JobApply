@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 
 from pipeline.llm_client import complete
+from pipeline.resume_tracks import classify_track, track_profile
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,14 @@ def _profile_text(profile: dict) -> str:
         for b in exp.get("bullets", []):
             lines.append(f"  - {b}")
 
+    if profile.get("summary"):
+        lines += ["", f"=== BASE SUMMARY ({profile.get('track_label', 'general')}) ===", profile["summary"]]
+
     lines += ["", "=== PROJECTS ==="]
     for proj in profile.get("projects", []):
         lines.append(f"\n{proj['name']}")
+        if proj.get("tech"):
+            lines.append(f"  Tech: {', '.join(proj['tech'])}")
         for b in proj.get("bullets", []):
             lines.append(f"  - {b}")
 
@@ -112,8 +118,12 @@ def tailor_resume(job: dict, jd_text: str) -> dict | None:
     Returns tailored resume dict, or None on failure.
     """
     profile = _load_profile()
+    track = classify_track(job)
+    profile = track_profile(profile, track)
     target = (profile.get("work_authorization", {}).get("job_search_target")
               or "full-time new-grad and internship AI/ML roles")
+    if profile.get("track_label"):
+        target = f"{target} (this role: {profile['track_label']} — start from the base summary)"
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
         profile_text=_profile_text(profile), target=target
     )
@@ -152,6 +162,7 @@ JOB DESCRIPTION:
             "education":      profile["education"],
             "certifications": profile["certifications"],
             "publications":   profile["publications"],
+            "track":          track,
         })
 
         logger.info(f"Tailored resume for '{job.get('title')}' @ '{job.get('company')}'")

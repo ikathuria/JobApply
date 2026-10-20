@@ -46,8 +46,8 @@
       "start": "Sep 2025",
       "end": "Present",
       "bullets": [
-        "Conducting applied research on Retrieval-Augmented Generation (RAG) systems, focusing on retrieval quality, hallucination reduction, and end-to-end latency optimization for LLM-based applications.",
-        "Evaluating retrieval strategies using Recall@K and nDCG to optimize real-world question answering performance."
+        "Researching Retrieval-Augmented Generation (RAG) for retrieval quality, hallucination reduction, and end-to-end latency.",
+        "Evaluating retrieval strategies with Recall@K and nDCG to optimize real-world question answering performance."
       ]
     },
     {
@@ -56,11 +56,11 @@
       "start": "Jul 2023",
       "end": "Jul 2025",
       "bullets": [
-        "Built and deployed LLM-based log summarization systems for production services, reducing root-cause analysis time from 2.5 hours to 30 minutes.",
-        "Designed internal AI chatbots for developer support workflows, improving resolution efficiency for routine operational queries by 40%.",
-        "Automated region-build and deployment pipelines for 15+ OpenSearch services using AWS infrastructure tooling, reducing manual intervention by 80% and accelerating launch timelines by 3 weeks.",
-        "Developed proactive anomaly and bug detection systems to identify failures pre-release, reducing external customer-reported issues by 30%.",
-        "Optimized distributed system scripts, cutting CPU and memory usage by 50%, lowering infrastructure costs by $50K/month."
+        "Built and deployed LLM-based log summarization for production services, cutting root-cause analysis from 2.5 hours to 30 min.",
+        "Designed internal AI chatbots for developer support, improving resolution efficiency for routine operational queries by 40%.",
+        "Automated region-build and deployment pipelines for 15+ OpenSearch services, cutting manual work 80% and launches by 3 weeks.",
+        "Built proactive anomaly and bug detection that catches failures pre-release, reducing customer-reported issues by 30%.",
+        "Optimized distributed system scripts, cutting CPU and memory usage by 50% and infrastructure costs by $50K/month."
       ]
     },
     {
@@ -84,34 +84,306 @@
   ],
   "projects": [
     {
-      "name": "TrustworthyRAG",
+      "name": "Homebase — Alexa+ Household Agent (AWS)",
+      "link": "https://github.com/ikathuria/AmazonDevHack",
+      "tracks": [
+        "ai_ml",
+        "swe"
+      ],
+      "tech": [
+        "TypeScript",
+        "MCP",
+        "AWS Lambda",
+        "DynamoDB",
+        "SQS",
+        "Bedrock",
+        "AWS CDK"
+      ],
       "bullets": [
-        "Designed a query-adaptive learned fusion (QALF) mechanism to dynamically route queries across vector, graph, and keyword retrieval systems.",
-        "Built a multimodal knowledge graph ingesting unstructured text and images to enable multi-hop reasoning and complex retrieval workflows."
+        "Built a 22-tool MCP backend for an Alexa+ household assistant on AWS (Lambda, DynamoDB, SQS, Bedrock, CDK) at 101 ms p95 latency.",
+        "Paired the LLM meal planner with a deterministic allergen verifier and fallback; evaluated tool routing at 37/40 with 120 tests."
       ]
     },
     {
-      "name": "AutoRedTeam",
+      "name": "QALF — Query-Adaptive Learned Fusion for Multimodal RAG",
+      "link": "https://github.com/ikathuria/QALF",
+      "tracks": [
+        "ai_ml",
+        "research"
+      ],
+      "tech": [
+        "Python",
+        "Neo4j",
+        "RAG",
+        "Docker"
+      ],
       "bullets": [
-        "Engineered a multi-agent adversarial evaluation framework (Attacker, Target, Judge) to stress-test LLM safety and robustness.",
-        "Implemented provider-agnostic LLM integrations (GPT-4, Gemini, Llama 3) with a real-time React-based visualization interface."
+        "Built query-adaptive fusion that routes each query across vector, keyword, and graph retrieval by complexity and intent (Neo4j).",
+        "Improved NDCG@10 by 14% over vector-only retrieval (0.488 vs 0.423), with 76.4% generative accuracy on DocBench."
       ]
     },
     {
-      "name": "DeepFakeGuard",
+      "name": "TrustworthyRAG — Trust Layer for Critical-Infrastructure RAG (Master's research)",
+      "tracks": [
+        "ai_ml",
+        "research"
+      ],
+      "tech": [
+        "Python",
+        "Local open LLMs",
+        "RAG",
+        "LLM Evaluation"
+      ],
       "bullets": [
-        "Built a client-side AI forensic tool using Transformers.js to detect synthetic audio directly in-browser, preserving user privacy.",
-        "Optimized streaming inference pipelines to achieve sub-second latency without server-side dependencies."
+        "Building a trust layer that scores each RAG answer on attribution, faithfulness, and related trust dimensions for water/wastewater SCADA question answering, using fully local open-source models.",
+        "Created WWS-RAG-Bench, a 279-document corpus and 253-question benchmark for evaluating RAG systems in the water/wastewater domain."
+      ]
+    },
+    {
+      "name": "FactCheck — Multi-Agent Fact Verification",
+      "link": "https://github.com/ikathuria/FactCheck",
+      "tracks": [
+        "ai_ml",
+        "swe"
+      ],
+      "tech": [
+        "Python",
+        "LangGraph",
+        "FastAPI",
+        "Next.js",
+        "Gemini",
+        "Turso (SQL)"
+      ],
+      "bullets": [
+        "Built a 5-agent LangGraph pipeline (decompose, retrieve, score, synthesize, critique) that returns calibrated supported/refuted/contested verdicts with sources for any public claim.",
+        "Served it through a FastAPI backend and Next.js frontend with real-time web retrieval and a 7-day SQL (Turso) result cache."
+      ]
+    },
+    {
+      "name": "AutoRedTeam — Automated LLM Red-Teaming",
+      "link": "https://github.com/ikathuria/AutoRedTeam",
+      "tracks": [
+        "ai_ml",
+        "research"
+      ],
+      "tech": [
+        "TypeScript",
+        "React",
+        "Python",
+        "OpenAI",
+        "Gemini",
+        "Groq"
+      ],
+      "bullets": [
+        "Engineered a multi-agent adversarial evaluation framework (attacker, target, judge) that stress-tests LLM safety across secret-leakage, PII-extraction, jailbreak, and indirect prompt-injection scenarios.",
+        "Implemented provider-agnostic model integrations (OpenAI, Gemini, Groq-hosted Llama) with a real-time React visualization and a reproducible Python evaluation harness."
+      ]
+    },
+    {
+      "name": "JobApply — AI Job-Search Pipeline",
+      "link": "https://github.com/ikathuria/JobApply",
+      "tracks": [
+        "swe",
+        "ai_ml",
+        "data_science"
+      ],
+      "tech": [
+        "Python",
+        "FastAPI",
+        "React",
+        "SQL (SQLite/Turso)",
+        "GitHub Actions",
+        "LLMs"
+      ],
+      "bullets": [
+        "Built an end-to-end job-search platform: scrapers across 3 sources (3,300+ jobs), keyword and H-1B-sponsorship scoring, LLM resume tailoring, and a FastAPI + React dashboard.",
+        "Automated daily scraping, enrichment, and email digests with GitHub Actions over a cloud SQL database (Turso), with IMAP reply classification that auto-advances application status; 249 automated tests.",
+        "Added funnel analytics (response and interview rates split by sponsor status) and ATS keyword-gap scoring against job descriptions."
+      ]
+    },
+    {
+      "name": "Hatch — Hackathon Hosting Platform",
+      "link": "https://github.com/ikathuria/Hatch",
+      "tracks": [
+        "swe"
+      ],
+      "tech": [
+        "TypeScript",
+        "Astro",
+        "Cloudflare Workers",
+        "D1 (SQL)",
+        "R2"
+      ],
+      "bullets": [
+        "Built a full-stack hackathon platform on Cloudflare Workers with D1 (SQL) and R2 storage: branded event pages, applications, project submissions, rubric-based judging, and People's Choice voting.",
+        "Implemented role-based organizer, judge, and participant flows with result publishing that locks scoring, plus separate staging and production environments."
+      ]
+    },
+    {
+      "name": "Aura — AI City-Exploration iOS App",
+      "link": "https://github.com/ikathuria/Aura",
+      "tracks": [
+        "swe"
+      ],
+      "tech": [
+        "Swift",
+        "SwiftUI",
+        "Supabase (Postgres)",
+        "Edge Functions",
+        "LLMs"
+      ],
+      "bullets": [
+        "Building a native SwiftUI iOS app that combines geolocation, personalization, and AI-generated storytelling for city exploration, on a Supabase (Postgres + Edge Functions) backend."
+      ]
+    },
+    {
+      "name": "RealSight — Real-Time AI-Video Detection Extension",
+      "link": "https://github.com/ikathuria/RealSight",
+      "tracks": [
+        "ai_ml",
+        "swe"
+      ],
+      "tech": [
+        "Python",
+        "FastAPI",
+        "Docker",
+        "Cloud Run",
+        "Gemini",
+        "MCP",
+        "MongoDB"
+      ],
+      "bullets": [
+        "Built a Chrome extension that samples video frames as users browse and gets a verdict from a Gemini multimodal agent behind a Dockerized FastAPI service on Cloud Run, with badges appearing within about 5 seconds.",
+        "Cached verdicts in MongoDB through an MCP integration so repeat videos are answered instantly."
+      ]
+    },
+    {
+      "name": "AdaptVLA — Attack-Resilient VLA Robots (Master's thesis)",
+      "tracks": [
+        "research"
+      ],
+      "tech": [
+        "Python",
+        "PyTorch",
+        "OpenVLA",
+        "LIBERO",
+        "Computer Vision"
+      ],
+      "bullets": [
+        "Researching deployment-time adapter selection that keeps vision-language-action robot policies reliable under adversarial attacks, with experiments on OpenVLA and the LIBERO benchmark."
+      ]
+    },
+    {
+      "name": "UAV-UGV Cooperative Navigation",
+      "tracks": [
+        "research"
+      ],
+      "tech": [
+        "Python",
+        "Reinforcement Learning (TD3)",
+        "Simulation"
+      ],
+      "bullets": [
+        "Researching observation authority for ground-robot teams sharing one aerial drone among moving pedestrians and vehicles; trained a TD3 reinforcement-learning executor that reached 98/104 validation goals.",
+        "In a matched pilot, drone-assisted observation reached 25/25 goals versus 10/25 for ground-only sensing; an 18-mission fault matrix recorded 12 goals and 6 safe aborts."
+      ]
+    },
+    {
+      "name": "Python to AI — Interactive ML Learning Platform",
+      "link": "https://github.com/ikathuria/python-to-ai",
+      "tracks": [
+        "data_science",
+        "ai_ml"
+      ],
+      "tech": [
+        "Python",
+        "Scikit-Learn",
+        "ONNX Runtime Web",
+        "Jupyter"
+      ],
+      "bullets": [
+        "Built a free learning platform from Python basics to generative AI, with live in-browser demos of supervised and unsupervised models (classification, regression, k-means, PCA) running on ONNX Runtime Web."
+      ]
+    },
+    {
+      "name": "Distracted Driving Fatalities Analysis",
+      "link": "https://github.com/ikathuria/DistractedDrivingFatalities",
+      "tracks": [
+        "data_science"
+      ],
+      "tech": [
+        "Python",
+        "Pandas",
+        "Scikit-Learn",
+        "Jupyter"
+      ],
+      "bullets": [
+        "Merged and preprocessed a decade (2010-2019) of NHTSA FARS national crash data and modeled factors behind distracted-driving fatalities with regression analysis."
       ]
     }
   ],
   "skills": {
-    "generative_ai": ["LLMs", "RAG", "Fine-Tuning", "Multi-Agent Systems", "Prompt Engineering", "LangChain", "HuggingFace", "Gemini", "ChatGPT", "Claude", "Mistral"],
-    "ml_frameworks": ["PyTorch", "TensorFlow", "Scikit-Learn", "Ollama"],
-    "programming": ["Python", "Golang", "TypeScript", "Java"],
-    "cs_fundamentals": ["Data Structures & Algorithms", "Distributed Systems", "System Design", "Scalability", "Concurrency"],
-    "cloud_mlops": ["AWS Bedrock", "Lambda", "ECS", "Step Functions", "CloudFormation", "CloudWatch", "Azure"],
-    "web_data": ["React", "Flask", "Django", "Pandas", "NumPy", "Tableau"]
+    "generative_ai": [
+      "Generative AI",
+      "LLMs",
+      "RAG",
+      "AI Agents",
+      "Multi-Agent Systems",
+      "MCP",
+      "LangGraph",
+      "LangChain",
+      "Fine-Tuning",
+      "Prompt Engineering",
+      "LLM Evaluation",
+      "Hugging Face",
+      "Ollama"
+    ],
+    "machine_learning": [
+      "Machine Learning",
+      "Deep Learning",
+      "NLP",
+      "Computer Vision",
+      "Reinforcement Learning",
+      "CNNs",
+      "Transformers",
+      "PyTorch",
+      "TensorFlow",
+      "Scikit-Learn"
+    ],
+    "programming": [
+      "Python",
+      "SQL",
+      "TypeScript",
+      "Java",
+      "Golang"
+    ],
+    "cloud_devops": [
+      "AWS (Bedrock, Lambda, DynamoDB, SQS, ECS, Step Functions, CDK, CloudFormation, CloudWatch)",
+      "Azure",
+      "Docker",
+      "CI/CD (GitHub Actions)",
+      "Git",
+      "Claude Code"
+    ],
+    "backend_web": [
+      "REST APIs",
+      "FastAPI",
+      "Flask",
+      "Django",
+      "React"
+    ],
+    "data": [
+      "Pandas",
+      "NumPy",
+      "Tableau"
+    ],
+    "cs_fundamentals": [
+      "Data Structures & Algorithms",
+      "Distributed Systems",
+      "System Design",
+      "Scalability",
+      "Concurrency"
+    ]
   },
   "certifications": [
     "AWS Certified AI Practitioner",
@@ -122,5 +394,84 @@
     "Temperature Based Food Recommendation using AI (IEEE 2023)",
     "Deep Learning in Healthcare (Springer 2023)",
     "PM2.5 Prediction using Azure ML Studio (IEEE 2022)"
-  ]
+  ],
+  "tracks": {
+    "ai_ml": {
+      "label": "AI/ML Engineer",
+      "priority": 1,
+      "summary": "AI/ML engineer (MS Applied AI, 4.0 GPA; ex-AWS SDE) who builds and evaluates production LLM systems: agents with MCP tools, RAG, and LLM evaluation, deployed on AWS with measured latency and accuracy.",
+      "skill_order": [
+        "generative_ai",
+        "machine_learning",
+        "programming",
+        "cloud_devops",
+        "backend_web"
+      ],
+      "projects": [
+        "Homebase — Alexa+ Household Agent (AWS)",
+        "QALF — Query-Adaptive Learned Fusion for Multimodal RAG",
+        "FactCheck — Multi-Agent Fact Verification",
+        "AutoRedTeam — Automated LLM Red-Teaming",
+        "RealSight — Real-Time AI-Video Detection Extension",
+        "TrustworthyRAG — Trust Layer for Critical-Infrastructure RAG (Master's research)"
+      ]
+    },
+    "swe": {
+      "label": "Software Engineer",
+      "priority": 2,
+      "summary": "Software engineer with 2 years at AWS building distributed systems and deployment automation, now an MS Applied AI student shipping full-stack and serverless systems with REST APIs, SQL, CI/CD, and automated tests.",
+      "skill_order": [
+        "programming",
+        "cs_fundamentals",
+        "cloud_devops",
+        "backend_web",
+        "generative_ai"
+      ],
+      "projects": [
+        "Homebase — Alexa+ Household Agent (AWS)",
+        "JobApply — AI Job-Search Pipeline",
+        "Hatch — Hackathon Hosting Platform",
+        "FactCheck — Multi-Agent Fact Verification",
+        "Aura — AI City-Exploration iOS App",
+        "RealSight — Real-Time AI-Video Detection Extension"
+      ]
+    },
+    "data_science": {
+      "label": "Data Scientist",
+      "priority": 3,
+      "summary": "Data scientist (MS Applied AI, 4.0 GPA; ex-AWS SDE) who turns messy data into models and measurable decisions, with Python, SQL, and machine learning, from retrieval evaluation (NDCG, Recall@K) to production analytics.",
+      "skill_order": [
+        "data",
+        "machine_learning",
+        "programming",
+        "generative_ai",
+        "cloud_devops"
+      ],
+      "projects": [
+        "QALF — Query-Adaptive Learned Fusion for Multimodal RAG",
+        "JobApply — AI Job-Search Pipeline",
+        "Distracted Driving Fatalities Analysis",
+        "Python to AI — Interactive ML Learning Platform"
+      ],
+      "note": "Thin until the M43 data-science project lands."
+    },
+    "research": {
+      "label": "ML Research Engineer",
+      "priority": 4,
+      "summary": "ML research engineer (MS Applied AI, 4.0 GPA; 4 publications; ex-AWS SDE) working on trustworthy AI: robust multimodal RAG, adversarial robustness for vision-language-action robots, and LLM red-teaming, with production engineering experience.",
+      "skill_order": [
+        "machine_learning",
+        "generative_ai",
+        "programming",
+        "cloud_devops"
+      ],
+      "projects": [
+        "QALF — Query-Adaptive Learned Fusion for Multimodal RAG",
+        "AdaptVLA — Attack-Resilient VLA Robots (Master's thesis)",
+        "UAV-UGV Cooperative Navigation",
+        "TrustworthyRAG — Trust Layer for Critical-Infrastructure RAG (Master's research)",
+        "AutoRedTeam — Automated LLM Red-Teaming"
+      ]
+    }
+  }
 }

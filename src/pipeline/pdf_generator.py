@@ -97,6 +97,16 @@ def _styles() -> dict:
     }
 
 
+# .title() mangles acronyms ("generative_ai" → "Generative Ai").
+_LABEL_FIXES = {"Ai": "AI", "Ml": "ML", "Cs": "CS", "Nlp": "NLP", "Devops": "DevOps",
+                "Mlops": "MLOps", "Llms": "LLMs", "Aws": "AWS"}
+
+
+def _category_label(cat: str) -> str:
+    words = cat.replace("_", " ").title().split()
+    return " ".join(_LABEL_FIXES.get(w, w) for w in words)
+
+
 def _safe(text: str) -> str:
     """Normalize unicode chars that ReportLab's built-in fonts can't encode."""
     return re.sub(r"[\u2013\u2014]", "-", str(text))
@@ -180,7 +190,7 @@ def generate_resume_pdf(tailored: dict, output_path: Path) -> Path:
     if tailored.get("skills"):
         _section(story, s, "SKILLS & CERTIFICATIONS")
         for cat, items in tailored["skills"].items():
-            cat_label = cat.replace("_", " ").title()
+            cat_label = _category_label(cat)
             story.append(Paragraph(
                 f"<b>{cat_label}:</b> {_safe(', '.join(items))}",
                 s["skills_line"],

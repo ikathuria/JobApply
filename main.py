@@ -643,6 +643,23 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9_]", "", text.lower().replace(" ", "_"))[:60]
 
 
+def run_base_resumes() -> None:
+    """Render one untailored PDF per resume track (M41) for quick applies."""
+    import json
+    from pipeline.pdf_generator import generate_resume_pdf
+    from pipeline.resume_tracks import base_resume
+
+    profile = json.loads(Path("config/profile.json").read_text())
+    out_dir = Path("output/resumes/base")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tracks = sorted(profile.get("tracks", {}).items(), key=lambda kv: kv[1].get("priority", 99))
+    for track, spec in tracks:
+        label = spec.get("label", track).replace("/", "-").replace(" ", "_")
+        path = out_dir / f"Ishani_Kathuria_{label}.pdf"
+        generate_resume_pdf(base_resume(profile, track), path)
+        print(f"  {spec.get('label', track):22s} → {path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="JobApply - AI Internship Hunter")
     parser.add_argument("--source", choices=["intern_list", "newgrad_jobs", "google_careers", "linkedin", "handshake"])
@@ -669,6 +686,8 @@ def main() -> None:
                         help="Email a weekly summary (new jobs, reviews, follow-ups, windows)")
     parser.add_argument("--remind", action="store_true",
                         help="Email a daily nudge (what to apply to, who to ask for referrals, follow-ups)")
+    parser.add_argument("--base-resumes", action="store_true",
+                        help="Render the 4 untailored track resumes → output/resumes/base/")
     parser.add_argument("--dedup", action="store_true",
                         help="Detect duplicate NEW listings across sources and skip the extras")
     args = parser.parse_args()
@@ -700,6 +719,8 @@ def main() -> None:
         run_reminder()
     elif args.dedup:
         run_dedup()
+    elif args.base_resumes:
+        run_base_resumes()
     else:
         config = load_config()
         run_pipeline(config, source=args.source)

@@ -228,17 +228,26 @@ Regex exclusions for clearance / citizenship / ITAR / "no sponsorship";
 re-checked after enrichment (scrape-time text is a snippet). 28/89 full JDs
 blocked, 0 false positives on applied jobs; 7 queued jobs → skipped.
 
-### M40 — Profile rebuild (needs Ishani's review)
+### M40 — Profile rebuild ✅ (done 2026-10-19)
 - Add missing keywords she can defend (ML, deep learning, SQL, Git, Docker,
   CI/CD, REST APIs, NLP, MCP, FastAPI, LangGraph, Claude Code).
 - Replace the 3 profile projects with the strongest repos (see M42 map), each
   with tech + quantified bullets.
 
-### M41 — Four base resumes (tracks)
+Skills confirmed by Ishani 2026-10-19 (Docker, CI/CD, Git, SQL, REST/FastAPI, MCP,
+LangGraph, Claude Code, NLP, CV, RL, deep learning, CDK/DynamoDB/SQS; **not** Google ADK).
+Project pool 3 → 13 with tech + quantified bullets. **DeepfakeGuard removed** until its
+detector is real (its "detects synthetic audio" claim was false). ATS check: 11/14 key JD
+terms now present (was 3); remaining gaps — data science, statistics, MLOps — are M43's job.
+
+### M41 — Four base resumes (tracks) ✅ (done 2026-10-19)
 Priority: **AI/ML Engineer → Software Engineer → Data Scientist → ML Research
 Engineer.** `profile.json` gains `tracks` (summary, skill order, project picks,
 bullet emphasis per track); a title-based classifier picks the track and
 tailoring starts from that base. Also render the 4 base PDFs for quick applies.
+Shipped: `pipeline/resume_tracks.py` (`classify_track`, `track_profile`, `base_resume`),
+`python main.py --base-resumes` → `output/resumes/base/` (all four one page). Also fixed
+local PDF generation — ReportLab 4.2.2 breaks on Python 3.14 (`ast.Str`); pinned 4.5.1.
 
 ### M42 — Portfolio polish (existing repos, before new builds)
 | Track | Lead projects |
@@ -256,6 +265,10 @@ Ranking/recommendation + experimentation on a public dataset: SQL feature
 pipeline (DuckDB), LightGBM/two-tower ranker, MLflow tracking, NDCG/Recall@K,
 simulated A/B test with power analysis + CUPED, small dashboard. Covers SQL,
 statistics, A/B testing, recsys (13% of JDs), feature engineering, MLOps.
+
+### M44 — Interview prep backlog (Ishani)
+Refresh before interviews: software architecture / system design, Linux basics, CNN and
+LLM (transformer) architecture. Use the in-app Prep pack per interview.
 
 ---
 
