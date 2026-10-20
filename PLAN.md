@@ -22,8 +22,11 @@ you're about to submit.
 - Public/private decisions (2026-10-20): AdaptVLA and uav-ugv stay private (papers in
   progress; revisit once on arXiv). Aura stays private (planned monetizable app). On
   resumes/portfolio describe these without code links ("code available on request"), or
-  link a demo/landing page for Aura. TrustworthyRAG: audit done, see below; it is a
-  thesis + paper project, so the owner decides.
+  link a demo/landing page for Aura. TrustworthyRAG: submitted to a conference, decision
+  due 2026-10-28; keep private until then, re-evaluate after. Before going public: strip
+  Claude co-author trailers from history (git filter-repo, back up first), remove Claude
+  mentions from CLAUDE.md / PLAN.md L303-319 / PROJECT.md L125,193, review docs/,
+  experiments/, presentation/ and the commit email.
 - AutoRedTeam / DeepfakeGuard: being rebuilt with real evals in their own repos
   (`~/GitHub/Personal/AutoRedTeam`, `…/DeepfakeGuard`, each has PLAN.md). Re-add
   DeepfakeGuard to `profile.json` only once its detector is real.
