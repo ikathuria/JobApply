@@ -36,6 +36,7 @@ Ranking/recommendation + experimentation on a public dataset: SQL feature pipeli
 (DuckDB), LightGBM/two-tower ranker, MLflow, NDCG/Recall@K, simulated A/B test with power
 analysis + CUPED, small dashboard. Covers SQL, statistics, A/B testing, recsys, MLOps —
 the keywords still missing from the profile.
+- Status 2026-10-21: planned in `~/GitHub/Personal/rec-ranking-lab` (MovieLens 25M, 8 milestones; PLAN.md + PROJECT.md committed). Build starts at its M1.
 
 ### M44 — Interview prep (Ishani)
 Refresh system design / software architecture, Linux basics, CNN and transformer
