@@ -1,48 +1,47 @@
-# Handoff: 2026-10-20 · Greenbar UI rebrand + ATS in pipeline
+# Handoff: 2026-11-15 · LinkedIn overhaul + résumé title pinning
 
-**Goal:** Rebrand the dashboard (apps/web) and make ATS scores visible while triaging jobs; then move on to PLAN.md work (M42–M44).
-**Status:** Done, merged to `master` and pushed.
+**Goal:** Land a full-time ML/AI Engineer, Research Engineer or SWE (ML) role starting May 2027. Applying is the priority, not tool work.
+**Status:** LinkedIn revised and recruiter-reviewed twice (7/10, "would click in"). Résumé AWS title fixed and pinned. Queued résumés from 2026-11-12 are still unsent.
 
 ## Next step
-Do these first, in order, then move on to PLAN.md (M42 portfolio polish is the quickest):
-1. **Recreate `.venv`.** It was moved from `~/GitHub/JobApply`, so its scripts point at a dead interpreter path.
-   Run `rm -rf .venv && python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/pip install -e .`
-   → verify `.venv/bin/uvicorn --version` and `.venv/bin/pytest -q` both run.
-2. **Make `make` independent of the shell PATH.** In `Makefile`, add `PY := .venv/bin/python` and replace the bare
-   `python`/`pip`/`uvicorn` calls with `$(PY)`, `$(PY) -m pip` and `$(PY) -m uvicorn`. The local/dev/api targets
-   also need `PYTHONPATH=src` or `--app-dir src` if `pip install -e .` doesn't cover `api.main`.
-   → verify `make test` (250 pass) and `make local` serves http://localhost:8000.
-3. **Remove the auto-apply leftovers from the UI.** Auto-apply was archived (PROJECT.md), but `apps/web/src/components/JobDrawer.jsx` still says:
-   L11 "Approved for the apply bot", L387 "Approve for apply bot", L691–693 "Auto-apply queued … apply bot will pick
-   this up", and L131 mentions "outside the ap…". Reword them for manual applying, e.g. "Approve to apply" and
-   "Approved: open the posting and apply, then mark applied". Also grep `src/` for any leftover auto-apply text
-   (the `/api/focus` labels). → verify with `make build`, check `grep -rni "apply bot\|auto-apply" apps/web/src src` is clean, then commit.
+Ishani applies to the queued jobs in the dashboard (`make local`), freshest first (24734 Apple, 25559 Nuro,
+26528 Microsoft, 25558 TikTok, 23177 Oracle), and marks each applied → verify with `.venv/bin/python main.py --stats`.
 
 ## Done this session
-- Greenbar brand: `BRAND.md` + `apps/web/src/tokens.css` (single source of truth); `theme.js` maps to CSS vars (e2af6a1)
-- All components de-hexed (no hard-coded colors, radius 2px, IBM Plex fonts, no emoji icons)
-- ATS: score + 90-target gauge column in list rows (`JobRow.jsx`, `AtsScore` in `ui/index.jsx`); `sort=ats` in `src/api/main.py`; Sonnet ATS report at top of drawer Overview (`AtsScorePanel` in `JobDrawer.jsx`)
-- Layout: one-line Today strip (`PipelineView.jsx`), tabs + search on one row (`JobsView.jsx`), flat drawer sections, bottom tab bar ≤760px; `FocusQueue.jsx` deleted
-- Verified: `make test` 250 passed; axe critical/serious clean on all screens light+dark; no page h-scroll 320–2560
+- Résumé: AWS title is now "Software Development Engineer; System Development Engineer until Apr 2025"
+  (`config/profile.json`). `_restore_role_facts` in `src/pipeline/resume_tailor.py` pins every role's title,
+  company and dates to the profile after LLM tailoring (`tests/test_role_facts.py`). Commit 9458f1d.
+- Committed earlier pipeline work: `make refresh` / `--refresh` (skip closed Jobright jobs, use employer URLs),
+  `--tailor --max-age 14` with interns excluded, cover letters for full-time roles. Commit eab91de. `make test`: 256 passed.
+- LinkedIn (done in Chrome, not in the repo): new headline/About/top skills; AWS split into System Dev Eng
+  (Jul 2023–Apr 2025, 4 bullets, framed as software development) + SDE (Apr–Jul 2025, 2 bullets); 10 dated projects;
+  3 honors; unverifiable metrics removed (Autbot 30%, SelfMed 30%, Docplus "40+ devs"); typos fixed;
+  2020 certs (HackerRank, Django, Udemy) and the Duolingo score removed.
 
 ## Decisions
-- Greenbar (ledger/greenbar printout, forest #1D6B45, IBM Plex): user's pick from 4 previews. Rejected: Docket, Departures, Riso Zine.
-- Light-first; default theme only changes for users with no saved setting (user's saved setting is dark).
-- Daily-tool density over portfolio polish (user: "just me, daily tool").
+- Most AWS achievements stay under the System Dev Eng title: titles and dates are what background checks verify,
+  and the SDE title only covers 4 months. Rejected: moving them under SDE.
+- Not stating F-1/OPT on LinkedIn, keeping "4x Published" and the India/Europe targets, keeping the AWS 30%/25% metrics.
+- Old 2021 internships (Sparks ×2, ProfiVe) and the Depth Gesture project stay: Ishani's call, they do no harm.
+- Don't edit résumé content or tailoring code without an explicit yes (saved as a memory).
 
 ## Open threads
-- Only job #19024 has an ATS score (79); all other rows show "run" until scored (each run = one Sonnet call).
-- Analytics flow chart still uses translucent fills; other secondary screens only got the token restyle, not a layout pass.
+- Ishani: update the AWS title by hand in the iCloud master résumé .docx.
+- LinkedIn later: add an RA result bullet and a post once a paper is accepted. Check that SIREN's
+  "Oct 2025 – Oct 2026" end date is right (PROFILE.md says Ishani still runs it).
+- Left for now: RA employer "Purdue University" vs PNW, degree name (AI vs Applied AI), banner.
+- Carried over: the scorer underrates plain SWE titles (`src/pipeline/job_filter.py`); ATS-check top picks
+  (DeepMind, NVIDIA, Amazon, Apple, Nuro) before submitting.
 
 ## Gotchas
-- `.venv` scripts have stale shebangs (venv moved from `~/GitHub/JobApply`): `make local`/`make test` fail with `python: No such file`. Workaround until Next step 1–2 is done: `PATH="$PWD/.venv/bin:$PATH" make test`; server: `PYTHONPATH=src .venv/bin/python -m uvicorn api.main:app --port 8000`.
-- Playwright wants chromium build 1228; cached build is 1243 — pass `executable_path` to `~/Library/Caches/ms-playwright/chromium_headless_shell-1243/...`.
+- LinkedIn: use form_input or execCommand('insertText'), not typing (typing drops characters). Wait about 4 s
+  before reading the page text. Language entries with a Duolingo score must be deleted and re-added to drop the score.
+- Turso is the source of truth; local `data/*.db` is stale.
 
 ## Read first
-- `BRAND.md`: brand rules, tokens table, layout rules
-- `apps/web/src/tokens.css`: all design tokens (light + `body.dark`)
-- `apps/web/src/theme.js`: token map for inline styles, `alpha()`, `atsColor`, status meta
-- `PLAN.md`: open milestones M42–M44
+- `PROJECT.md`: flow, commands, conventions
+- `src/pipeline/resume_tailor.py`: tailoring + `_restore_role_facts`
+- `config/profile.json`: résumé source of truth
 
 ## Uncommitted
-clean
+clean (after this handoff commit)

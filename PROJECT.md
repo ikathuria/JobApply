@@ -3,7 +3,7 @@
 > Read this first; it is the whole map. Full history (M1–M44 decision log) lives in
 > `archive/docs/PROJECT-history.md` — only open it if a decision below isn't enough.
 
-_Last updated: 2026-11-12_
+_Last updated: 2026-11-15_
 
 ## What it is
 Personal job-search tool for Ishani Kathuria (MS Applied AI @ Purdue Northwest, May
@@ -100,5 +100,5 @@ make build            # after editing apps/web/src
   scrapes jobright HTML. Setting `JOBRIGHT_EMAIL/PASSWORD` in `.env` may help locally.
 
 ## Status / next
-2026-11-12: pipeline cleaned (339 stale/dup rows skipped), 17 resumes queued; `--tailor` now limited to
+2026-11-15: LinkedIn revised; résumé role titles/dates pinned to profile.json (`_restore_role_facts`). 2026-11-12: pipeline cleaned (339 stale/dup rows skipped), 17 resumes queued; `--tailor` limited to
 jobs from the last 14 days (`--max-age`). Priority is applying, not tool work. See `HANDOFF.md`, then `PLAN.md`.
