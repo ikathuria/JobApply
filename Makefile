@@ -1,6 +1,6 @@
 PY := .venv/bin/python
 
-.PHONY: local dev api web build install test discover tailor base-resumes outreach-linkedin tidy
+.PHONY: local dev api web build install test discover tailor refresh base-resumes outreach-linkedin tidy
 
 # Daily use: serve the committed React build + API on localhost:8000, reading the
 # live DB from .env (Turso if set, else local SQLite).
@@ -33,9 +33,13 @@ test:
 discover:
 	$(PY) main.py
 
-# Tailor the top N new jobs with the Claude CLI (Haiku). N=5 by default.
+# Tailor the top N new jobs from the last AGE days (Claude CLI, Haiku). N=5, AGE=14 by default.
 tailor:
-	$(PY) main.py --tailor --limit $(or $(N),5)
+	$(PY) main.py --tailor --limit $(or $(N),5) --max-age $(or $(AGE),14)
+
+# Skip closed `new` jobs + swap Jobright links for employer URLs (N per run, resumable)
+refresh:
+	$(PY) main.py --refresh --limit $(or $(N),50)
 
 # Render the 4 untailored track resumes → output/resumes/base/
 base-resumes:

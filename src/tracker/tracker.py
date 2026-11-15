@@ -266,7 +266,10 @@ def get_jobs(
     status: str | None = None,
     min_score: float = 0.0,
     limit: int = 200,
+    max_age_days: int | None = None,
 ) -> list[sqlite3.Row]:
+    """Jobs by score (newest first on ties). ``max_age_days`` keeps only jobs
+    added in the last N days, so stale listings don't crowd out fresh ones."""
     query = "SELECT * FROM jobs WHERE score >= ?"
     params: list = [min_score]
 
@@ -274,7 +277,11 @@ def get_jobs(
         query += " AND status = ?"
         params.append(status)
 
-    query += " ORDER BY score DESC LIMIT ?"
+    if max_age_days is not None:
+        query += " AND created_at >= datetime('now', ?)"
+        params.append(f"-{int(max_age_days)} days")
+
+    query += " ORDER BY score DESC, created_at DESC LIMIT ?"
     params.append(limit)
 
     return conn.execute(query, params).fetchall()

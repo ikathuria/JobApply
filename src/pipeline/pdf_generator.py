@@ -247,7 +247,7 @@ def generate_cover_letter_pdf(letter_text: str, job: dict, output_path: Path) ->
     story.append(Spacer(1, 16))
 
     story.append(Paragraph(
-        f"Re: {job.get('title', 'Internship')} at {job.get('company', '')}",
+        f"Re: {job.get('title') or 'Application'} at {job.get('company', '')}",
         ParagraphStyle("subject", fontName="Helvetica-Bold", fontSize=10, leading=14),
     ))
     story.append(Spacer(1, 10))

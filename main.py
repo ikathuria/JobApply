@@ -270,16 +270,21 @@ def run_scrape_recruiters(config: dict, limit: int | None = None, guess_emails: 
 
 # -- Phase 2: Tailoring --------------------------------------------------------
 
-def run_tailor(limit: int = 10, cover_letter: bool = False) -> None:
+def run_tailor(limit: int = 10, cover_letter: bool = False, max_age_days: int = 14) -> None:
     """Tailor the top-scored new jobs (pipeline.tailor_flow): enrich → JD →
     work-auth recheck → tailored resume (Haiku) → PDF → queued. Cover letters and
-    the ATS score are on demand from the dashboard, to save usage."""
+    the ATS score are on demand from the dashboard, to save usage. Internship /
+    co-op titles are skipped: the target is full-time new grad."""
+    from pipeline.job_filter import INTERN_TITLE_RE
     from pipeline.tailor_flow import TailorError, tailor_job
 
     conn = _open_db()
-    jobs = get_jobs(conn, status=STATUS_NEW, limit=limit)
+    # Filter before the limit, so interns don't eat the top-N slots.
+    pool = get_jobs(conn, status=STATUS_NEW, limit=1000, max_age_days=max_age_days)
+    jobs = [j for j in pool if not INTERN_TITLE_RE.search(j["title"] or "")][:limit]
     if not jobs:
-        print("No new jobs to tailor. Run discovery first.")
+        print(f"No new non-intern jobs from the last {max_age_days} days to tailor. "
+              "Run discovery first, or widen --max-age.")
         conn.close()
         return
 
@@ -297,6 +302,19 @@ def run_tailor(limit: int = 10, cover_letter: bool = False) -> None:
     for status, count in sorted(get_stats(conn).items()):
         print(f"  {status:<12} : {count}")
     print()
+    conn.close()
+
+
+def run_refresh(limit: int = 50) -> None:
+    """Check `new` Jobright jobs: skip closed ones, swap in the employer URL."""
+    from pipeline.refresh_jobs import refresh_new_jobs
+
+    conn = _open_db()
+    c = refresh_new_jobs(conn, limit=limit)
+    print(f"Checked {c['checked']}: {c['closed']} closed → skipped, "
+          f"{c['relinked']} relinked to the employer site.")
+    if c["blocked"]:
+        print("Jobright rate-limited the run; rerun later to continue where it stopped.")
     conn.close()
 
 
@@ -401,6 +419,10 @@ def main() -> None:
     parser.add_argument("--guess-emails", action="store_true",
                         help="With --recruiters: resolve emails (Prospeo by LinkedIn URL + finder waterfall)")
     parser.add_argument("--limit", type=int, default=10, help="Max jobs to process (default: 10)")
+    parser.add_argument("--max-age", type=int, default=14,
+                        help="With --tailor: only jobs added in the last N days (default: 14)")
+    parser.add_argument("--refresh", action="store_true",
+                        help="Skip closed `new` jobs and replace Jobright links with employer URLs")
     parser.add_argument("--stats", action="store_true", help="Show tracker stats")
     parser.add_argument("--scan-inbox", action="store_true",
                         help="Read recruiter replies over IMAP and auto-advance job statuses")
@@ -428,8 +450,10 @@ def main() -> None:
             limit=args.limit if "--limit" in sys.argv else None,
             guess_emails=args.guess_emails,
         )
+    elif args.refresh:
+        run_refresh(limit=args.limit)
     elif args.tailor:
-        run_tailor(limit=args.limit)
+        run_tailor(limit=args.limit, max_age_days=args.max_age)
     elif args.scan_inbox:
         run_scan_inbox(limit=args.limit if "--limit" in sys.argv else 500,
                        ingest=args.ingest, days=args.days)

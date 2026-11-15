@@ -34,10 +34,12 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
 
   async function downloadPacket(job) {
     const prefix = `${safeFilePart(job.company)}_${job.id}`
-    await Promise.all([
+    // Cover letters are generated on demand, so most jobs have none: skip it quietly.
+    const [resume] = await Promise.allSettled([
       downloadFile(api.resumeUrl(job.id), `${prefix}_resume.pdf`),
       downloadFile(api.coverLetterPdfUrl(job.id), `${prefix}_cover_letter.pdf`),
     ])
+    if (resume.status === 'rejected') throw resume.reason
   }
 
   async function openPosting(job) {
@@ -50,7 +52,7 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
     try {
       await downloadPacket(job)
     } catch (e) {
-      alert(`Could not download both documents: ${e.message}`)
+      alert(`Could not download the resume: ${e.message}`)
     }
     if (!hasPosting) {
       onOpenJob(job)
@@ -177,7 +179,7 @@ export default function ApprovedDeck({ jobs, loading, dark, onOpenJob, onDecisio
                   <div>
                     <div style={{ fontSize: 10, color: T.muted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>Application link</div>
                     <div style={{ fontSize: 13, color: T.text, lineHeight: 1.45 }}>
-                      {hasLink ? 'Opening this link downloads the resume and cover letter.' : 'No posting URL is stored for this job.'}
+                      {hasLink ? 'Opening this link downloads the resume (and cover letter, if generated).' : 'No posting URL is stored for this job.'}
                     </div>
                   </div>
                   <div>

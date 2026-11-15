@@ -10,7 +10,7 @@ from pipeline.llm_client import complete
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are an expert career coach writing concise, compelling cover letters \
-for AI/ML internship positions.
+for full-time new-grad software, ML and AI engineering roles.
 
 Write in first person, professional but not stiff. Keep it to 3 short paragraphs:
 1. Hook — what excites you about this specific company/role (use why_fit from context)
@@ -31,7 +31,7 @@ def generate_cover_letter(job: dict, jd_text: str, why_fit: str) -> str:
     why_fit comes from the tailored resume output.
     Returns cover letter as plain text, or empty string on failure.
     """
-    user_message = f"""Write a cover letter for this internship application.
+    user_message = f"""Write a cover letter for this application.
 
 COMPANY: {job.get('company', 'Unknown')}
 ROLE: {job.get('title', 'Unknown')}
