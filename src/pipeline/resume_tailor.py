@@ -20,6 +20,21 @@ def _load_profile() -> dict:
         return json.load(f)
 
 
+def _restore_role_facts(tailored: dict, profile: dict) -> dict:
+    """Pin each role's title and dates to the profile; the LLM may only reword bullets.
+
+    Titles and dates are what background checks verify, so they must match the
+    profile exactly. Roles are matched by company name (case-insensitive).
+    """
+    by_company = {e["company"].lower(): e for e in profile.get("experience", [])}
+    for exp in tailored.get("experience", []):
+        src = by_company.get(str(exp.get("company", "")).lower())
+        if src:
+            exp.update(company=src["company"], title=src["title"],
+                       start=src["start"], end=src["end"])
+    return tailored
+
+
 def _profile_text(profile: dict) -> str:
     lines = [
         f"Name: {profile['name']}",
@@ -161,7 +176,7 @@ present in the profile — never add a keyword the profile does not support."""
                 raw = raw[4:]
             raw = raw.strip()
 
-        tailored = fit_one_page(json.loads(raw))
+        tailored = _restore_role_facts(fit_one_page(json.loads(raw)), profile)
 
         # Inject static fields the LLM doesn't change
         tailored.update({
